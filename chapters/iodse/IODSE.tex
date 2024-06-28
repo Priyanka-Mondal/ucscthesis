@@ -1,0 +1,19 @@
+\chapter{Locality aware dynamic searchable encryption meets forward and backward privacy}\label{ch:iodse}
+We focus on the problem of I/O-efficient Dynamic Searchable Encryption (DSE), i.e., schemes that perform well when executed with the dataset on-disk. Towards this direction, for HDDs, schemes have been proposed with good \emph{locality} (i.e., low number of performed non-continuous memory reads) and \emph{read efficiency} (the number of additional memory locations read per result item). \neww{Similarly,} for SSDs, schemes with good \emph{page efficiency} (reading as few pages as possible) have been proposed. However, the vast majority of these works are limited to the \emph{static} case (i.e. no dataset modifications) and the {only} dynamic scheme fails to achieve forward and backward privacy, the de-facto leakage standard in the literature. In fact, prior related works (Bost [CCS'16] and Minaud and Reichle [CRYPTO'22]) claim that I/O-efficiency and forward-privacy are two \emph{irreconcilable} notions.
+% while they propose new I/O efficient Dynamic Searchable Encryption but without forward/backward privacy. 
+Contrary to that, in this work, we ``reconcile'' {for the first time} forward and backward privacy with I/O-efficiency for DSE both for HDDs and SSDs. We propose two families of DSE constructions which also improve the state-of-the-art (non I/O-efficient) both asymptotically and experimentally. Indeed, some of our schemes improve the in-memory performance of prior works. \neww{ At a technical level, we revisit and enhance the \emph{lazy de-amortization} DSE construction by Demertzis et al. [NDSS'20], transforming it into an I/O-preserving one. Importantly, we introduce an oblivious-merge protocol that merges two equal-sized databases without revealing any information, effectively replacing the costly oblivious data structures with more lightweight computations.}
+
+
+%At a technical level, we revisit and improve the \emph{lazy de-amortization} DSE \neww{construction} of Demertzis et al. [NDSS'20] into an I/O-preserving one. Importantly, we \new{introduce an oblivious-merge protocol which merges two equal-sized databases obliviously, and} replaces the costly oblivious data structures.
+%with more lightweight and simpler-to-implement oblivious sorting.
+
+%At a technical level, we revisit and refine the \emph{lazy de-amortization} DSE \neww{construction} of Demertzis et al. [NDSS'20] into an I/O-preserving one. Importantly, we \new{introduce a protocol which merges two equal-sized databases obliviously, and} replaces the costly oblivious data structures with more lightweight and simpler-to-implement oblivious sorting. %\todo{1. explain novelty}
+%\tblue{add one line about oblivious merge.}
+% DSE schemes for HDDs and SSDs, while at the same time 
+
+% In this area, many recent works achieve the  of forward-and-backward privacy; however, none of these simultaneously achieves good I/O-performance when running from disk storage.
+% % (forward privacy nullifies the leakage during updates; backward privacy controls during search the leaked information about deleted records).
+\input{chapters/iodse/preliminaries}
+\input{chapters/iodse/SDa}
+\input{chapters/iodse/SDdFramework}
+%\input{chapters/iodse/experiment}

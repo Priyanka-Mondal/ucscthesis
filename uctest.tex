@@ -17,27 +17,70 @@
 % package geometry should override the various margin settings from .clo and .cls
 % and also eliminates issues where the default papersize is A4
 \usepackage[letterpaper, left=1.5in, right=1.25in, top=1.25in, bottom=1.25in, includefoot]{geometry}
+\usepackage{microtype}
+\usepackage{times,graphicx,color,eso-pic}
+\usepackage{upgreek}
+\usepackage{pdfpages}
+%\pdfsuppresswarningpagegroup=1
+\usepackage{relsize}
+\usepackage{amsmath, amsthm, amssymb, stmaryrd}
+%\newcommand{\U}{}
+\usepackage{textcomp}
+\usepackage{listings,lstautogobble}
+\usepackage{algorithm,algpseudocode}
+\usepackage{ifthen}
+
+\algtext*{EndIf}
+\algtext*{EndFor}
+\algtext*{EndWhile}
+\algnewcommand{\IIf}[1]{\State\algorithmicif\ #1\ \algorithmicthen}
+\algnewcommand{\EndIIf}{\unskip\ \algorithmicend\ \algorithmicif}
+\algnewcommand{\ElsIIf}[1]{\State\algorithmicelse\ \algorithmicif \ #1\ \algorithmicthen}
+\algnewcommand{\ElsI}[1]{\State\algorithmicelse\ #1}
+\algnewcommand{\FFor}[1]{\State\algorithmicfor\ #1\ \algorithmicdo}
+
+\usepackage{xspace}
+%\usepackage{algorithmicx}
+\usepackage{paralist}
+\usepackage{xcolor}
+\usepackage{cite}
+%\usepackage[noend]{algpseudocode}
+%\usepackage{algpseudocode}
+%{\textit{Proof:} }{$\square$}
+\usepackage{hyperref}
+%\usepackage{float}
+\usepackage{ttquot,macros}
+\usepackage{cases}
+\usepackage{stmaryrd}
+\usepackage{mathpartir}
+\usepackage{tikz}
+\usepackage{thmtools}
+\usepackage{thm-restate}
+\usepackage{xcolor}
+\usepackage[utf8]{inputenc}
+%\newcommand{\tblue}[1]{\color{blue}{#1}}
 % Use PostScript fonts as required by UCSC Dissertation Preparation Guidelines
 \usepackage{pslatex}
+\usepackage{subcaption}
+%\pgfplotsset{compat=1.18} 
 
 \begin{document}
-
 % Declarations for Front Matter
 
-\title{The Elements of Theses}
-\author{Perry H. Disdainful}
-\degreeyear{1994}
-\degreemonth{March}
+\title{Towards Making Distributed Systems Trustless}
+\author{Priyanka Mondal}
+\degreeyear{2024}
+\degreemonth{July}
 \degree{DOCTOR OF PHILOSOPHY}
-\chair{Professor Ignatius Arrogant}
-\committeememberone{Professor Ivory Insular}
-\committeemembertwo{Professor General Reference}
-\committeememberthree{Professor Ipsum Lorem}
+\chair{Professor Owen Arden}
+\committeememberone{Professor Ioannis Demertzis}
+\committeemembertwo{Professor Alvaro Cardenas}
+\committeememberthree{Professor Lindsey Kuper}
 \numberofmembers{4} %% (including chair) possible: 3, 4, 5, 6
-\deanlineone{Dean John Doe}
+\deanlineone{Dean Peter F Biehl}
 \deanlinetwo{Vice Provost and Dean of Graduate Studies}
 \deanlinethree{}
-\field{Indigineous Peoples Basketry}
+\field{Computer Science and Engineering}
 \campus{Santa Cruz}
 
 \begin{frontmatter}
@@ -50,7 +93,31 @@
 \listoftables
 
 \begin{abstract}
-Theses have elements.  Isn't that nice?
+%One of the main design goals of distributed systems is to eliminate centralized trust in order to deal with malicious hosts. Different approaches can be taken to address these issues. We present two kinds of techniques that enable a client to do computations in a distributed system without trusting a centralized remote server. First, I will present a general purpose programming framework FLAQR(…) that can be used to build decentralized applications while enforcing end-to-end information security in the presence of replication, consensus and program failures. My second work focuses on structured encryption techniques that can be used by the client to out- source its data to an untrusted server while retaining the ability to access and update it securely as well as efficiently.
+%Hosts in a distributed system can behave maliciously based on their own interest. Hence, 
+One of the main design goals of distributed systems is to eliminate centralized trust. %There are different aspects that need to be taken into account to achieve this goal. 
+%For instance, while computing on a distributed system there should not be any “single point-of-failure”. 
+Quorum replication techniques are very popular in this regard.
+%eliminating such “single point-of-failures”. 
+%The way quorum replication works is that a computation is replicated into a bunch of hosts and if a predetermined set of hosts agree on their outcome then we say consensus has been reached and hence the system makes progress. 
+In my first work, I will present a general purpose programming framework, called Flow Limited Authorization for Quorum Replication (FLAQR), that can be used to build decentralized quorum-based protocols. FLAQR type-system ensures that a well-typed program can not fail in ways that violate its type-level specifications. FLAQR enforces end-to-end information-security by annotating programs with information flow control (IFC) policies. IFC has been used to enforce decentralized security in distributed systems for confidentiality and integrity, while less attention has been paid to enforce decentralized availability policies with IFC. In this work, we extend the Flow Limited Authorization Model with availability policies. FLAQR security policies, language constructs, and the type-system together enable a programmer to write heterogeneous quorum based applications that are secure by construction. No programming language we are aware of addresses systems that compose multiple quorums or consider quorum participants with arbitrary trust relationships. 
+In this work we also 
+%identify the trade-offs between integrity and availability in distributed systems. Which led us to 
+introduce two novel binary-operators, called \emph{partial-or} and \emph{partial-and}, to realize integrity policies for programs that can be executed in the presence of replication, consensus and program failures. 
+
+{\color{blue}{here goes FLAQR+ and flamechor}}
+
+
+Another important aspect of distributed systems is to store data in a trustless manner. My second work focuses on dynamic searchable encryption (DSE) techniques that can be used by the client to out-source its data to an untrusted server while retaining the ability to access it securely as well as efficiently. 
+%The way searchable encryption works is that 
+%The client creates an inverted index from its data, encrypts them both and uploads them both to the server. The client later makes search and update queries to the inverted index. 
+%Accessing data on the server can leak a lot of information about the client's query and the accessed data.
+A vast majority of works on DSE schemes focus on how to minimize the leakages that occur due to accessing the data on the server and make the schemes \emph{forward} and \emph{backward} private.
+%the two properties that a DSE scheme needs to satisfy in order to maintain a standard leakage profile. % are forward privacy and backward privacy. 
+Another line of work focuses on how to make the DSE scheme 
+\emph{locality aware} by minimizing the number of random disk seeks.
+%, or in other words make the DSE operation \emph{locality aware}. 
+This is because, when the server stores data on hard disk drives, the number of random disk movements becomes the performance bottleneck. I will present amortized and de-amortized DSE constructions that are \emph{locality aware} and at the same time forward and backward private. This is the first work we are aware of that combines forward and backward privacy with \emph{locality} for DSE constructions. 
 
 \end{abstract}
 
@@ -58,9 +125,7 @@ Theses have elements.  Isn't that nice?
 \null\vfil
 {\large
 \begin{center}
-To myself,\\\vspace{12pt}
-Perry H. Disdainful,\\\vspace{12pt}
-the only person worthy of my company.
+To my family.
 \end{center}}
 \vfil\null
 \end{dedication}
@@ -74,56 +139,13 @@ would have graduated so, so, very much faster.
 \end{frontmatter}
 
 \part{First Part}
-
-\chapter{Introduction}
-
-Every dissertation should have an introduction.  You might not realize
-it, but the introduction should introduce the concepts, background,
-and goals of the dissertation.
-
-\begin{table}
-\begin{tabular}{|l|r|}
-  \hline 
-Title & Author \\
-\hline
-War And Peace & Leo Tolstoy \\
-The Great Gatsby & F. Scott Fitzgerald \\ \hline
-\end{tabular}
-\caption{A normalsize table.  There has been a complaint that table
-captions are not single-spaced.  This is odd because the code
-indicates that they should be.}
-\end{table}
-
-\begin{table}
-\caption{A small table.}
-\begin{scriptsizetabular}{|l|r|}
-  \hline 
-Title & Author \\
-\hline
-War And Peace & Leo Tolstoy \\
-The Great Gatsby & F. Scott Fitzgerald \\ \hline
-\end{scriptsizetabular}
-\end{table}
-
-\chapter{Previous Work}
-
-Some other research was once performed.
-
-\begin{figure}
-\caption{A first figure.}
-\end{figure}
-
-\begin{figure}
-\caption{A second figure.}
-\end{figure}
-
+\input{introduction}
+\input{FLAQR}
+\input{chapters/iodse/IODSE}
 \chapter{Conclusion}
 
 \appendix
-\chapter{Some Ancillary Stuff}
 
-Ancillary material should be put in appendices, which appear BEFORE the
-bibliography. 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % bibliography

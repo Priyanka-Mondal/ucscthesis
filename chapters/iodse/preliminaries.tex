@@ -1,0 +1,476 @@
+\section{Preliminaries} \label{sec:prelim}
+\noindent\textbf{Notation.} Let $(x';y')\leftrightarrow P(x;y)$ denote a protocol execution between a 
+client and a server, {which may consist of multiple rounds of communication}, and $(x';y')\leftarrow A(x;y)$ 
+denote an algorithm execution, with no communication between client and server---$x$ and $x'$ are the 
+input and output for the client, and $y$ and $y'$ are the input and output for the server.  
+We denote by $\lambda \in \mathds{N}$ a security parameter and by $v(\lambda)$ a negligible function in $\lambda$. \textsf{PPT} stands for \textsf{P}robabilistic \textsf{P}olynomial-\textsf{T}ime. $\D$ is a collection of $n$ documents with identifiers $id_1, \ldots, id_n$. A document contains a set of keywords from a dictionary $\Delta$. 
+%$D(w)$ is the set of documents that contain keyword $w$.
+ %to the set of identifiers of the documents that contain it. Let the database, denoted as $DB$, consists of keyword-identifier  %pairs of the form $\pair{w}{id}$. There are a total of $N$ entries in $DB$.
+Let $DB$ consist of $N$ tuples of the form $(w,id,op)$--file $id$ contains keyword $w$, and $op$ is either $add$ or $del$, which denotes whether the tuple is for an insertion or deletion. $DB(w)$ is the set of identifiers of documents that contain keyword $w$. We use $n_w$ to denote $|DB(w)|$, i.e. the result size of keyword $w$. 
+The aforementioned tuples can be expanded to $(w,id,op,rank,n_w)$, where $0 \leq rank < n_w$. $EDB$ denotes the encrypted database/index stored in the server. 
+   
+ %The acronym PPT stands for probabilistic polynomial-time.
+ %Our searchable encryption protocols are executed 
+ %between a client and a server in an interactive way. 
+%  The notation $(x';y')\leftrightarrow P(x;y)$ denotes a protocol 
+%  execution, where $x$ and $x'$ are the input and output for the client, and $y$ and $y'$ 
+%  are the input and output for the server.
+
+\smallskip\noindent\textbf{Pseudo Random Functions (PRFs) \cite{katz2020introduction}.} A PRF function  $F : {\{0, 1\}}^{\lambda} \times {\{0, 1\}}^{*} \rightarrow
+{\{0, 1\}}^{*}$ is a two input function where the first input is the \textit{key} and the second is the input $x$. $F$ can be distinguished from a truly random function by a \textsf{PPT} adversary only with negligible probability $v(\lambda)$.  
+
+% \medskip\noindent\textbf{Pseudorandom Functions.}
+% Let $Gen(1^{\lambda}) \in \{0, 1\}^{\lambda}$ be a
+% key generation function, 
+% and $F : {\{0, 1\}}^{\lambda} \times {\{0, 1\}}^{\ell} \rightarrow
+% {\{0, 1\}}^{\ell'}$ be a pseudorandom function (PRF) family. 
+% $F$ is a secure PRF family if for all PPT adversaries Adv,
+% $|Pr[K \leftarrow Gen(1^{\lambda}); 
+% Adv^{F(K,\cdotp)}(1^{\lambda}) = 1]-Pr[Adv^{R(\cdotp)}(1^{\lambda}) = 1]| \leq v(\lambda)$, 
+% where $R : {\{0, 1\}}^{\ell} \rightarrow {\{0, 1\}}^{\ell'}$ is a truly random function.
+
+
+% \begin{figure}
+% \begin{tabular}{|c|c|}
+% \hline
+% symbol & Definition \\
+% \hline
+% \hline
+% $\lambda$ & security parameter \\
+% \hline
+% $v(\lambda)$ & negligible function in $\lambda$ \\
+% \hline
+% $w$ & keyword \\
+% \hline
+% $\Delta$ & dictionary of keywords \\
+% \hline
+% $n$ & total number of documents \\
+% \hline
+% $\D = \{d_1, \ldots d_n\}$ & set of documents \\
+% \hline
+% $\I = \{id_1, \ldots id_n\}$ & set of unique identifiers  \\
+% & per document \\
+% \hline
+
+% $D:\Delta \rightarrow P(\I)$ & 
+%                 $D(w)$ returns the document \\
+%                 &  identifiers that contain $w$ \\
+%                 \hline
+% $\pair{w}{id}$ & keyword-identifier pair \\
+% \hline
+% $DB$& the database : collection of   \\
+% & keyword-identifier pairs, i.e. \\
+% & if $id \in D(w)$ then $\pair{w}{id} \in DB$ \\
+% \hline
+% N & total number of keyword-identifier \\
+% & pairs i.e. $N = |DB| = \Sigma_{w\in\Delta}|D(w)|$ \\
+% \hline
+% $EDB$ & Encrypted $DB$ \\
+% \hline
+% \end{tabular}
+% \end{figure}
+
+\smallskip\noindent{\textbf{Dynamic Searchable Encryption (DSE).}} 
+A DSE scheme  $\Sigma$ consists of a $\texttt{Setup}$ algorithm, and (possibly interactive) protocols $\texttt{Search}$ and $\texttt{Update}$--$\Sigma=(\texttt{Setup},\texttt{Search},\texttt{Update})$.
+\begin{itemize}
+    \item $(K,\sigma ;EDB) \leftarrow \texttt{Setup}(\lambda,N)$ takes as input the security parameter 
+    $\lambda$ and $N$. Returns $EDB$ to the server, and the secret key $K$ and local state $\sigma$ to the client.
+    
+    \item $(res,K,\sigma;EDB) \leftrightarrow\texttt{Search}(K, w, \sigma; EDB)$ is a protocol for searching keyword $w$. The output of this protocol is the query result $res$ (i.e., $DB(w)$). The protocol may or may not modify $K$, $\sigma$ and $EDB$. 
+    
+    \item $(K,\sigma;EDB) \leftrightarrow\texttt{Update}(K, (w,id,op), \sigma ; EDB)$ is a protocol that inserts/removes $\pair{w}{id}$ to/from the DB--$op = add/del$. The protocol may modify $K$, $\sigma$ and $EDB$. {This protocol modifies $EDB$ and may modify $K$ and $\sigma$.}
+\end{itemize}
+{{The \texttt{Search} and \texttt{Update} algorithm/protocols for the schemes presented in section \ref{sec:de-amortized} also include an additional parameter $\Gamma$, which is an instance of a static SE scheme}\footnote{\new{$\Gamma$ is a static searchable encryption scheme such that $\Gamma = (\texttt{KeyGen},$ $\texttt{Setup},$ $\texttt{Search})$.}.}}
+
+Following~\cite{bost2016ovarphiovarsigma,bost2017forward,ghareh2018new,SDa}, we start from an empty database. Given an input $DB$ of size $N$, the client populates $EDB$ by calling the $\texttt{Update}$ protocol $N$ times. Other works ~\cite{etemad2018efficient,kim2017forward} equivalently modeled updates in document granularity, i.e., inserting or 
+deleting an entire document. We focus on retrieving only the document identifiers upon $\texttt{Search}$; the client may retrieve the documents separately if needed. This leads to a straightforward leakage formulation and is more natural for database queries (e.g.,~\cite{compress,Kamara16,Seal}).
+
+% Following~\cite{bost2016ovarphiovarsigma,bost2017forward,ghareh2018new,SDa}, we assume that we start with an empty database by running $\texttt{Setup}$.Given a $DB$ of size $N$, 
+% the client first instantiates the empty database by running $Setup$, 
+% followed by $N$ calls to $Update$ to ``populate" the $EDB$. Other works ~\cite{etemad2018efficient,kim2017forward}
+% have modeled different definitions of update, e.g. inserting or 
+% deleting an entire document from the database. We argue that it is 
+% functionally equivalent as it can be decomposed into multiple calls of 
+% our version of $Update$. We have also omitted the fact 
+% that after performing a $Search$, the client might
+% make an additional step to retrieve the actual documents.}
+
+
+\smallskip\noindent{\textbf{DSE--Leakages \& Forward/Backward privacy.}}
+The standard security of a DSE scheme is parametrized by a leakage function $\lp = (\lp^{Stp}, \lp^{Srch}, \lp^{Updt})$. $\lp^{Stp}$ corresponds to the leakage during the setup phase--in our case it reveals size of the database $N$; %\tgreen{the rest have no example} 
+$\lp^{Srch}$ corresponds to the leakage during search queries; $\lp^{Updt}$ corresponds to the leakage during update queries. %We discuss  $\lp^{Srch}$ and $\lp^{Updt}$ in more detail below. 
+{\emph{Search pattern} leakage reveals which searches
+are related to the same $w$, and \emph{access pattern} leakage reveals
+$DB(w)$ during a search for $w$. \emph{Access pattern} leakage
+is unavoidable if the client retrieves the actual files
+with an additional round of communication with the server; schemes
+that avoid this leakage (e.g. by storing files in oblivious data structures) 
+are referred as \emph{result hiding} schemes.}
+
+A secure DSE scheme with leakage $\lp$ should reveal nothing to an adaptive \textsf{PPT}\footnote{\new{An adaptive \textsf{PPT} decides its next step based on its previously observed leakages/search results.}} adversary about the database $DB$ other than the leakage $\lp$. This is formally captured by a standard real/ideal 
+% experiment presented in Figure \ref{fig:games} in the Appendix \ref{append:secGames}---for more details see \cite{ShiNDSS14,ghareh2018new,bost2017forward}.
+%@@
+experiment presented in the extended version---for more details see \cite{ShiNDSS14,ghareh2018new,bost2017forward}.
+
+
+%with two games RealSSE, IdealSSE following the definitTion of \cite{ShiNDSS14}.
+% \medskip\noindent{\textbf{Leakages.}}
+% One of the main design goals of an SE scheme is that the leakages associated with it should be as minimal as it can be. But in order to make the scheme useful for real world applications, some leakages are tolerated. 
+% During the setup phase, the (maximum) number of entries of $DB$ 
+% %and size of the documents 
+% is revealed to the server. This leakage is unavoidable and is called the $total~leakage$. During searches and updates few other kinds of leakages occur. \emph{Search pattern} reveals if two queries are for the same keyword. \emph{Access pattern} reveals the documents in the result of a query. \emph{Total updates} reveals total number of times entries pertaining to a keyword $w$ is inserted and deleted (also referred as $n_w$). \emph{Response length} reveals the number of document identifiers in the query result of a keyword $w$, i.e. it reveals $|D(w)|$ (also referred to as $n_w$).
+% ORAM based techniques are most commonly used to hide search and access pattern, while padding is used to hide $n_w$ and $n_w$.
+% %\paragraph{\textbf{Leakage profile.}}
+% Leakage profile of a particular SE scheme is represented as a collection of these above mentioned leakage patterns. 
+% %An SE scheme $\Sigma$ is said to be correct if the returned result is correct for every query \cite{cash2014dynamic}. 
+% The security of an SE scheme is parametrized by a leakage function $\lp = (\lp^{Stp}, \lp^{Srch}, \lp^{Updt})$ which captures the information revealed to the server or a passive attacker. $\lp^{Stp}$ corresponds to the leakage during setup phase, $\lp^{Srch}$ corresponds to the leakage during search  queries, and $\lp^{Updt}$ corresponds to the leakage during update queries. A secure SE scheme with leakage $\lp$ should reveal nothing about the database $DB$ other than the leakage, $\lp$, defined for it. \change{This is formally captured by a standard real/ideal experiment with two games RealSSE, IdealSSE following the definition of \cite{ShiNDSS14}.}
+Forward and backward privacy~\cite{ShiNDSS14,bost2017forward} have become the de-facto security guarantees for modern DSE.
+
+\noindent\underline{\textit{Forward privacy} (\textbf{FP}):} limits the information revealed due to updates. In particular, an $\lp$-adaptively secure DSE is forward private \textit{iff} the update leakage function $\lp^{Updt}$ can be written as: $\mathcal{L}^{Updt}({op},w,{id})=\mathcal{L'}^{Updt}({op},id)$ where $\mathcal{L'}$ is a stateless function, {$op=add/del$, and $id$ is a file identifier}. {Particularly, it should be impossible to tell whether an insertion is for a new keyword or a previously inserted/searched one}.\newline
+\noindent\underline{\textit{Backward privacy} (\textbf{BP}):} ensures that during searches the server does not learn the identifiers of deleted documents that contained the searched keyword $w$. Bost et al.~\cite{bost2017forward} proposed various formulations for this property.
+% three types of backward privacy (BP-I, BP-II, BP-III) with different leakage patterns, from Type-I which reveals the least information to Type-III which reveals the most. 
+Here, we target backward private schemes that reveal the identifiers of (non-deleted) documents currently containing $w$ (known as $TimeDB(w)$ leakage) and the timestamps and type (i.e. insertion and deletion) of all prior updates for $w$ (known as $Updates(w)$ leakage). This corresponds to the \textbf{BP-II} definition from~\cite{bost2017forward} %(see Appendix \ref{append:BP} for more details). 
+%@@
+(see the extended version for more details).
+{$TimeDB(w)$ accounts for the leakage from retrieving the actual files; but we focus only on retrieving the document identifiers during \texttt{Search}, and we never use it in our proofs as none of our constructions explicitly leaks $TimeDB(w)$.
+
+\begin{definition}[\cite{bost2017forward}] \label{def:adpSec}
+{A DSE scheme $\Sigma$ is $\lp$-adaptively-secure with forward and backward privacy, 
+\textit{iff} $\mathcal{L}^{Updt}({op},w,{id}) = \mathcal{L}^{'}({op})$ 
+and $\mathcal{L}^{Srch}(w)$  $=\mathcal{L}^{''}({TimeDB}(w),{Updates}(w))$ 
+\textbf{and} \textit{iff} for any adaptive \textup{\textsf{PPT}} adversary $\adv$ 
+~issuing polynomially many queries $q$, there exists a stateful \textup{\textsf{PPT}} simulator 
+\textup{$\sim$}=$(SimSetup,~SimSearch,~SimUpdate)$ such that 
+
+$|\Pr[{Real}^{\textsf{\emph{DSE}}}_{\adv}(\lambda,q)=1]-\Pr[{Ideal}^{\textsf{\emph{DSE}}}_{\adv,\sim,\mathcal{L}}(\lambda,q)=1]| < v(\lambda)$, where $\mathcal{L}^{'}$ 
+
+and $\mathcal{L}^{''}$ are stateless functions; $op$ is insertion or deletion, and $id$ is a file identifier.}
+% (BP-II_ functionand it is forward    scheme that supports single-keyword additions/deletions is forward private \textit{iff} the update leakage function  $\mathcal{L}^{Updt}$ can be written as:
+% $\mathcal{L}^{Updt}({op},w,{id})=\mathcal{L'}^{Updt}({op},id)$
+% where $\mathcal{L'}$ is a stateless function, {$op=add/del$, and $id$ is a file identifier}.
+\end{definition}
+
+% document $d$ containing keyword $w$ is deleted before a search for
+% $w$, then the result of this search does not reveal anything about $d$. Backward privacy is categorized into three types. (a) Type-I/BP-I reveals only the identifiers of documents currently containing the searched keyword and timestamp of when the documents were inserted, (b) Type-II/BP-II additionally reveals the timestamps and type (i.e. insertion and deletion) of all prior updates for the searched keyword, (c) Type-III/BP-III also reveals for each deletion which insertion it canceled. 
+% The following definitions will help us formally define backward privacy ~\cite{bost2017forward}.
+
+
+%Dynamic symmetric searchable encryption (DSE) leaks additional information to what described above due to the update queries. 
+% A dynamic SE is considered to be secure if it satisfies two additional security notions: forward and backward privacy.
+% A scheme is forward private if an update does not reveal if the keyword
+% pertaining to this update have been queried before. Achieving forward privacy for dynamic SE schemes is important as otherwise it suffers from adversarial document-injection attacks \cite{Seal}. 
+
+
+% \begin{definition}[\cite{bost2017forward}]
+% An $\mathcal{L}$-adaptively-secure DSE scheme that supports single-keyword additions/deletions is forward private \textit{iff} the update leakage function  $\mathcal{L}^{Updt}$ can be written as:
+% $\mathcal{L}^{Updt}({op},w,{id})=\mathcal{L'}^{Updt}({op},id)$
+% where $\mathcal{L'}$ is a stateless function, {$op=add/del$, and $id$ is a file identifier}.
+% \end{definition}
+
+
+% Backward privacy ensures that if a
+% document $d$ containing keyword $w$ is deleted before a search for
+% $w$, then the result of this search does not reveal anything about $d$. Backward privacy is categorized into three types. (a) Type-I/BP-I reveals only the identifiers of documents currently containing the searched keyword and timestamp of when the documents were inserted, (b) Type-II/BP-II additionally reveals the timestamps and type (i.e. insertion and deletion) of all prior updates for the searched keyword, (c) Type-III/BP-III also reveals for each deletion which insertion it canceled. 
+% The following definitions will help us formally define backward privacy ~\cite{bost2017forward}.
+
+% \change{Let $Q$ be a list that has one entry for each query executed. The entry for a search is of the form $(u,w)$ where $u$ is the query timestamp and $w$ is the searched keyword. Entry for an update is $(u,op,(w,id))$.
+% %where $op=add/del$ and $id$ is the document identifier.
+% For a keyword $w$, the function \textbf{TimeDB}($w$) returns 
+% the list of all timestamp/identifier pairs of keyword $w$ that have been added to $DB$ and not subsequently deleted. }
+% \begin{align*}
+% \textbf{TimeDB}(w) = \{(u, {id}) \;| \;(&u, {add}, (w, {id})) \in Q \\ &\text{and }
+% \forall u', (u', {del}, (w, {id})) \notin Q\}
+% \end{align*}
+% \textbf{Updates}($w$) function returns the timestamp of all insertion and deletion operations for $w$ in $Q$. 
+% \begin{align*}
+% \textbf{Updates}(w) =& \{u | (u, {add}, (w, {id})) \in Q \\
+%  & \text{ or }~(u, {del}, (w, {id})) \in Q\}.
+% \end{align*}
+% Funtion \textbf{DelHist}($w$) returns all 
+% (insertion timestamp, deletion timestamp) pairs revealing
+% which deletion corresponds to which insertion for keyword $w$. 
+% \begin{align*}
+% \textbf{DelHist}(w) = \{(u^{add},u^{del})\; | \;&\exists\; {id} : (u^{add}, {add}, (w, {id})) \in Q\\ &\text{and }
+% (u^{del}, {del}, (w, {id})) \in Q\}
+% \end{align*}
+% It is clear that the leakage of these three functions is progressively increasing. 
+% We are now ready to formally define backward privacy with different types of leakage.
+
+%The strongest backward privacy definition is the type I which reveals just currently existing documents having keyword $w$, their insertion time, and the total number of updates on each keyword. The formal definition of this statement is:
+
+% \begin{definition}[\cite{bost2017forward}]\label{def-bp1}
+% An $\mathcal{L}$-adaptively-secure SE scheme has backward privacy:
+
+% 	\begin{itemize}
+% 		\item []\textbf{Type-I} \textbf{(BP-I):} \textit{iff} $\mathcal{L}^{Updt}({op},w,{id}) = \mathcal{L}^{'}({op})$, and\\
+% 		$\mathcal{L}^{Srch}(w) = \mathcal{L}^{''}(\textbf{TimeDB}(w),n_w)$.
+% 		\item[] \textbf{Type-II}\textbf{ (BP-II):} \textit{iff} $\mathcal{L}^{Updt}({op},w,{id}) = \mathcal{L}^{'}({op},w)$, and
+% 		$\mathcal{L}^{Srch}(w) = \mathcal{L}^{''}(\textbf{TimeDB}(w),\textbf{Updates}(w))$.
+% 		\item[] \textbf{Type-III (BP-III):}		\textit{iff}\\ $\mathcal{L}^{Updt}({op},w,{id}) = \mathcal{L}^{'}({op},w)$, and\\	$\mathcal{L}^{Srch}(w) = \mathcal{L}^{''}(\textbf{TimeDB}(w),\textbf{DelHist}(w))$.	
+% 	\end{itemize}
+
+% where $\mathcal{L}^{'}$ and $\mathcal{L}^{''}$ are stateless {functions}.
+% \end{definition}
+% \change{
+% Note that the above definition assumes schemes leak the documents that
+% currently contain $w$ in order to account for the leakage from actually retrieving the files. Namely, \textbf{TimeDB}($w$) function explicitly reveals the indexes of  returned documents.} 
+% %While none of our schemes reveals this information directly, we still account for it as
+% %part of our leakage.
+
+\smallskip\noindent{\textbf{DSE for HDDs: Locality/Read-Efficiency/Update Locality/Update Cost/Space}.}
+To scale SE to big data using external memory (i.e., HDD drives),  SE schemes with ``small'' locality and read efficiency have been proposed before. \emph{Locality} is defined as the number of \emph{non-contiguous} memory accesses made during the search by the server. \emph{Read-efficiency} is the ratio of the total amount of data read/retrieved during the search over the actual query result size (for querying a keyword $w$)---see \cite{cash2014locality} for formal definitions. 
+%Cash and Tessaro \cite{cash2014locality} proved that in any secure SE scheme with both optimal locality $\bO(1)$ and optimal read efficiency $\bO(1)$ requires $\omega(N)$ space. The intuition behind this lower bound is that in a scheme with optimal locality, read efficiency and linear space, an attacker/server can observe the locations of some queries, as well as the non-accessed ones and infer statistical information about the entire input dataset, i.e., learn information about queries which we have not requested. 
+Cash and Tessaro \cite{cash2014locality} proved that any secure SE scheme with both optimal locality $\bO(1)$ and optimal read efficiency $\bO(1)$ requires $\omega(N)$ space. %The intuition behind this lower bound is that schemes with optimal locality, read efficiency, and linear space allow attackers/servers to infer statistical information about the entire input dataset (even for non-requested queries) using information about some accessed queries and observing the non-accessed memory locations. 
+%\todo{6.Give the definition of I/O efficiency metrices }
+For locality-aware DSE schemes, in addition to the "search" and "static" efficiency, i.e., (i) locality, (ii) read-efficiency and (iii) space, we focus on two update metrics: (iv) update-locality, i.e., the number of \emph{non-contiguous} memory accesses during an update and (v) update asymptotic cost, i.e., the {asymptotic} cost of one update (i.e., insert/delete one $(w,id,op)$ tuple). 
+%See Appendix \ref{append:metrics} for the exact definitions.
+%@@
+See the extended version for the exact definitions.
+
+%\tgreen{the text here sounds like locality and update cost are novel definition}
+%\tpurp{--I dont think so.}
+
+% \begin{itemize}
+%     \item \emph{Update Locality:} is defined as the number of \emph{non-contiguous} memory accesses during an update.
+%     \item \emph{Update Overhead:} is defined as the cost/overhead of one  update (i.e., insert/delete one $(w,id,op)$ tuple).\footnote{Other works consider batch updates (or operate in document granularity). For that case, we can define  \emph{Update Efficiency} as the ratio of the total amount of data read/retrieved during a batch of updates over the batch size.}
+% \end{itemize}
+
+
+% \emph{Update Locality:} The number of total \emph{non contiguous} memory accesses during an update  \\ 
+% \emph{Update Overhead:} The ratio of total amount of data read (retrieved) during an update
+%                             to the actual amount of data that corresponds to the update 
+
+% The amount of space required to store EDB is called its $space~overhead$. The ideal goal is to construct an SE scheme with optimal space overhead ($\bO(N)$), optimal locality ($\bO(1)$), and optimal read efficiency ($\bO(1)$). But Cash and Tessaro \cite{ct14} proved that achieving optimality in all these three metrices is impossible. Specifically, they prove a lower bound: ``any scheme must be sub-optimal in either its space overhead, its locality, or its read efficiency". 
+
+% \paragraph{\textbf{Dynamic Locality-aware SSE.}}
+% Unlike static SE schemes, for Dynamic Locality-aware schemes no such lower bound 
+% has been proven yet. Moreover, as DSE schemes support updates, we formally define 
+% two new metrices : \\
+% \emph{Update Locality:} The number of total \emph{non contiguous} memory accesses during an update  \\ 
+% \emph{Update Overhead:} The ratio of total amount of data read (retrieved) during an update
+%                             to the actual amount of data that corresponds to the update 
+
+\smallskip\noindent{\textbf{DSE for SSDs: Page-Efficiency/Space}.}
+Bossuat et al. \cite{BFF21} proposed a new I/O-efficiency dimension for SSDs, which is called \emph{page efficiency}---SSD performance mainly depends on page efficiency, aiming at reading as few memory pages as possible. More formally, \emph{page efficiency} is the ratio of the total number of pages that the server accesses (using SE) over the optimal number of accessed pages in a plaintext case. %\todo{6. Give the definition of I/O efficiency metrices } 
+For page-efficient DSE schemes, in addition to the "search" and "static" efficiency dimensions, i.e., (i) page-efficiency and (ii) space, we focus on (iii) update efficiency, i.e., the number of pages accessed 
+ during one update (i.e., insert/delete one $(w,id,op)$ tuple) and (iv) update asymptotic cost (i.e., {asymptotic cost} of insert/delete of one $(w,id,op)$ tuple).
+%See Appendix \ref{append:metrics} for the exact definitions.
+%@@
+See the extended version for the exact definitions.
+
+
+
+%@@ more detailed explanation Page Efficient literature
+% \tblue{
+% \noindent{\textbf{DSE for SSDs--Page-Efficiency/Space}.}
+% Locality and read efficiency are not meaningful metrics when solid state drives (SSD) are used as the underlying 
+% storage device. For SSDs, the memory accesses are done in terms of memory pages, and the performance 
+% is mainly determined by the number of these pages accessed, regardless of whether they are contiguous 
+% pages or not. Bossuat et al. \cite{BFF21} present a new criterion called \emph{page efficiency} 
+% to capture performance of an SE scheme whose data is stored on SSDs.
+% The \emph{page efficiency} is defined as the number of pages that 
+% the server must access to process a client's query, 
+% divided by the number of pages of the plaintext answer to
+% the query. In the same paper the authors presented a \emph{page efficient} static 
+% searchable encryption scheme (\textbf{PE-SE}) called Tethys. 
+% Storage efficiency in this model is the number of
+% pages needed to store the encrypted database, divided by the number of 
+% pages of the plaintext database. Tethys offers $\bO(1)$ page efficiency 
+% and $\bO(1)$ storage efficiency, but the client storage is not optimal $ \bO{p \log \lambda}$,
+% where $p$ is the page size and $\lambda$ is the security parameter. 
+% The authors in \cite{BFF21} claims that page efficiency is 
+% an excellent predictor of SSD performance and they supported their claim with experiments as well.
+% In~\cite{LocalLayeredSSECrypto22} Minaud and Reichle presented two DSE schemes.
+% The first one is a dynamic page efficient SE (\textbf{PE-DSE})
+% scheme, called \LayeredSSE, that offers 
+% \tpurp{$\bO(\log \log N )$} page efficiency, and $\bO(1)$ storage efficiency and client 
+% storage. The second scheme takes a PE-SE scheme as 
+% an input parameter and runs it along with an overflowing SE (which they call OSSE) scheme. 
+% %The basic idea is that if a keyword list overflows, then the 
+% %overflowing items will be stored in 
+% %the PE-SE scheme, rest will be stored in the OSSE scheme.
+% They use a variant of One-Choice Allocation as their OSSE scheme, 
+% that supports new updates but ignores the overflowing items.
+% There are $\log N$ instances of the PE-SE scheme. If a keyword-list
+% of size $k$ overflows then the overflowing items
+% go to $\ceil{\log{k}}^{th}$ instance of PE-SE.
+% This scheme offers $\bO(1)$ locality, 
+% $\bO(1)$ storage efficiency, and \tpurp{$\bO(\log \log N )$}
+% read efficiency, but under the condition that the longest list
+% is of size $N^{1-\frac{1}{\log \log N}}$. These schemes do not
+% ensure $FP$ and $BP$.
+% }
+% \tblue{
+% For PE-DSE schemes, we classify the \emph{page efficiency} metric into two:
+% \emph{Search Page Efficiency} and \emph{Update Page Efficiency}.
+% \begin{itemize}
+%  %\itemsep-0.3em 
+%  \item \emph{Search Page Efficiency:} the number of pages that 
+% the server must access to process a search query, 
+% divided by the number of pages of the plaintext answer to the search query
+%  \item \emph{Update Page Efficiency:}  the number of memory pages accessed 
+%  during one update (i.e., insert/delete of one $(w,id,op)$ tuple).%\footnote{Similar to \emph{Update Efficiency}, one can define  \emph{Update Page Efficiency} as the ratio of the total number of pages read/retrieved during a batch of updates over the size of the batch in terms of pages.}
+% \end{itemize}
+% }
+
+\smallskip\noindent{\textbf{Oblivious sort.}}
+An oblivious sorting algorithm sorts an array of $N$ elements without leaking information about the relative ordering of the input elements \cite{aks,zigzag,bitonic,ngai2024distributed}. We use the oblivious bucket sort~\cite{bucketSort}, 
+which has $\bO(N \log N$) time complexity, and uses a temporary client 
+storage { of two buckets, where one bucket contains} 512 elements. 
+%and merge sort as the \emph{non-oblivious} sort that bucket sort requires for the last step. 
+We can decompose bucket sort into $N \log N/\gamma$ rounds of $\bO(\gamma)$ work per round (e.g., for $\gamma = O(\log N)$ the oblivious bucket sort can be completed in $N$ rounds). We highlight that fetching $\bO(\gamma)$ elements from disk requires always $\bO(1)$ locality, since accesses are performed on a {bucket granularity}, \new{and on consecutive buckets}---
+%see Figure \ref{fig:bucketSort} and \ref{fig:mergeSort} in the Appendix \ref{append:bucketLoc} for more details.
+%@@
+see the extended version for more details.
+
+%@@ More detailed discussion for o-sort 
+%
+
+
+
+\smallskip\noindent{\textbf{Oblivious compaction.}}
+Given an array of $N$ elements, some of which are tagged with bit 1, and the rest 
+with bit 0, an oblivious compaction \cite{compact1,compact2,godrichOblComp} 
+generates an output in which all the 
+elements tagged with bit 1 appear before all the elements tagged with bit 0, without leaking the information of which elements were tagged with bit 1 or 0.  
+Our constructions need the compaction to be
+order preserving, i.e. the relative ordering of the elements tagged with bit 1/0 do not change after the compaction. We use the oblivious bucket sort~\cite{bucketSort} mentioned above for performing order preserving compaction.
+
+
+\smallskip\noindent\textbf{Oblivious Maps}($\textsc{OMAP}$)\cite{wang2014oblivious,dauterman2021snoopy}.
+%\label{append:omap}
+An oblivious map is a data structure that supports oblivious read/get and write/put functionality for encrypted $(key,value)$ pairs (i.e., oblivious hash map). That is, all same-length operation sequences appear indistinguishable. $\textsc{OMAP}$ has the following algorithms/protocols: (i) $\textsc{OMAP}$.$\texttt{Setup}$ initializes an empty data structure with maximum capacity $N$ blocks, (ii) $\textsc{OMAP}$.$\texttt{put}$ adds/overwrites a $(key,value)$ pair, and (iii) $\textsc{OMAP}$.$\texttt{get}$ returns the $value$ of a given $key$. We have used the AVL tree based implementation by Wang et al.~\cite{wang2014oblivious} on top of PathORAM~\cite{stefanov2013path}. For a map with capacity $N$, each oblivious access requires $\bO(\log^2 N)$ operations/accessed-blocks, $\bO(\log N)$ roundtrips, and $\bO(\log^2 N)$ locality---see~\cite{wang2014oblivious} for more details. 
+
+% Goodrich’s oblivious compaction algorithm \cite{godrichOblComp} runs in time $\bO(N \log N)$ 
+% and is order-preserving.
+% This algorithm accesses array locations in a fixed order using a $\log N$ deep routing network that
+% shifts each element a fixed number of steps in every layer. 
+%\tpurp{check the paper to see how to de-amortize it, or we can 
+%replace it with bucket oblivious sort, which has the same time complexity}
+
+
+% \paragraph{\textbf{Oblivious sort.}}
+% An oblivious sorting algorithm is a sorting algorithm that always compares the elements in the input dataset in the same order regardless of their values. Bitonic sort (also known as Batcher's sort)~\cite{bitonicsort}, is an oblivious sorting algorithm which sorts $N$ elements in $\bO(N\log^2 N)$ time.
+% %and with $\bO(\log^2 N)$ locality. 
+% The algorithm assumes $N$ to be in power of 2 (padded if not). It \textbf{\textit{compares-and-swaps}} elements in $\log N$ phases. The $i$th phase has $i$ subphases, with $\frac{N}{2}$ \textit{compare-and-swap}s in each subphase. Hence a total of - $$\frac{N}{2}\cdot{\sum_{i=1}^{\log N}i}=\frac{N}{2}\cdot \frac{\log N (\log N +1))}{2}= \frac{N \log N (\log N +1)}{4}$$ \textit{compare-and-swap}s are required to produce a sorted output. Because, the \textit{compare-and-swap}s happen in a fixed schedule, the algorithm can be decomposed into fixed number of rounds, with fixed number of \textit{compare-and-swap}s in each round. For instance, if we decide to execute $\gamma$ number of \textit{compare-and-swap}s per round (ideally $\gamma$ divides $\frac{N \log N (\log N +1)}{4}$ ) then the algorithm will need $\ceil{\frac{N \log N (\log N +1)}{4\gamma}}$ rounds to complete. In one of our schemes the client downloads the necessary $2\gamma$ elements, to perform the $\gamma$ \textit{compare-and-swap}s, then it encrypts those elements with fresh encryptions and sends them back to the server.
+
+
+% Asharov et al.~\cite{bucketSort} presents an oblivious bucket
+% sort that sorts the elements in three steps: 
+% \emph{Oblivious Random Bin Assignment (ORB)}, \emph{Oblivious Random Permutation (ORP)}
+% and \emph{Non-oblivious Sorting}. During \emph{ORB} the elements are 
+% assigned a random key and are randomly distributed into $B$ buckets with $Z/2$
+% elements in each bucket ($B= 2N/Z$). $Z/2$ dummy elements are added in each of the bucket. Then, $\log B +1$ rounds of merge-splits are performed, 
+% with $B/2$ merge-splits in each round. The main idea is that, 
+% during the $i^{th}$ round of merge-splits, every two buckets 
+% at distance $2^i$ are fetched by the client and their elements are
+% assigned to correct output buckets based on the $i^{th}$ bit 
+% of their random key. The two output buckets are written back to level $i+1$.
+% During the \emph{ORP} step, 
+% each bin is fetched separately by the client, 
+% their dummy elements are removed and the real elements are permuted. The \emph{ORP} can be combined together with the last round of $OBA$ . Once all the bins are permuted, any \emph{non-oblivious} sort can be performed to sort the elements. They have proved that composition of these three steps results into an \emph{Oblivious sort}.
+% As a total of $B/2 (\log B +1)$ merge-splits are performed, the runtime 
+% of this algorithm is $\bO(N\log N)$, if the \emph{non-oblivious} sort
+% also has $\bO(N \log N)$ runtime. In our construction
+% we have used merge sort as the \emph{non-oblivious} sort. 
+% Since elements of a bucket are 
+% always stored in contiguous memory locations,
+% locality of fetching a bucket is always $\bO(1)$. 
+
+%\todo{7.Clarify which scheme targets which storage and which metrices}
+%\todo{20. Explain 1C/2C/NlogN in depth. Explain what superbin is.} 
+
+%\smallskip
+\smallskip\noindent{\textbf{One-Choice Allocation.}}
+Asharov et al.~\cite{onechoice} presented 
+the One-Choice Allocation scheme 
+(we will refer to it as \OneChoice) that offers optimal locality,
+optimal space overhead and $\bO(\log N \log \log N)$ read efficiency.
+Given a database of size $N$, this scheme allocates an 
+array of $m={N}/{\log N \log\log N}$ bins, each of 
+size $3\log N \log \log N$\footnote{\new{The bins overflow with negligible probability when the bin size is set to $3\log N \log \log N$ for \OneChoice}.}. For each keyword $w$ it computes a hash value $h(w)$, and stores the $i^{th}$ document identifier
+in the bin $(h(w) + i)mod~m$. Bins are filled up with $dummy$ entries, if not full.
+% The formal description of 1C is provided 
+% in Figure \ref{alg:1C}, and Figure \ref{fig:allSEschemes} shows an example in the Appendix. 
+%@@
+The formal description of 1C is provided the extended version. 
+%in Figure \ref{alg:1C}, and Figure \ref{fig:allSEschemes} shows an example in the Appendix. 
+
+
+\smallskip\noindent{\textbf{Two-Choice Allocation.}}
+Asharov et al. also presented the Two-Choice Allocation 
+(\TwoChoice) in \cite{onechoice}.
+For a database of size $N$, this scheme offers optimal locality and space overhead and 
+$\bO((\log\log N)^A(\log$$\log$$\log N)^2)$ read efficiency 
+assuming keyword list sizes $<N^{1-1/(\log\log N)^A}$, 
+for a constant $A \geq 1$. This scheme allocates an 
+array of $m={N}/{(\log\log N)^A (\log \log \log N)^2}$ bins, each bin with  
+size $z{\cdot}(\log\log N)^A$ ($\log$$\log$$\log N)^2$, where $2\leq z \leq 4$ (we use $A=1$).
+The keyword lists are padded to be nearest power of 2 and stored in decreasing length order. 
+For list for $w$, first
+it divides bins into groups of $sb = \frac{m}{n_w}$ \emph{superbins}; \neww{i.e. each \emph{superbin} consists of $n_w$ bins.} Then two superbins are chosen with two hash functions: 
+$h_1(w)\% sb$ and $h_2(w)\%sb$. \neww{Finally,} the superbin that has \neww{minimal load} stores the list for $w$. 
+%Formal description \neww{and an example} of 2C are in Figures \ref{alg:2C} \neww{and \ref{fig:allSEschemes}} in Appendix. 
+%@@
+The formal description of 2C is provided the extended version. 
+
+\smallskip\noindent{\textsf{\textbf{NlogN}} \textbf{Scheme.}}
+The third scheme presented by Asharov et al. in~\cite{onechoice} 
+offers optimal locality and read efficiency at the cost of
+$\bO(\log N)$ storage overhead, i.e. a total of $\bO(N\log N)$ storage. We highlight this scheme provides optimal page efficiency. This scheme consists of $(\log N +1)$ hash tables, each of size $N$. The keyword-lists are padded so that their length becomes 
+nearest power of 2. The $k^{th}$ hash-table stores lists of size $2^k$.  
+%The pseudocode of the \NlogN\ scheme is provided in Figure \ref{alg:NlogN}, and Figure \ref{fig:allSEschemes} shows an example in the Appendix. 
+%@@
+The pseudocode and more details of the \NlogN\ scheme are provided in the extended version. %Figure \ref{alg:NlogN}, and Figure \ref{fig:allSEschemes} shows an example in the Appendix. 
+Demertzis et al. \cite{Demertzis17} proposed a variation of the \NlogN\ scheme in which only $s$ of the above mentioned hash tables are stored; $s$ is evenly distributed (i.e. the server stores the levels $\{0, x, 2x, \ldots (s-1){\cdot}x \}$, 
+where $x$ is set to be $\lceil{\frac{\log N+1}{s}}\rceil$). In the worst case, 
+a keyword-list is divided into smaller $\bO(N^{\frac{1}{s}})$ chunks. 
+This scheme achieves optimal read efficiency, $\bO(N^{\frac{1}{s}})$ locality and 
+has a $\bO(s)$ space overhead, and $\bO(\text{min}\{N^{\frac{1}{s}}/p, p\})$ page efficiency ($p$ denotes the memory page size). We refer to this scheme as \sN.
+
+
+
+
+
+
+%  levels starting from 
+% level 0, instead of storing $\ell = (\log N+1)$ levels
+% (where $s$ can be as small as 2). Specifically, a value of $p$ is set to be $\ceil{\frac{\ell}{s}}$, 
+% and the server stores the levels $\mathcal{L} = \{0, p, 2p, \ldots (s-1){\cdot}p \}$.
+% The keyword-list of a keyword $w$ is divided into smaller chunks 
+% of size $2^j$ and stored in the level $j$ if $2^j \leq |DB(w)| < 2^i$ for $i,j\in \mathcal{L}$.
+% This idea is first introduced in \cite{Demertzis17}
+% by We will refer to this scheme as \textsf{Ns}.
+% This scheme achieves optimal read efficiency, $\bO(N^{\frac{1}{s}})$ 
+% locality and has a $\bO(s)$ space overhead.}
+
+
+
+%\tpurp{Description of \Tethys\ is in the appendix.}
+
+
+
+
+%\paragraph{\textbf{LayeredSSE}.}
+\smallskip\smallskip\noindent{\textbf{Encrypted dictionary.}}
+\new{In our DSE constructions (in section \ref{sec:dseio}) along with the 
+encrypted index we have an encrypted dictionary. The 
+encrypted dictionary maintains a keyword to keyword-counter 
+mapping, i.e. keyword $w$ maps to $|DB(w)|$. To perform searches 
+in \OneChoice, \TwoChoice, \NlogN, and \Ns\ schemes the keyword-counter
+is required (to know how many bins to fetch, or which levels to search). 
+%Because our DSE constructions in section 
+%\ref{sec:dseio} use these above mentioned static SE schemes, we needed to 
+%maintain this encrypted dictionary as well. 
+We will refer to the encrypted 
+dictionary as $EDB.\Dict$ and the encrypted index as $EDB.\Index$. % in the rest of the paper.
+For an index with $N$ entries the size of $EDB.\Dict$ is at most $N$,
+as there can be at most $N$ distinct keywords.}
+
+%\tblue{We should decribe the $EDB.\Dict$ briefly here, it will 
+%help us describe the locality/read-efficiency in section \ref{sec:SDalocality}}
+
+%\paragraph{Result hiding SE.} \tblue{Add a short description of it. }
+% In a response-hiding scheme, the adversary can not infer
+%whether two different responses have overlapping records, thus
+%making reconstruction harder. \tred{I think we should not use the term "result-hiding" (result-pattern hiding) at all}

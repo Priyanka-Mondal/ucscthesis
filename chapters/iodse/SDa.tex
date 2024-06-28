@@ -1,0 +1,255 @@
+\section{DSE---I/O efficiency meets Forward/Backward Privacy}\label{sec:dseio}
+%This section presents our I/O efficient DSE schemes which are the first that achieve both good I/O performance and forward/backward privacy. In Section \ref{sec:SDalocality}, we use
+% the \SDa\ transformation proposed by Demertzis et al.\cite{SDa} which transforms static SE schemes to dynamic ones with forward/backward privacy. 
+% Our observation is that if we use I/O efficient static SE schemes in the \SDa\ transformation, then the I/O efficiency will be preserved in the produced dynamic ones while maintaining forward/backward privacy. In Sections \ref{sec:de-amortized}, we focus on the more challenging task of providing de-amortized I/O efficient constructions with forward/backward privacy; we provide a new \emph{oblivious merge} framework which achieves the above goals, and we provide three instantiations of this framework---the dynamic de-amortizated \OneChoice, \TwoChoice, and \NlogN\ schemes. 
+\neww{
+This section introduces our I/O efficient DSE schemes, which are the first to simultaneously achieve good I/O performance and forward/backward privacy. In Section \ref{sec:SDalocality}, we apply the \SDa\ transformation, as proposed by Demertzis et al.\cite{SDa}, in conjunction with I/O efficient static SE schemes. In Section \ref{sec:de-amortized}, we address the more challenging task of offering de-amortized I/O efficient constructions that ensure forward/backward privacy. Here, we introduce a novel \emph{oblivious merge} framework to meet these objectives and present three implementations of this framework: the dynamic de-amortized \OneChoice, \TwoChoice, and \NlogN\ schemes.}
+
+
+%Later in section \ref{sec:eval} we show our experimental evaluation for these schemes along with the \sN\ scheme for some specific values of s.
+%\tgreen{What about \sN scheme?}
+
+
+
+
+
+\subsection{Amortized Constructions using \SDa \textup{\cite{SDa}}\label{sec:SDalocality}}
+
+\noindent{\textbf{Overview of \SDa[$\cdot$].}} 
+% \todo{2. general overview of the transformation} 
+% Recently, Demertzis et al~\cite{SDa} proposed a generic compiler called \SDa~that yields a forward/backward private DSE scheme from any result hiding static SE scheme. 
+% The high-level idea of \SDa~is that the result of  $N$ updates is stored as a 
+% collection of $\log N $ indexes (0$th$ through $(\log N-1)th$),
+% where the $i$th index (denoted as $EDB_i$) is of size $2^{i}$. For each new update
+% the client runs the \texttt{Setup} of the underlying static SE
+% scheme to create an index of size 1 (i.e. $EDB_0$).
+% Whenever two indexes of the same size (say $z$) exist, 
+% they are downloaded by the client, and the setup of the
+% static scheme is called to ``merge'' them into a
+% single new index of size $2z$, amortizing the cost of updates.
+% Searches are 
+% performed in each index independently.  
+% In Figure \ref{fig:SDaex1}, we provide an example of an update in \SDa. 
+Demertzis et al.~\cite{SDa} introduced a compiler, \SDa, that converts any result hiding static SE scheme into a forward/backward private DSE scheme. The essence of \SDa\ is to store the results of $N$ updates across $\log N$ indexes (ranging from 0$th$ to $(\log N-1)th$). The $i$th index ($EDB_i$) has a size of $2^{i}$. With each update, the client initializes the static SE scheme (using SE's \texttt{Setup}) to produce and upload an encrypted index with size 1 ($EDB_0$). When two same-sized indexes emerge (in server), the client downloads, decrypts and combines them into a doubled size index, amortizing the cost of updates. Searches are performed in each index independently. Figure \ref{fig:SDaex1} shows an update example using \SDa. 
+%The optimized pseudocode for \SDa, as depicted in Figure \ref{fig:SDaex1}, can be found in Figure \ref{fig:Scheme1} in the Appendix.
+%@@
+The optimized pseudocode for \SDa, as depicted in Figure \ref{fig:SDaex1}, can be found in the extended version.
+
+%Figure \ref{fig:SDaex1} shows and update example for \SDa.}We provide the pseudocode of \SDa\ \cite{SDa}(with the optimization shown in Figure \ref{fig:SDaex1}) in Figure \ref{fig:Scheme1} in the Appendix.
+%An update example in \SDa is depicted in Figure \ref{fig:SDaex1}.
+
+
+
+
+
+
+%\tgreen{Let us assume that the indexes $EDB_0$ and $EDB_1$ already exist, while a new element needs to be inserted. The new insertion causes the creation of $EDB_0$ (Step 1). At this point two 
+%$EDB_0$ indexes exist, hence they are downloaded and merged 
+%to create $EDB_1$. When $EDB_1$ is uploaded to the server (Step 2), again
+%two $EDB_1$ indexes exist, so the two $EDB_1$
+%are downloaded and merged to create $EDB_2$ (Step 3). -- repetitive} The above steps are shown 
+%with gray arrows in Figure \ref{fig:SDaex1}, while 
+% The \neww{black} arrow indicates an equivalent optimized version of \SDa\ in which the client looks for the smallest index level $k$, that does not exist at the server and downloads all the indexes \new{(along with the keyword dictionaries)} $EDB_0,\ldots, EDB_{k-1}$, then creates $EDB_{k}$ with the entries of $EDB_0,\ldots, EDB_{k-1}$ along
+% with the new entry. We provide the pseudocode of the original optimized version of \SDa\ from \cite{SDa}
+% in Figure \ref{fig:Scheme1} in the Appendix.
+
+In~\cite{SDa}, the authors 
+ use \PiBas\cite{cash2014dynamic} as the underlying static SE scheme. 
+\PiBas\ maps every $(w,id,op)$ tuple to a pseudo-random location 
+(using a counter $cnt_w$ that is maintained locally for each keyword).
+During search for $w$, all locations for {counter values} $1,\dots,cnt_w$
+are accessed to retrieve the results. The results are decrypted and the deleted entries are filtered locally at the client. While this gives us a very simple and lightweight scheme, when it comes to I/O overhead, due to the pseudorandom 
+placement,  the number of disk head movements (HDD case) and the number of fetched pages (SDD case) is equal to the result size. In other words, \SDa[$\cdot$] when applied to \PiBas\ gives a DSE with the worst possible \emph{search locality} and \emph{page efficiency}.
+
+
+\begin{figure}[t!]
+\centering
+\scalebox{0.6}{
+\begin{tikzpicture}
+[%green = gray red=white blue=black yellow = light gray
+greenball/.style={circle, draw=gray, fill=gray, thick, minimum size=7mm},
+redball/.style={circle, draw=black, fill=white, thick, minimum size=7mm},
+blueball/.style={circle, draw=black, fill=black, thick, minimum size=7mm},
+yellowball/.style={circle, draw=gray, fill=gray!30, thick, minimum size=7mm},
+grayball/.style={circle, draw=black, fill=gray, thick, minimum size=7mm},
+bin/.style={cylinder, draw=black!70, fill=white, thick, minimum height=2.4cm, minimum width = 1cm, rotate=90},
+bin2/.style={cylinder, draw=black!70, fill=white, thick, minimum height=1.3cm, minimum width = 1cm, rotate=90},
+textbox/.style={rectangle, draw=white, fill=white, thick, minimum height=0.2cm},
+box1/.style={rectangle, draw=black, fill=white, very thick, minimum height=2.8cm, minimum width=1.4cm},
+box2/.style={rectangle, draw=black, fill=white, very thick, minimum height=2.8cm, minimum width=2.7cm},
+box3/.style={rectangle, draw=black, fill=white, very thick, minimum height=1.6cm, minimum width=1.4cm},
+myarrow1/.style={single arrow, draw=gray, fill=gray, 
+      minimum width = 1mm, single arrow head extend=1mm,
+      minimum height=1cm},
+myarrow2/.style={single arrow, draw=black, fill=black, 
+      minimum width = 1mm, single arrow head extend=1mm,
+      minimum height=1.3cm},
+myarrow3/.style={single arrow, draw=blue, fill=blue, 
+minimum width = 0.09cm, single arrow head extend=0.05cm,
+minimum height=0.7cm},
+]
+\node at (0.2,7.1) [blueball] (blueball)               {};
+%\node at (0.5, 6.5) [myarrow3,rotate=-45] (a1) {};
+%\draw[->] (0.5,6.7) -- (1,6) ;
+\node at (0.3,6.4) [textbox] (tb) {insert};
+\node at (0.5,5) [box3,label={south:$EDB_0$}] (firstbox) {} ;
+ %\node at (0.5,5) [bin2] (bin2) {};
+\node at (0.5,5) [greenball]      (ball3)     {};
+\node at (2.18,5.6) [box1,label={south:$EDB_1$}] (b3) {};
+  % \node at (2.2,5.5) [bin] (bin2) {};
+ \node at (2.2,5.1) [yellowball]      (ball4)       {};
+ \node at (2.2,6.1) [redball]      (ball5)   {};
+  %\draw[->] (blueball.east) -- (firstbox.north);
+  \node at (3.5, 5.5) [myarrow1,label={south:Step 1}] (a1) {};
+   \node at (1.5, 3) [myarrow2,rotate=270,label={south:Optimized}] (a2) {};
+\node at (5.08,6.6) [box3,label={south:$EDB_0$}] (b4) {} ;
+ %\node at (5.1,6.5) [bin2] (bin1) {};
+\node at (5.1,6.6) [blueball]      (ball3)   {};
+\node at (5.08,4.3) [box3,label={south:$EDB_0$}] (b4) {} ;
+ %\node at (5.1,4.2) [bin2] (bin1) {};
+\node at (5.1,4.3) [greenball]      (d3)   {};
+\node at (6.78,5.6) [box1,label={south:$EDB_1$}] (b3) {} ;
+%   \node at (6.8,5.5) [bin] (bin2) {};
+ \node at (6.8,5.1) [yellowball]      (ball4)        {};
+ \node at (6.8,6.1) [redball]      (ball5)   {};
+  \node at (5.9, 2.7) [myarrow1,label={north:Step 2},rotate=-90] (a2) {};
+ \node at (1.15,0.6) [box2,label={south:$EDB_2$}] (b2) {} ;
+% \node at (0.5,0.5) [bin] (bin2) {};
+\node at (0.5,0.1) [blueball]      (ball3)  {};
+\node at (0.5,1.1) [redball]      (d3)   {};
+%\node at (1.8,0.5) [bin] (bin2) {};
+ \node at (1.8,0.1) [greenball]      (ball4)    {};
+ \node at (1.8,1.1) [yellowball]      (ball5)   {};
+
+ \node at (3.5, 0.6) [myarrow1,label={north:Step 3},font=\small,rotate=180] (a1) {};
+ \node at (4.98,0.6) [box1,label={south:$EDB_1$}] (b4) {} ;
+ %\node at (5,0.5) [bin] (bin1) {};
+\node at (5,0.1) [blueball]   (ball3)    {};
+\node at (5,1.1) [greenball]      (d3)   
+  {};
+ \node at (6.78,0.6) [box1,label={south:$EDB_1$}] (b3) {} ;
+  % \node at (6.8,0.5) [bin] (bin2) {};
+ \node at (6.8,0.1) [yellowball]      (ball4)      {};
+ \node at (6.8,1.1) [redball]      (ball5)    {};
+\end{tikzpicture}
+}
+%\captionsetup{font=small}
+\caption{Update in \SDa. Before the insertion of the new (black) entry three previous consecutive insertions have created EDB0 and EDB1. After the fourth insertion, two EDB0 indexes exist (Step 1), which are downloaded and merged to a single EDB1 of size 2 (Step 2). Now, two EDB1 indexes exist, which are downloaded and merged to a single EDB2 of size 4 (Step 3). The black arrow shows an optimized version of \SDa~where the intermediate steps are skipped.}
+\label{fig:SDaex1}
+\end{figure}
+
+
+\smallskip\noindent{\textbf{I/O-efficient \SDa[$\cdot$].}} \neww{Our main observation here is that  when applied to an \emph{I/O-efficient} %result-hiding 
+static scheme, the \SDa~transformation gives dynamic schemes with "good" I/O performance. %At a high level, the locality (for HDDs) or the page-efficiency (for SSDs) of the resulting DSE would have an additional factor of $\bO(\log N)$ as each index is queried independently. 
+In fact, in the extended version we prove two theorems that state that the resulting \SDa[$\Gamma$] transformation 
+will retain same \emph{space-overhead} as that for $\Gamma$, where as for \emph{locality}, \emph{read-efficiency} (for HDDs) and  \emph{page-efficiency} (for SSDs) an additional factor of $\bO(\log N)$ is introduced as each index is queried independently}
+
+%queried independently.
+
+%be the same as the underlying static SE plus a factor of $\bO(\log N)$ as each index is %queried independently. \todo{theorems}}
+
+% can also lead to 
+% In this work, we are concerned with \emph{locality} 
+% of the DSE schemes. To improve \emph{locality}, 
+% we can instantiate \SDa with any \emph{locality aware},
+% result-hiding, static SE scheme. 
+%\todo{7.Clarify which scheme targets which storage and which metrices}
+
+
+\smallskip\noindent\textbf{Locality-aware \SDa[$\cdot$] (for HDDs).}
+\neww{There exist various candidates for static locality-aware schemes, the \OneChoice\ and \TwoChoice\ schemes from \cite{onechoice} achieve optimal \emph{locality}, storage, and polylogarithmic \emph{read-efficiency}. The \NlogN\ scheme from \cite{onechoice} provides optimal \emph{locality} and \emph{read-efficiency} but increases storage. Other recent schemes are also introduced in \cite{TwoChoicePPCrypto18, Demertzis17, locCrypto18}.}
+%There exist various candidates for static locality-aware schemes, namely the \OneChoice\ and \TwoChoice\ schemes of~\cite{onechoice} that have optimal \emph{locality} and storage, and polylogarithmic \emph{read-efficiency}, the \NlogN\ scheme~\cite{onechoice} with optimal \emph{locality} and \emph{read-efficiency} but blow-up the storage, as well as the more recent schemes of~\cite{TwoChoicePPCrypto18, Demertzis17,locCrypto18}. 
+
+
+\smallskip\noindent\textbf{Page-Efficient \SDa[$\cdot$] (for SSDs).}
+{\Tethys\ \cite{BFF21} and \NlogN\ \cite{onechoice} are candidates for static page-efficient schemes.}
+%In \SDa[\Tethys] the results of a search can be distributed in at most $\log N$ levels. Let us assume a list of length $l (= l_0+l_1+\ldots + l_{\log N})$ is distributed into all the index levels. If the start and end points of the list are not aligned with server pages then total page accesses = $\Sigma_{i=0}^{\log N} (\frac{l_i}{p}+2) = \frac{l}{p}+2{\cdot}\log N$.  
+% The amortized update overhead of \SDa[\Tethys] is $\bO(N \log N)$ 
+% %\tblue{again calculation can be included in the appendix}, 
+% since its setup is $\bO(N^2)$. 
+% Similarly, the page efficiency of \SDa[\NlogN] is $\bO(\log N)$, and its amortized update overhead $\bO(\log^2 N)$ (since its page-efficiency is $\bO(1)$ and setup time is $\bO(N \log N)$ respectively). 
+\neww{
+Table~\ref{table:SDaLoc} shows various \SDa~instances from \emph{locality-aware} and \emph{page-efficient} static schemes. In this work, we emphasize the most practical I/O-efficient static SE schemes: \OneChoice\ and \TwoChoice\ (suitable for HDDs) and \NlogN 
+ (compatible with both HDDs and SSDs). The security and forward/backward privacy of the DSE schemes resulting from the \SDa$[\cdot]$ transformation are directly derived from \cite[Theorem 1]{SDa}. {In the extended version we provide a more detailed 
+discussion for \SDa[$\cdot$].}}
+
+% Below, we focus on the instantiation of \SDa~with \OneChoice, denoted as \SDa[\OneChoice], 
+% %\tblue{as it will be important for our de-amortized construction in Section~\ref{sec:de-amortized} -- we should remove this part}. \tpurp{Let us choose \OneChoice\ scheme and }
+% to explain the locality and read-efficiency as stated in the Theorem \ref{thm:SDaLoc} above.
+%  %,and on \SDa~with \Tethys, denoted \SDa[\Tethys].
+% The $i^{th}$ index of \SDa$[\OneChoice]$ stores the
+% real $2^i$ elements across $\ceil{{2^i}/{\log 2^i \log \log 2^i}}$ bins.
+% %, where each bin can store upto $3{\cdot}\log 2^i \log \log 2^i$ elements\footnote{except indexes $EDB_0$ and $EDB_1$, which have 
+% %a single bin each, with capacity 1 and 2 respectively}.
+%  During a search, each index is searched by calling 
+% \OneChoice.\Search, with locality $\bO(1)$, 
+% as \emph{locality} of \OneChoice\ is $\bO(1)$.
+% Since there are at most $\log N$ non-empty indexes: \new{$EDB_0.\Ind$, $EDB_1.\Ind$ \ldots $EDB_{\log N -1}.\Ind$, 
+% and the corresponding $\log N$ dictionaries: $EDB_0.\Dict$, $EDB_1.\Dict$ \ldots $EDB_{\log N-1}.\Dict$, the total number of required I/Os is $2\log N$, i.e.} search locality for \SDa$[\OneChoice]$ is $\bO(\log N)$. 
+% %(i.e. an I/O is needed for querying the dictionaries even if the corresponding index does not contain any result for the queried keyword).
+% Read-efficiency for \SDa$[\OneChoice]$ is $\bO(\log N \log\log N + \log N)$; \new{the extra $\log N$ factor is added as $\log N$ keyword counter information is fetched from the $\log N$ dictionaries}. 
+% The transformation preserves the storage overhead of \OneChoice, which is optimal. %($\bO(N)$). 
+% Finally, regarding updates, the amortized update overhead is $\bO(\log N)$ as the setup time of \OneChoice~ is linear, and the update locality is $\bO(\log N)$ as at most $\log N$ indexes are fetched. Table~\ref{table:SDaLoc} provides different instantiations of the \SDa[$\cdot$] transformation with \emph{locality-aware} static SE schemes. We highlight that the amortized update overhead for \TwoChoice\ and \NlogN\ is $\bO(\log^2 N)$ since their setup time is $\bO(N \log N)$. 
+
+%From Table~\ref{table:SDaLoc} one can see that \SDa$[\OneChoice]$ has higher {read-efficiency} than \SDa$[\PiBas]$. However, as our experimental evaluation shows (see Figure \ref{fig:}), the lower locality of the former makes it much more efficient when data is stored on hard-disk.
+
+% \textit{Encrypted dictionary.} 
+% \tpurp{we can remove it, as its already present in the original paper
+% , and extra details provided in  the appendix \ref{append:locAware}}
+
+
+% \tblue{During search, the client computes the first bin 
+% for a keyword $w$ using the 
+% \OneChoice~hash function $h(w)$. But, the client also 
+% needs to know how many bins to fetch starting from the first bin.
+% Hence, our modified \OneChoice~algorithm maintains an encrypted dictionary,
+% that maps each unique keyword to its corresponding keyword-counter. 
+% Please refer to Figure \ref{fig:1C} for the pseudocode of \OneChoice.
+% Along with the encrypted bins (represented as $EDB.$\Ind, the server now
+% stores the encrypted dictionary (represented as $EDB$.\Dict) as well. 
+% }
+% \tblue{
+% \textit{Encrypted dictionary.} In section \ref{sec:prelim} we mentioned that 
+% along with the database, the server also stores 
+% an encrypted dictionary, that maps keywords to 
+% the corresponding keyword-counters. As every 
+% index level in \SDa~maintains a separate instance of \OneChoice\ ($EDB_0.\OneChoice$, $EDB_1.$$\OneChoice$, $\ldots$, $EDB_{\ell}.\OneChoice$ \tpurp{can we please change the notation here?}),
+% every \SDa~index level now has an encrypted dictionary
+%  ($EDB_0.\Dict$, $EDB_1.\Dict$, $\ldots$, $EDB_{\ell}.\Dict$).
+% }
+% %\tblue{
+% %The dictionary is created using a \MAP~function (see Figure \ref{alg:encMap}). 
+% %For a keyword $w$ and its keyword-counter $n_w$, 
+% %\MAP~takes a $prf$ key, an $encryption$ key, $w$ and $n_w$ as inputs and returns a 
+% %$(key, value)$ pair. The dictionary stores $value$ at position $key$.
+% %The $value$ is the encryption of $n_w$, and the $key$ is 
+% %produced from $w$ with the help of a pseudo-random function. 
+% %}
+
+% \smallskip\noindent\textbf{Page-Efficient \SDa[$\cdot$].}
+% \todo{7.Clarify which scheme targets which storage and which metrices}
+% \SDa\ can be instantiated with a static \emph{page-efficient} scheme, e.g., \Tethys\ \cite{BFF21} and \NlogN\ \cite{onechoice}. \Tethys\ fetches two pages from the server during search, hence it offers $\bO(1)$ \emph{search page efficiency}. So the page efficiency of \SDa[\Tethys] will be  $\bO(\log N)$ (since it will require two page accesses per index). 
+% %In \SDa[\Tethys] the results of a search can be distributed in at most $\log N$ levels. Let us assume a list of length $l (= l_0+l_1+\ldots + l_{\log N})$ is distributed into all the index levels. If the start and end points of the list are not aligned with server pages then total page accesses = $\Sigma_{i=0}^{\log N} (\frac{l_i}{p}+2) = \frac{l}{p}+2{\cdot}\log N$.  
+% The amortized update overhead of \SDa[\Tethys] is $\bO(N \log N)$ 
+% %\tblue{again calculation can be included in the appendix}, 
+% since its setup is $\bO(N^2)$. 
+% Similarly, the page efficiency of \SDa[\NlogN] is $\bO(\log N)$, and its amortized update overhead $\bO(\log^2 N)$ (since its page-efficiency is $\bO(1)$ and setup time is $\bO(N \log N)$ respectively). 
+
+%In worst case all the index levels are downloaded and merged to build the new index during update. In best case only  the smallest level is built. If we look closely we will see for a total of $i$ indexes, the $i$th index is built once, the $(i-1)$th index is built once, the $(i-2)$th  index is built twice, the $(i-3)$th index is built 4 times and so on. Taking the summation, we get for $N$ updates pages fetched $\approx \bO(N \log N /p)$, which results into the amortized \emph{update page efficiency} for one update to be $\bO(\log N /p)$.
+
+%\begin{theorem}
+%\tblue{Another theorem for PE-SE ?}
+% \todo{14.Overall intuition of the proofs (for non-experts) }
+% \smallskip\noindent\textbf{Security.} \new{The security and forward/backward privacy of 
+% the DSE schemes resulting from \SDa$[\cdot]$ transformation follow directly from~\cite[Theorem 1]{SDa}.}
+% \begin{theorem}\label{thm:scheme1}
+% 	Assuming {\sf SE} is an adaptively-secure result-hiding static searchable encryption scheme, \SDd\ is an adaptively-secure DSE according to \textup{Definition~\ref{def:adpSec}} with $\mathcal{L}^{Updt}(\text{op},w,\text{id}) = \bot$  and  
+% 	$\mathcal{L}^{Srch}(w) = \textbf{Updates}(w)$.
+% %	(\text{TimeDB}(w),\text{Updates}(w))$.
+% \end{theorem}
+% \noindent\textit{Proof sketch.}
+% Building a simulator {\sf Sim} is straight-forward, given the existence of a simulator ${\sf Sim}_{{\sf SE}} = \{SimInit_{{\sf SE}}, SimSearch_{{\sf SE}}\}$. $SimInit$ returns empty vector $EDB$ and initializes and update counter $upd=0$. During each update, $SimUpdate$ computes $j$ as the least significant zero bit position of $ upd$, runs a new instance ${\sf Sim}^{(j)}_{{\sf SE}}= \{SimInit^{(j)}_{{\sf SE}}, SimSearch^{(j)}_{{\sf SE}}\}$, executes $SimInit^{(j)}_{{\sf SE}}$ on input $2^j$, and sends the result to the adversary. It also terminates currently running instances of $SimInit^{(i)}_{{\sf SE}}$ for $i=0,\dots,j-1$, and increments $upd$. During a search for $w$, let $upd$ be the current update counter. $SimSearch$ receives as input $\textbf{Updates}(w)$.
+% %and sets $n_w = |\textbf{Updates}(w)|$. 
+% It then initializes values $t_0,\dots,t_{\lfloor\log upd\rfloor}$ to 0. For each entry $u \in \textbf{Updates}(w)$, it computes $i$ as the index in which the update with timestamp $u$ was stored (determined by $upd,u$) and increments $t_i$ by one. Finally for $j=0,\dots, \lfloor\log upd\rfloor$, it runs $SimSearch^{(j)}_{{\sf SE}}$ on input $t_j$, and sends all the outputs to the adversary.
+% Assuming {\sf SE} is secure and result-hiding, and each instance ${\sf Sim}_{{\sf SE}}$ is spawned independently with fresh randomness, and given that the timestamp of an update fully determines the corresponding index structure for its entry, the transcript produced by {\sf Sim} is indistinguishable from the messages observed by the adversary during the real protocol execution. $\square$
+

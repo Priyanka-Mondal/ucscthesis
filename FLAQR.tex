@@ -1,0 +1,2248 @@
+\chapter{FLAQR : A programming model to apply consensus and replication securely} \label{ch:flaqr}
+\section{Introduction} 
+
+\label{sec:Intro}
+
+Failure is inevitable in distributed systems, but its consequences
+may vary.  The consequences of failure are particularly
+severe in centralized system designs, where single points-of-failure
+can render the entire system inoperable.  Even distributed systems are
+sometimes built using a single, centralized authority to execute
+security-critical tasks.  If this trusted entity is compromised, the
+security of the entire system may be compromised as well.
+
+Building reliable \emph{decentralized systems}, which have no single
+point-of-failure, is a complex task. Quorum replication protocols such
+as Paxos~\cite{paxos} and PBFT~\cite{pbft}, and blockchains such as Bitcoin~\cite{bitcoin} replicate state and computation at independent nodes and use consensus protocols to
+ensure the integrity and availability of operations on system state.
+In these protocols, there is neither centralization of function nor
+centralization of trust: all honest nodes work to replicate the same
+computation on the same data, and this redundancy helps the system
+tolerate a bounded number of node failures and corruptions.
+
+Within a single trust domain such as a corporate data center, replicas
+likely have uniform trust relationships and may be treated
+interchangeably.  However, many
+large-scale systems depend on services hosted by multiple external
+services. Even when a service's internal components are replicated, 
+developers must take into account the failure properties of external
+dependencies when considering their own robustness. 
+
+Information flow control (IFC) has been used to enforce decentralized
+security in distributed systems for confidentiality and integrity
+(e.g., Fabric~\cite{jfabric} and DStar~\cite{dstar}).  Less
+attention has been paid to enforcing decentralized availability
+policies with IFC. In particular, no language (or protocol) we are
+aware of addresses systems that compose multiple quorums or consider
+quorum participants with arbitrary trust relationships.
+
+To build a formal foundation for such languages, we
+present FLAQR, a core calculus for Flow-Limited
+Authorization~\cite{flam} for Quorum Replication.
+FLAQR uses
+high-level abstractions for replication and consensus that help
+manage tradeoffs between the availability and integrity of
+computation and data.
+
+\begin{figure*}
+  \centering
+  \begin{subfigure}[b]{0.23\textwidth}
+  \centering
+  \includegraphics[scale=0.28]{chapters/pictures/tradeoff1.pdf}
+  \caption{More Integrity}
+  \label{fig:compare}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.23\textwidth}
+  \hspace{-0.4cm}
+  \centering
+  \includegraphics[scale=0.28]{chapters/pictures/tradeoff1.pdf}
+  \caption{More Availability}
+  \label{fig:select}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.23\textwidth}
+  \centering
+  \hspace{-0.4cm}
+  \includegraphics[scale=0.28]{chapters/pictures/tradeoff1.pdf}
+  \caption{More Integrity and Availability}
+  \label{fig:majority}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.23\textwidth}
+  \centering
+  \includegraphics[scale=0.28]{chapters/pictures/tradeoff1.pdf}
+   \caption{Heterogeneous trust}
+  \label{fig:hetero}
+  \end{subfigure}
+  %
+  \caption{Integrity-Availability Trade-off}
+  \label{fig:tradeoff}
+\end{figure*}
+
+Consider the scenarios in
+Figure~\ref{fig:tradeoff}.  Shaded boxes represent hosts in a distributed
+system.  Dashed lines denote outputs that contribute to the final
+result, a value $v$.  Dotted lines denote ignored outputs and solid
+lines indicate the flow of data from an initial expression $e$
+distributed to hosts to the collected result.  Results are accompanied
+by labels that indicate which hosts influenced the final result.
+
+In Figure~\ref{fig:compare}, $e$ is distributed to hosts \texttt{alice}
+and \texttt{bob}. The hosts' results are compared and, if they match,
+the result is produced.  Since a value is output only
+if the values match, we can treat the output of this protocol as
+having \emph{more integrity} than just \texttt{alice} or 
+\texttt{bob}.
+While both \texttt{alice} and
+\texttt{bob} technically influence the output, 
+neither host can unilaterally control its value.
+However, either host can cause the protocol to fail.   
+
+By contrast, the protocol in Figure~\ref{fig:select} prioritizes
+availability over integrity: if either \texttt{alice} or \texttt{bob}
+produce a value, the protocol outputs a value—in this case
+\texttt{alice}'s.  Here, neither host can unilaterally cause a
+failure; the protocol only fails if both \texttt{alice} and
+\texttt{bob} fail.  Either \texttt{alice} or \texttt{bob} (but not
+both) has complete control over the result in the event of the other's
+failure, so we should treat the output as having \emph{less integrity}
+than just \texttt{alice} or \texttt{bob}.
+
+With an adequate number of hosts, we can combine these two techniques
+to form the essential components of a quorum system.  In Figure~\ref{fig:majority}, $e$ is
+replicated to \texttt{alice}, \texttt{bob}, and \texttt{carol}.  This protocol outputs a
+value if any two hosts have matching outputs.  Since \texttt{alice} and \texttt{bob}
+both output $v$, the protocol outputs $v$ and attaches \texttt{alice} and
+\texttt{bob}'s signatures.  The non-matching value $v'$ from \texttt{carol} is
+ignored.  Hence, this protocol prevents any single host from
+unilaterally controlling the failure of the protocol or its output.
+
+Figure~\ref{fig:majority} is similar in spirit to consensus protocols
+such as Paxos or PBFT where quorums of independent replicas are used to
+tolerate a bounded number of failures.  FLAQR also permits us to write
+protocols where principals have differing trust relationships.
+Figure~\ref{fig:hetero} illustrates a protocol that tolerates failure
+(or corruption) of either \texttt{alice} or \texttt{bob}, but requires \texttt{dave}'s
+output to be part of any quorum.  This protocol will fail if both
+\texttt{alice} and \texttt{bob} fail to produce matching outputs, but can also fail
+if \texttt{dave} fails to produce a matching output. This example illustrates
+the distributed systems where the hosts do not have homogeneous trust.
+
+The main contributions of this paper are as follows:
+\begin{itemize}
+\item An extension of the static fragment of the Flow Limited Authorization 
+  Model (FLAM) \cite{flam} with availability policies 
+  and algebraic operators representing the effective authority of
+  consensus and replication protocols (§\ref{sec:FLAMalgebra}-§\ref{sec:types}).
+
+\item A formalization of the FLAQR language (§\ref{sec:FLAQRprimitives}) and accompanying results:
+\begin{itemize}
+    \item A liveness theorem for majority-quorum FLAQR protocols (§\ref{blameproofs}) which
+      experience a bounded number of faults using a novel proof technique:
+      a \emph{blame semantics} that associates failing executions of a FLAQR
+      program with a set of principals who may have caused the failure.
+      \item Noninterference theorems for confidentiality, integrity, and availability (§\ref{sec:secPropNI}). 
+\end{itemize}
+\end{itemize}
+
+\paragraph*{Non-goals} The design of FLAQR is motivated by application-agnostic
+consensus protocols such as Paxos~\cite{paxos} and PBFT~\cite{pbft}, but our present goal is not to develop a framework for
+\emph{verifying} implementations of such protocols (although it would be interesting future work).
+Rather, the goal is to develop
+security abstractions that make it easier to create 
+components with application-specific integrity and availability guarantees,
+and compose them in a secure and principled way.
+
+In particular, the FLAQR system model lacks some features that a
+protocol verification model would require, most notably a concurrent
+semantics, asynchronous message delivery, and arbitrary communication
+patterns.  Although this simplifies some aspects of consensus
+protocols, our model retains many of the core challenges present in
+fault tolerance models. For example, perfect fault detection is
+impossible and faulty nodes can manipulate data to cause failures to
+manifest at other hosts.  We argue that even in a synchronous, deterministic
+model with RPC-style communication, the challenges of specifying
+and enforcing policies remain quite difficult to solve, and are among
+the primary security concerns of high-level application developers.
+
+\section{Motivating examples.}\label{sec:section2.0}
+
+In this section we present two motivating examples.  The first example
+highlights the trade-off between integrity and availability.
+The second example highlights the need for availability policies in distributed systems.
+
+\subsection{Tolerating failure and corruption}
+\label{sec:section2.1}
+If a bank's deposit records are stored in a single node,
+then customers will be unable to access their accounts if that
+node is unavailable or is compromised.  To eliminate this single
+point-of-failure, banks can replicate their records on multiple hosts
+as illustrated in Figure~\ref{fig:majority}.  If a majority of nodes
+agree on an account balance, then the system can tolerate 
+the remaining minority
+of nodes failing or returning corrupted results.
+
+  
+Consider a quorum system with three nodes: \texttt{alice},
+\texttt{bob}, and \texttt{carol}.  To tolerate the failure of a single
+node, balance queries attempt to contact all three nodes and compare
+the responses.  As long as the client receives two responses with the
+same balance, the client can be confident the balance is correct even
+if one node is compromised or has failed.
+
+\begin{figure}
+\begin{lstlisting} 
+getBalance(acct):
+    bal_a = fetch bal(acct) $@$ alice;$\label{fetchb}$
+    bal_b = fetch bal(acct) $@$ bob;
+    bal_c = fetch bal(acct) $@$ carol;$\label{fetche}$ 
+    
+    if (bal_a==bal_b && bal_a != $\fail$)$\label{compb}$ 
+       return bal_a;
+    else if (bal_b==bal_c && bal_b != $\fail{}$)$\label{compbb}$
+       return bal_b;
+    else if (bal_c==bal_a && bal_c != $\fail{}$)$\label{compe}$  
+       return bal_c;
+    else return $\fail{}$;$\label{rete}$
+\end{lstlisting}
+\caption{Majority quorum}
+\label{fig:majex}
+\end{figure}
+
+Figure~\ref{fig:majex} illustrates a pseudocode implementation
+of \texttt{getBalance} in this system.
+The code fetches balances from the three nodes (lines
+\ref{fetchb}-\ref{fetche}). The function returns the balance if each fetched value matches,
+otherwise the function returns $\fail{}$ (lines
+\ref{compb}-\ref{rete}).
+
+The downside of this approach is that it is quite verbose and
+repetitive compared to a single-line fetch without any fault
+tolerance.  Small mistakes in any of these lines could have
+significant consequences. For example, suppose a programmer typed
+\texttt{bal\_b} instead of \texttt{bal\_c} on line \ref{compbb}. This small change
+gives \texttt{bob} (or an attacker in control of \texttt{bob}'s node)
+the ability to unilaterally choose the return value of the function,
+even when \texttt{alice} and \texttt{carol} agree on a different
+value.
+
+\subsection{Using best available services}\label{sec:section2.2}
+Real world applications often consist of 
+communication between entities with mutual distrust. 
+The pseudocode in Figure \ref{fig:example2} 
+communicates with two banks, represented by 
+\texttt{b} and \texttt{b'},  
+during a distributed computation.
+A user has two accounts
+\texttt{acc\_1}, and \texttt{acc\_2}
+with \texttt{b} and \texttt{b'} 
+respectively.
+The user has linked both accounts to a service and 
+specifies the bill should be paid 
+\begin{enumerate}
+\item as long as at least one account is available \label{spec:1}
+\item using the highest-balance account, if available \label{spec:2}
+\end{enumerate}
+Lines \ref{retbal1}-\ref{availe} take care of point\eqref{spec:1},
+ensuring the comparison on line $\ref{compbal12}$
+does not get stuck if a \texttt{fetch} returns $\fail{}$.
+Lines \ref{compbal12}-\ref{retbal2} cover point \eqref{spec:2},
+returning the account with the highest balance when both 
+balances are available.
+
+\begin{figure}
+\begin{lstlisting}
+highestBalance(acct_1, acct_2):
+  bal_1:= fetch getBalance(acct_1) $@$ b; 
+  bal_2:= fetch getBalance(acct_2) $@$ b';
+  
+  if (bal_1==$\fail{\relax}$) and (bal_2==$\fail{\relax}$) then $\label{avails}$
+     return $\fail{}$;
+  else if (bal_1==$\fail{\relax}$) then $\label{retbal1}$
+     return acct_2;
+  else if (bal_2==$\fail{\relax}$) then
+     return acct_1; $\label{availe}$
+  
+  if (bal_1 > bal_2) then $\label{compbal12}$
+      return acct_1;
+  else
+      return acct_2; $\label{retbal2}$
+\end{lstlisting}
+\caption{Available largest balance}
+\label{fig:example2}
+\end{figure}
+
+This example shows how availability of data can effect the final
+result of an application and thus highlights the importance of
+enforcing availability in distributed computations.  As in the
+previous example, the programmer must reason about failures due to
+unavailable hosts and make the correct comparisons to implement the
+(implicitly) desired policy.
+Furthermore, the programmer may be unaware of the availability guarantees
+offered by \texttt{b} and \texttt{b'}.  For example, if \texttt{b} and \texttt{b'} rely on the
+same replicas to implement \texttt{getBalance}, the availability of "highest balance" may be lower than expected.
+
+Finally, in both of the above examples, 
+an attacker should not be able to read an account balance,
+or infer which account balance was greater.
+With the FLAQR type-system, programmers can
+not only specify and enforce availability 
+and integrity, but also confidentiality—crucial for  
+dealing with sensitive information. Moreover,
+FLAQR enables programmers 
+to write fault-tolerant code concisely, with explicit primitives
+for consensus and replication operations that clarify the programmer's intentions.
+
+
+\section{Specifying FLAQR policies} \label{sec:FLAMalgebra}
+FLAQR policies are specified using an extension of the
+FLAM~\cite{flam,jflac} principal algebra that includes availability
+policies.\footnote{Specifically, we extend the
+  static fragment of FLAM's principal algebra defined by FLAC~\cite{jflac}.}
+FLAM principals represent both the
+\emph{authority} of entities in a system as well as bounds on the
+\emph{information flow policies} that authority entails. For example,
+Alice's authority is represented by the principal \texttt{alice}.
+\emph{Authority projections} allow us to refer to specific categories of
+Alice's authority.  The principal $\texttt{alice}^{\confid}$
+ refers to
+Alice's confidentiality authority: what Alice may read. Principal
+$\texttt{alice}^{\integ}$ refers to Alice's integrity authority: what
+Alice may write or influence.\footnote{Prior FLAM-based formalizations have used $\rightarrow$ and $\leftarrow$ for confidentiality and integrity, respectively.} Principal $\texttt{alice}^{\avail}$
+refers to her availability authority: what Alice may cause to \_fail\_.
+A principal always acts for any projection of its authority, so for example $\texttt{alice} \succcurlyeq \texttt{alice}^{\avail}$.
+We refer to the set of all \emph{primitive principals} such as \texttt{alice} and \texttt{bob}
+as $\N$. 
+
+We can write the conjunction of two principals
+with the Boolean connective $\wedge$ as $\texttt{alice} \wedge \texttt{bob}$, denoting 
+the combined authority of Alice and Bob. Put another way, $\texttt{alice} \wedge \texttt{bob}$
+is a principal both Alice and Bob \emph{trust}.
+The disjunction of two
+principals' authority is written using the connective $\vee$ as $\texttt{alice} \vee \texttt{bob}$.  
+This is a principal whose authority is less than both Alice and Bob; either Alice or Bob
+can act on behalf of the principal $\texttt{alice} \vee \texttt{bob}$. Put another way
+$\texttt{alice} \vee \texttt{bob}$ is a principal that trusts both Alice and Bob.
+Authority projections distribute over $\wedge$ and $\vee$, so for example
+$(\texttt{alice} \wedge \texttt{bob})^{\integ} \equiv \texttt{alice}^{\integ} \wedge \texttt{bob}^{\integ}$. 
+
+The confidentiality, integrity, and availability authorities
+make up the totality of a principal's authority, so writing
+$\texttt{alice}^{\confid} \wedge \texttt{alice}^{\integ}  \wedge \texttt{alice}^{\avail}$
+is equivalent to writing $\texttt{alice}$. For brevity, we sometimes write
+$\texttt{alice}^{\confid \integ}$ as a shorthand for $\texttt{alice}^{\confid} \wedge
+\texttt{alice}^{\integ}$ when we wish to include all but one kind of authority.
+Due to space constraints, we refer the reader to FLAC~\cite{jflac} and our expanded technical
+report for the complete formalization of the $\succcurlyeq$ relation.  In this article, we present only the
+extensions to this relation introduced by FLAQR.
+
+In addition to conjunctions and disjunctions of authority, FLAQR also
+introduce two new operators: \emph{partial conjunction} ($\comand{}{}$),
+and \emph{partial disjunction} ($\selor{}{}$).  These operations are
+necessary to represent the tradeoffs between integrity and
+availability mediated by consensus and replication.  Consider the
+``more integrity'' protocol from Figure~\ref{fig:compare}.  It is
+reasonable to think of the consensus value $v$ as having more
+integrity than (or at least, ``not less integrity than'') Alice or Bob
+alone, but it turns out to be useful to distinguish between this authority
+and the combined integrity authority of Alice and Bob,
+($\texttt{alice}^{\integ} \wedge \texttt{bob}^{\integ}$).  A principal with
+integrity authority ($\texttt{alice}^{\integ} \wedge \texttt{bob}^{\integ}$) may act
+arbitrarily on behalf of both Alice and Bob since it is trusted by them.
+In contrast, the integrity of the value produced in Figure~\ref{fig:compare}
+is \emph{not} fully trusted by Alice and Bob. Instead, Alice and Bob only trust
+the value when Alice and Bob agree on it.  If they do not agree,
+that trust is revoked and no value is produced.  For this reason,
+we describe the integrity of consensus values such as $v$ as the \emph{partial conjunction}
+of Alice and Bob, written ${\comand{\texttt{alice}^{\integ}}{\texttt{bob}^{\integ}}}$.
+
+Similarly, for replication protocols like that in
+Figure~\ref{fig:select}, we want to distinguish the integrity of
+values that may have been received from either Alice or Bob due to
+failure, from the
+integrity of values that may have been influenced by both Alice and
+Bob: $\texttt{alice}^{\integ} \vee \texttt{bob}^{\integ}$.  The integrity of a value
+produced by either Alice or Bob is written as the \emph{partial disjunction}
+$\selor{\texttt{alice}^{\integ}}{\texttt{bob}^{\integ}}$. This principal does not
+have the same integrity authority as Alice or Bob alone since we cannot guarantee which host's value
+will be used in the event of a failure.  
+However, the value does have more integrity than $\texttt{alice}^{\integ} \vee \texttt{bob}^{\integ}$,
+since \emph{only} Alice or Bob (and not both) may have influenced it. 
+
+We compare the authority of principals using the \emph{acts-for} relation
+$\succcurlyeq$, which partially orders (equivalence classes of) principals by
+increasing authority. We form the set of all principals $\mathcal{P}$ as the closure of 
+the set $\{\N, \top, \bot\}$ over the operations $\wedge$, $\vee$, $\comand{\relax}{\relax}$,
+$\selor{\relax}{\relax}$, and authority projections $\confid$, $\integ$, and $\avail$.
+We say Alice acts for Bob (or equivalently, Bob trusts Alice) and write
+$\texttt{alice} \succcurlyeq \texttt{bob}$ when Alice has at least as much
+authority as Bob.  The $\succcurlyeq$ relation forms a lattice with join
+$\wedge$, meet $\vee$, greatest element $\top$, and least element
+$\bot$.
+
+In addition to the trust relationships such as $p \wedge q \succcurlyeq p$ and $p \succcurlyeq
+p^{\integ}$ implied by the principal algebra, explicit delegations of
+trust such as $p \succcurlyeq q$ (for any $p$, $q$ in $\mathcal{P}$) may expressed using a
+\emph{delegation context} $\Pi$.  An acts-for judgment has the form
+\rafjudge{\Pi}{p}{q} and means that $p$ acts for $q$ in context $\Pi$.
+While FLAC has a feature that allows dynamic extensions of $\Pi$, for
+simplicity we fix $\Pi$ to a static set of delegations in FLAQR.
+
+\begin{figure*}
+  \begin{mathpar}
+\Rule{PAndL}
+{\rafjudge{\Pi}{p_i}{p} \\\\
+  k \in \{1,2\}
+% \rafjudge{\Pi}{p_2}{p}
+}
+{\rafjudge{\Pi}{\comor{p_1}{p_2}}{p}}
+
+\Rule{PAndR}
+{\rafjudge{\Pi}{p}{p_1}\\\\
+ \rafjudge{\Pi}{p}{p_2}}
+{\rafjudge{\Pi}{p}{\comor{p_1}{p_2}}}
+
+\Rule{AndPAnd}
+{}
+{\rafjudge{\Pi}{p \wedge q}{\comor{p}{q}}}
+
+%\Rule{PartandActsDisj}
+%{}
+%{\rafjudge{\Pi}{\comor{p}{q}}{p \vee q}}
+
+\Rule{PAndPOr}
+{}
+{\rafjudge{\Pi}{\comor{p}{q}}{\selor{p}{q}}}
+
+\Rule{ProjPAndL}
+{}
+{\rafjudge{\Pi}{\comor{p^{\pi}}{q^{\pi}}}{(\comor{p}{q})^{\pi}}}
+
+\Rule{ProjPAndR}
+{}
+{\rafjudge{\Pi}{(\comor{p}{q})^{\pi}}{\comor{p^{\pi}}{q^{\pi}}}}
+
+\Rule{ProjPOrL}
+{}
+{\rafjudge{\Pi}{\selor{p^{\pi}}{q^{\pi}}}{(\selor{p}{q})^{\pi}}}
+
+\Rule{ProjPOrR}
+{}
+{\rafjudge{\Pi}{(\selor{p}{q})^{\pi}}{\selor{p^{\pi}}{q^{\pi}}}}
+\hfill
+
+\Rule{POrOr}
+{}
+{\rafjudge{\Pi}{\selor{p}{q}}{p \vee q}}
+
+\end{mathpar}
+\caption{selected acts-for rules for partial conjunction and disjunction.}
+\label{fig:partialAF}
+\end{figure*}
+
+\begin{figure*}
+\includegraphics[height=10cm,width=10cm]{chapters/pictures/lat.pdf}
+\caption{The FLAQR authority lattice for the principal set $\{\bot, x, y, \top \}$.}
+\label{fig:flaqrlat}
+\end{figure*}
+
+We extend the acts-for relation defined by Arden et al.~\cite{jflac}
+with new rules for availability authority and partial conjunction and
+disjunction.  Figure~\ref{fig:partialAF} presents a selection of these
+rules—we have omitted the distributivity rules for brevity. The
+complete rule set is presented in Figure~\ref{fig:partialactsforfull}
+in the appendices. In Figure~\ref{fig:partialAF}, 
+an $acts$ $for$ judgement of form $\rafjudge{\Pi}{p}{q}$, 
+states that $p$ has at least as much authority as $q$ 
+in delegation context $\Pi$.
+
+As a consequence of these new acts-for rules we
+have additional distinct points in the authority lattice.
+Figure \ref{fig:flaqrlat} illustrates 
+the authority sublattice over 
+elements $\{\bot, x, y, \top\}$.
+%with $\wedge$ as join and $\vee$ as meet. 
+Figure \ref{fig:flaqrlat} shows
+the trust ordering of all 
+possible distinct combinations of elements
+that can be formed on the set 
+$\{\bot, x, y, \top\}$ with
+operations $\wedge$, $\vee$,
+$\comor{}{}$ and $\selor{}{}$ over them.
+The relationship between principals 
+$\bot, x, y, x \wedge y , x \vee y,$ and $\top$
+is the same as in FLAM, but Figure~\ref{fig:flaqrlat}
+also includes principals constructed using partial conjunctions
+and disjunctions.
+For example, $x \wedge (\comor{x}{y})$ is the least upper bound of
+$x \wedge (\selor{x}{y})$ and $\comor{x}{y}$.
+This is due to rule \ruleref{PAndPOr} in Figure~\ref{fig:partialAF},
+which lets us simplify $x \wedge (\selor{x}{y}) \wedge \comand{x}{y}$
+to $x \wedge (\comor{x}{y})$.
+
+To compare the restrictiveness of information flow policies, we use
+the \emph{flows-to} relation $\sqsubseteq$, which partially orders principals by
+increasing policy restrictiveness, rather than by authority. For
+example, we say Alice's integrity flows to Bob's integrity and write
+$\texttt{alice}^{\integ} \sqsubseteq \texttt{bob}^{\integ}$ if Bob trusts
+information influenced by Alice at least as much as information he
+influenced himself.  Likewise, we write $\texttt{alice}^{\confid} \sqsubseteq
+\texttt{bob}^{\confid}$ if Alice trusts Bob to protect the
+confidentiality of her information, and 
+$\texttt{alice}^{\avail} \sqsubseteq \texttt{bob}^{\avail}$ if
+Bob is trusted to keep Alice's data available. 
+The flows-to relation behaves
+similarly to a sub-typing relation.  Treating information 
+labeled $\texttt{alice}^{\confid\integ\avail}$ 
+(i.e. $\texttt{alice}$) as though it was labeled
+$\texttt{bob}^{\confid\integ\avail}$ (i.e. $\texttt{bob}$)  
+is only safe (doesn't violate anyone's
+policies) if $\texttt{alice}^{\confid\integ\avail} \sqsubseteq
+\texttt{bob}^{\confid\integ\avail}$ 
+(i.e. $\texttt{alice} \sqsubseteq \texttt{bob}$). 
+
+One advantage of the FLAM principal algebra is that we can define the 
+flows-to relation, as well as the upper and lower bounds of information flow policies,
+in terms of the acts-for relation, simplifying our formalism.
+
+\begin{align*}
+  p ~ \sqsubseteq ~q\ &\Longleftrightarrow q^{\confid} \succcurlyeq p^{\confid} \text{ and }\ p^{\integ} \succcurlyeq q^{\integ} \text{ and } p^{\avail} \succcurlyeq q^{\avail} \\
+  p \join q &\triangleq (p^{\confid} \wedge q^{\confid}) \wedge (p^{\integ} \vee q^{\integ}) \wedge (p^{\avail} \vee q^{\avail})\\
+  p \meet q &\triangleq (p^{\confid} \vee q^{\confid}) \wedge (p^{\integ} \wedge q^{\integ}) \wedge (p^{\avail} \wedge q^{\avail})
+\end{align*}
+
+Based on this, the equivalence classes of $\succcurlyeq$ and $\sqsubseteq$ are identical, meaning that
+the lattice formed by $\sqsubseteq$ with joins $\sqcup$ and meets $\sqcap$ has the same elements as the acts-for
+lattice.
+A flow from $p$ to $q$ is secure only when $q^{\confid}$ is at least as
+confidential as $p^{\confid}$, $q^{\integ}$ trusts information influenced by $p^{\integ}$, and $q^{\avail}$
+cannot cause failures that $p^{\avail}$ cannot. 
+
+\section{FLAQR syntax and semantics}\label{sec:FLAQRprimitives}
+
+\begin{figure}
+  {\small
+  \[
+    \begin{array}{rcl}
+      \multicolumn{3}{l}{ \Pi \in {\{\mathsf{c},\mathsf{i},\mathsf{a}\}}  \text{  (projections)}} \\
+      \multicolumn{3}{l}{ n \in \N \text{  (primitive principals)}} \\
+      \multicolumn{3}{l}{ x \in \mathcal{V} \text{  (variable names)}} \\
+      \\
+      p,\ell,\pc &::=&  n \sep \top \sep \bot \sep p^{\pi} \sep p \wedge p\sep p \vee p \\[0.4em]
+                   &\sep & p \sqcup p \sep p \sqcap p \sep {\pgfsetfillopacity{0.25}{\colorbox{blue!30}{\pgfsetfillopacity{1}{$\selor{p}{p} \sep \comor{p}{p}$}}}} \\[0.4em]
+      \tau &::=& \voidtype \sep X \sep \sumtype{\tau}{\tau} \sep \prodtype{\tau}{\tau} \\[0.4em]
+         & \sep & \func{\tau}{\pc}{\tau} \sep \tfunc{X}{\pc}{\tau} \sep \says{\ell}{\tau}  \\[0.4em]
+      v &::=& \void \sep \underline{\returnv{\ell}{v}} \sep \injia{\sumtype{\tau}{\tau}}{v} \sep \paira{v}{v}{\tau} \\[0.4em]
+        & \sep & \lamc{x}{\tau}{\pc}{e} \sep \tlam{X}{\pc}{e}  \\[0.8em]
+      f &::=& v \sep  {\pgfsetfillopacity{0.25}{\colorbox{blue!30}{\pgfsetfillopacity{1}{$\underline{\faila{\tau}}$}}}} \\[0.8em]
+      e &::=& f \sep x \sep e~e \sep e~\tau \sep \return{\ell}{e} \sep 
+             \paira{e}{e}{\tau} \\[0.4em]
+        & \sep & \proji{e} \sep \injia{\sumtype{\tau}{\tau}}{e} \sep \bind{x}{e}{e}\\[0.4em]
+        & \sep & \casexpan{e}{x}{e}{e}{\tau} \\[0.4em]
+        & \sep & {\pgfsetfillopacity{0.25}{\colorbox{blue!30}{\pgfsetfillopacity{1}{$\runa{\tau}{e}{p}  \sep \underline{\ret{e}{p}}  \sep \underline{\expecta{\tau}}$}}}}\\[0.4em]
+        & \sep & {\pgfsetfillopacity{0.25}{\colorbox{blue!30}{\pgfsetfillopacity{1}{$\selecta{e}{e}{\tau} \sep \comparea{\tau}{e}{e}$}}}}
+    \end{array}
+  \]
+  }
+  \caption[FLAQR Syntax]{FLAQR Syntax. Shaded terms are new to FLAQR. Underlined terms are used during evaluation and not available at the source level.}
+  \label{fig:syntax}
+\end{figure}
+\if 0
+\begin{figure}
+  {\small
+  \[
+    \begin{array}{rcl}
+      \multicolumn{3}{l}{ \Pi \in {\{"c","i","a"\}}  \text{  (projections)}} \\
+      \multicolumn{3}{l}{ n \in \N \text{  (primitive principals)}} \\
+      \multicolumn{3}{l}{ x \in \mathcal{V} \text{  (variable names)}} \\
+      \\
+     \multicolumn{3}{l}{
+      p,\ell,\pc \quad ::=\quad   n \sep \top \sep \bot \sep p^{\Pi} \sep p \wedge p\sep p \vee p}\\[0.4em]
+          &\sep&  p \sqcup p \sep p \sqcap p \sep \selor{p}{p} \sep \comor{p}{p}\\[0.4em] 
+      \tau &::=& \voidtype \sep X \sep \sumtype{\tau}{\tau} \sep \prodtype{\tau}{\tau} \\[0.4em]
+         & \sep & \func{\tau}{\pc}{\tau} \sep \tfunc{X}{\pc}{\tau} \sep \says{\ell}{\tau}  \\[0.4em]
+      v &::=& \void \sep \inji{v} \sep \pair{v}{v} \sep 
+              \underline{\returnv{\ell}{v}} \\[0.4em]
+        & \sep & \lamc{x}{\tau}{\pc}{e} \sep \tlam{X}{\pc}{e}  \\[0.8em]
+      f &::=& v \sep  \underline{\faila{\tau}} \\[0.8em]
+      e &::=& f \sep x \sep e~e \sep e~\tau \sep \return{\ell}{e} \sep 
+             \pair{e}{e} \sep \proji{e} \sep \inji{e} \\[0.4em]
+        & \sep & \bind{x}{e}{e} \sep \casexp{e}{x}{e}{e} \\[0.4em]
+         & \sep & {\pgfsetfillopacity{0.25}{\colorbox{blue!30}{\pgfsetfillopacity{1}{$\runa{\tau}{e}{p} \sep \underline{\ret{e}{p}} \sep \underline{\expecta{\tau}}$}}}} \\[0.4em]  
+        & \sep & {\pgfsetfillopacity{0.25}{\colorbox{blue!30}{\pgfsetfillopacity{1}{\select{e}{e} \sep \compare{e}{e}}}}}
+    \end{array}
+  \]
+  }
+  \caption{Type annotated FLAQR Syntax (Full version).}
+\end{figure}
+\fi
+\begin{figure}
+  \begin{subfigure}{0.5\textwidth}
+  {\small
+  \begin{flushleft}
+  %  \boxed{{e} \stepsone {e'}} \\
+  \begin{mathpar}
+    \erule{E-Sealed}{}{\return{\ell}{v}}{\returnv{\ell}{v}}
+
+    \erule{E-BindM}{}{ {\bind{x}{\returnv{\ell}{v}}{e}}}{ {\subst{e}{x}{v}}}
+
+    \erule{E-Compare}{}{\mathsf{compare}{\returnv{\ell_1}{v}}{\returnv{\ell_2}{v}}}{\returnv{\txcmp{\ell_1}{\ell_2}}{v}} 
+
+    \erule{E-CompareFail}{v_1 \neq v_2 \\ \tau=\says{(\txcmp{\ell_1}{\ell_2})}{\tau'}} {\mathsf{compare}{\returnv{\ell_1}{v_1}}{\returnv{\ell_2}{v_2}}}
+       {\faila{\tau}} 
+
+% \erule{E-CompareFail}{f_1 \neq f_2}{\mathsf{compare}{\says{\txcmp{\ell_1}{\ell_2}}{\tau}}{f_1}{f_2}}{\fail{\says{\txcmp{\ell_1}{\ell_2}}{\tau}}}
+
+    \erule{E-CompareFailL}{\tau_1=\says{\ell_1}{\tau} \\ 
+                            \tau'=\says{(\txcmp{\ell_1}{\ell_2})}{\tau} \\\\
+			   {f_2 = 
+				{\begin{cases}
+          				\returnv{\ell_2}{v} \\
+          				\faila{\says{\ell_2}{\tau}} 
+         			\end{cases}
+			}}
+              }{\mathsf{compare}{(\faila{\tau_1})} {f_2}}
+      {\faila{\tau'}}
+  
+ \erule{E-CompareFailR}{\tau_2 = \says{\ell_2}{\tau} \\ 
+                        \tau'=\says{(\txcmp{\ell_1}{\ell_2})}{\tau}}
+{\mathsf{compare}{\returnv{\ell_1}{v}}{\faila{\tau_2}}}{\faila{\tau'}}
+%\erule{E-CompareFailR}{}{\mathsf{compare}{\returnv{\ell_1}{v}}{(\faila{\says{\ell_2}{\tau}})}}
+%{\faila{\says{\txcmp{\ell_1}{\ell_2}}{\tau}}}
+ 
+%\erule{E-select}{ f_{i} = \returnv{\ell_i}{w_i}  \\  f_{j} = \fail }
+%     {\select{f_1}{f_2}{\says{\txsel{\ell_1}{\ell_2}}{\tau}}}{\returnv{\txsel{\ell_1}{\ell_2}}{w_i}} 
+
+    \erule{E-select}{}{\select{\returnv{\ell_1}{v_1}}
+    {\returnv{\ell_2}{v_2}}}
+    {\returnv{\txsel{\ell_1}{\ell_2}}{v_1}} 
+    
+    \erule{E-selectL}{}{\select{\returnv{\ell_1}{v}}
+    {(\faila{\says{\ell_1}{\tau}})}}
+    {\returnv{\txsel{\ell_1}{\ell_2}}{v}} 
+    %
+    %\erule{E-selectR}{}{{\select{(\faila{\says{\ell_1}{\tau}})}
+    %{\returnv{\ell_2}{v}}}}
+    %{\returnv{\txsel{\ell_1}{\ell_2}}{v}} 
+    
+    \erule{E-selectFail}{\forall i\in \{1,2\} \\ \tau_i=\says{\ell_i}{\tau} \\\\
+ \tau'=\says{(\txsel{\ell_1}{\ell_2})}{\tau}} {\select{(\faila{\tau_1})}
+    {(\faila{\tau_2})}}
+    {\faila{\tau'}} 
+    
+    \erule{E-RetStep}{e \stepsone e'}{\ret{e}{c}}{\ret{e'}{c}}
+%     
+    \erule{E-Step}{ {e} \stepsone  {e'}}{{E[e]}}{{E[e']}}
+\hfill
+\end{mathpar}
+\end{flushleft}
+}
+\end{subfigure} 
+
+\begin{subfigure}{0.5\textwidth}
+  \[
+    \begin{array}{rcl}
+      E & ::= & [\cdot] \sep E~e \sep v~E  \sep \return{\ell}{E}  \sep \bind{x}{E}{e} \\[0.4em]
+        & \sep & \ret{E}{p} \sep \select{E}{e} \sep \select{f}{E} \\[0.4em]
+        &\sep  & \compare{E}{e} \sep \compare{f}{E} \\[0.4em]
+    \end{array}
+  \]
+%\caption{operational semantics.}
+\end{subfigure} 
+\caption{FLAQR local semantics and evaluation context}
+\label{fig:semantics}
+\end{figure}
+
+
+Figures~\ref{fig:syntax} and~\ref{fig:semantics} present the FLAQR syntax
+and selected evaluation rules. For space and exposition purposes, we omit some term
+annotations and standard lambda calculus rules in order to focus on
+FLAQR's contributions, but the complete, annotated FLAQR syntax and semantics can be
+found in the extended technical report \cite{flaqrtr}.
+%\ref{sec:fulllang}.
+
+\subsection{Local semantics}\label{sec:flarLocalSem}
+FLAQR is based on FLAC~\cite{flac,jflac}, a monadic calculus in the
+style of Abadi's Polymorphic DCC~\cite{abadi06}.  In addition to
+standard extensions to System F~\cite{girard71,girard72,reynolds74}
+such as pairs and tagged unions, an Abadi-style calculus supports
+monadic operations on values in a monad indexed by a lattice of
+security labels.  Such a value has a type of the form
+$\says{\ell}{\tau}$, meaning that it is a value of type $\tau$,
+\emph{protected} at level $\ell$, where $\ell$ is an element of the security
+lattice. Here we focus on FLAQR's additions to
+FLAC and DCC, and refer readers to the techical report for our complete formalization.
+
+FLAQR builds on FLAC's expressive principal algebra and type system to
+model distributed security policies for applications that use
+replication and consensus. FLAC supports arbitrary policy downgrades
+through dynamic delegations of authority, but for
+simplicity we omit these features in FLAQR.  
+
+The monadic unit or return term $\return{\ell}{e}$ protects the value
+that $e$ evaluates to at level $\ell$
+(\ruleref{E-Sealed}).\footnote{Polymorphic DCC does not define a term
+similar to $\returnv{\ell}{v}$ and thus does not have an rule equivalent to
+\ruleref{E-Sealed}.  This approach enables us to distinguish where a
+value may be created (e.g., on a host authorized to read and create values
+protected at $\ell$) and use more permissive rules to control where a sealed
+value may flow.}
+Protected values, $\returnv{\ell}{v}$ cannot be operated on
+directly. Instead, a bind expression must be used to bind the
+protected value to a variable whose scope is limited to the body of
+the bind term (\ruleref{E-BindM}). The body performs the desired
+computation and ``returns'' the result to the monad, ensuring the
+result is protected. 
+These rules (\ruleref{E-Sealed} and \ruleref{E-BindM}) FLAQR inherits 
+from FLAC.
+The remaining rules of Figure~\ref{fig:semantics} are specific to FLAQR.
+
+The primary novelty in the FLAQR calculus is the introduction of
+$\mathsf{compare}$ and $\mathsf{select}$ terms for expressing consensus and replication
+operations.  We represent the consensus problem as a comparison of two
+values with the same underlying type but distinct outer security
+labels.  In other words, we want to 
+check the equality of values produced by two different principals.
+If the
+values match, we can treat them as having the (partially) combined integrity of
+the principals.  If not, then the principals failed to reach
+consensus.
+
+Rule \ruleref{E-Compare} defines the former case: two syntactically equal
+values protected at different labels evaluate to a value that combines
+ labels using the \emph{compare action} on labels $\txcmp{}{}$. Intuitively,
+$\txcmp{\ell_1}{\ell_2}$ determines the increase in integrity and the corresponding
+decrease in availability inherent in requiring a consensus. We define $\txcmp{}{}$ 
+formally in Definition~\ref{def:compare}.
+\begin{definition}[Compare action on principals]
+  \label{def:compare}
+\[
+  \txcmp{\ell_1}{\ell_2} \triangleq (\ell_1^{\confid} \wedge \ell_2^{\confid}) \wedge (\comor{\ell_1^{\integ}}{\ell_2^{\integ}}) \wedge (\ell_1^{\avail} \vee \ell_2^{\avail})
+\]
+\end{definition}
+We also lift this notation to $\says{}{}$ types by defining
+$$\txcmp{\says{\ell_1}{\tau}}{\says{\ell_2}{\tau}} \triangleq \says{(\txcmp{\ell_1}{\ell_2})}{\tau}$$
+
+
+As discussed in Section~\ref{sec:FLAMalgebra}, the integrity authority
+of $\mathsf{compare}$ is not as trusted as the conjunction of $\ell_1$
+and $\ell_2$'s integrity.  Instead, we represent the limited ``increase''
+in integrity authority\footnote{Strictly speaking, $\comand{x}{y}$ is
+not an increase in integrity over $x$ (or $y$); $\comand{x}{y}$ and
+$x$ are incomparable.} using a partial conjunction in
+Definition~\ref{def:compare}.  In contrast, the decrease in
+availability is represented by a (full) $\ell_1^{\avail}
+\vee \ell_2^{\avail}$ since either $\ell_1$ or $\ell_2$ could unilaterally
+cause the $\mathsf{compare}$ expression to fail.
+
+\begin{figure}
+  \small
+%\begin{flalign*}
+%  & \boxed{{e} \stepsone {\faila{\tau}}} &
+%\end{flalign*}
+  \begin{mathpar}
+\erule{E-AppFail}{}{\lamc{x}{\tau}{pc}{e}~{\faila{\tau}}}{\subst{e}{x}{\faila{\tau}}}
+
+\erule{E-SealedFail}{}{{\returnp{\ell }{\faila{\tau}}}}{{\faila{\says{\ell}{\tau}}}}
+
+\erule{E-InjFail}{}{\injia{\sumtype{\tau_1}{\tau_2}}{\faila{\tau_i}}}{\faila{\sumtype{\tau_1}{\tau_2}}}
+
+\erule{E-ProjFail}{}{\proji{\faila{\prodtype{\tau_1}{\tau_2}}}}{\faila{\tau_i}} 
+\hfill
+\end{mathpar}
+\caption{$\fail{}$ propagation rules.}
+\label{fig:failprop}
+\end{figure}
+
+The decreased availability resulting from applying $\mathsf{compare}$ is more
+apparent in 
+rules~\ruleref{E-CompareFail}, 
+~\ruleref{E-CompareFailL} and 
+~\ruleref{E-CompareFailR}.  In~\ruleref{E-CompareFail}, two
+unequal values are compared, resulting in a failure.  Failure is
+represented syntactically using a $\faila{\tau}$ term.  We use a type
+annotation $\tau$ on many terms in our formal definitions so that our
+semantics is well defined with respect to failure terms, but we omit
+most of these annotations in Figure~\ref{fig:semantics}.  These
+annotations are only necessary for our formalization and would
+be unnecessary in a FLAQR implementation.
+
+A $\mathsf{compare}$ term may also result in failure if either subexpression
+fails. Rule~\ruleref{E-CompareFailL} and ~\ruleref{E-CompareFailR},
+defines how failure of an input propagates to the output.  In fact,
+most FLAQR terms result in failure when a subexpression fails.
+Figure~\ref{fig:failprop} presents selected failure propagation
+rules (complete failure propagation rules are presented in Figure
+\ref{fig:Fullfailprop}).  
+Note that $\mathsf{fail}$ terms are treated similarly to values, but
+are distinct from them.  For example, in \ruleref{E-AppFail}, applying a lambda
+term to a fail term substitutes the failure as it would a value, but in
+\ruleref{E-SealedFail} the failure is propagated beyond the monadic
+unit term.  This latter behavior captures the idea that failures cannot be
+hidden or isolated in the same way as secrets or untrusted data.
+
+\begin{figure*}
+%\begin{flalign*}
+%  &\boxed{\distcon{e}{c}{s} \Longrightarrow  \distcon{e'}{c'}{s'}} &
+%\end{flalign*}
+
+\begin{mathpar}
+\derule{E-DStep} {e \stepsone e'}{\distcon{E[e]}{c}{t}}{\distcon{E[e']}{c}{t}}
+
+   \derule{E-Run}{}{\distcon{E[\runa{\tau}{e}{c'}]}{c}{t}}{\distcon{\ret{e}{c}}{c'}
+{\stackapp{E[\expecta{\tau}]}{c}{t}}}
+
+   \derule{E-RetV}{}
+    {\distcon{\ret{v}{c}}{c'}{\stackapp{E[\expecta{\says{pc^{{\integ}{\avail}}}{\tau'}}]}{c}{t}}}
+    {\distcon{E[\returnv{pc^{{\integ}{\avail}}}{v}]}{c}{t}}
+
+   \derule{E-RetFail}{}
+{\distcon{\ret{(\faila{\tau'})}{c}}{c'}
+{\stackapp{E[\expecta{\says{pc^{{\integ}{\avail}}}{\tau'}}]}{c}{t}}}
+{\distcon{E[\faila{\says{pc^{{\integ}{\avail}}}{\tau'}}]}{c}{t}}
+\hfill  
+\end{mathpar}
+\caption{FLAQR Global semantics}
+\label{fig:globsem}
+\end{figure*}
+
+\begin{figure}
+  \[
+    \begin{array}{rcl}
+    s & ::= & \distcon{e}{c}{t} \\[0.4em]
+    t & ::=  & \emptystack \sep 
+                  \stackapp{E[\expecta{\tau}]}{c}{t} \\[0.4em]
+    \end{array}
+  \]
+\caption{Global configuration stack}
+\label{fig:sstack}
+\end{figure}
+
+
+Failures are tolerated using replication. A $\mathsf{select}$ term will
+evaluate to a value as long as at least one of its subexpressions
+does not fail. For example, rule~\ruleref{E-selectL} returns its
+left subexpression when the right subexpression fails.
+In contrast to $\mathsf{compare}$, applying $\mathsf{select}$ increases availability
+since either subexpression can be used, but reduces integrity
+since influencing only one of the subexpressions is 
+potentially sufficient
+to influence the result of evaluating $\mathsf{select}$.
+The effect of a $\mathsf{select}$ statement on the labels of its 
+sub-expressions is captured with the
+\emph{select action} $\txsel{}{}$.
+\begin{definition}[select action on principals]
+  \label{def:select}
+\[
+  \txsel{\ell_1}{\ell_2}  \triangleq (\ell_1^{\confid} \wedge \ell_2^{\confid}) \wedge (\selor{\ell_1^{\integ}}{\ell_2^{\integ}}) \wedge (\ell_1^{\avail} \wedge \ell_2^{\avail})
+\]
+\end{definition}
+We define the select action on types similarly to compare:
+$$\txsel{\says{\ell_1}{\tau}}{\says{\ell_2}{\tau}} =\says{(\txsel{\ell_1}{\ell_2})}{\tau} $$
+
+The end result of a \emph{select} statement, 
+$\select{\returnv{\ell_1}{v}}{\returnv{\ell_2}{v}}$, 
+will have integrity of either $\ell_1^{\integ}$ or $\ell_2^{\integ}$
+since only one of the two possible values will be used.  We
+use a partial disjunction to represent this integrity since the result
+does not have the same integrity as $\ell_1$ or $\ell_2$, but does have
+more integrity than $\ell_1 \vee \ell_2$ since it is never the case that \emph{both}
+principals influence the output.
+%In this sense, we use $\selor{}{}$ 
+%in a similar way that Hunt and Sands use the disjoint union operator
+%on information flow quantales\footnote{A quantale is a lattice with an
+%  additional tensor operator}~\cite{quantale}.
+
+%here glob
+\subsection{Global semantics}
+We capture the distributed nature of quorum replication by embedding
+the local semantic rules within a global distributed semantics defined in Figure~\ref{fig:globsem}.  This
+semantics uses a \emph{configuration stack} $s=\distcon{e}{c}{t}$ (Figure~\ref{fig:sstack})
+to keep track of the currently executing expression $e$, the host on which it is
+executing $c$, and the remainder of the stack $t$. We also make explicit use of the
+evaluation contexts from Figure~\ref{fig:semantics} to identify the reducible subterms across stack
+elements. 
+
+The core operation for distributed computation is 
+$\runa{\tau}{e}{p}$ which runs the computation $e$
+of type $\tau$ on node $p$.
+Local evaluation steps are captured in the global semantics
+via rule \ruleref{E-DStep}.  This rule says that if $e$ steps to $e'$ 
+locally, then $E[e]$ steps to $E[e']$ globally.
+
+Rule \ruleref{E-Run} takes an expression $e$ at host $c$, pushes a new
+configuration on the stack containing $e$ at host $c'$ and places an $\expect$ term at $c$ as a place holder for the return value.  
+
+Once the remote expression is fully evaluated, rule \ruleref{E-RetV} 
+pops the top configuration off the stack and replaces the $\expect$ term
+at $c$ with the protected value $\returnv{\pc^{{\integ}{\avail}}}{v}$.
+Rule \ruleref{E-RetFail} serves the same purpose for $\fail$ terms, but is necessary since
+$\fail$ terms are not considered values (see Figure~\ref{fig:syntax}).
+The label $\pc^{{\integ}{\avail}}$ reflects both the integrity and availability context
+of the caller ($c$) as well as the integrity and availability of the remote host ($c'$).
+We discuss this aspect of remote execution in more detail in Section~\ref{sec:types}.
+
+\section{FLAQR typing rules}\label{sec:types}
+\begin{figure*}
+%\begin{subfigure}
+{\small
+\begin{flushleft}
+  %\rulefiguresize
+  \boxed{\TValGpcw{e}{\tau}} \\
+  \begin{mathpar}
+    \Rule{Var}{\Gamma(x)=\tau  \\ \rafjudge{\Pi}{c}{pc}}{\TValGpcw{x}{\tau}}
+    \Rule{Unit}{\rafjudge{\Pi}{c}{pc}}{\TValGpcw{\void}{\voidtype}}
+    
+    \Rule{Fail}{ \rafjudge{\Pi}{c}{pc}}
+     {\TValGpcw{\faila{\tau}}{\tau}}
+
+     \Rule{Expect}{ \rafjudge{\Pi}{c}{pc}}
+      {\TValGpcw{\expecta{\tau}}{\tau}}
+    
+    \Rule{Lam}{%
+     \TVal{\Pi;\Gamma,x\ty \tau_1;\pc';u}{e}{\tau_2} \\ \rafjudge{\Pi}{c}{pc} \\\\
+     %\rafjudge{\Pi}{c}{\UB{\func{\tau_1}{\pc'}{\tau_2}}} \\  
+     u = \UB{\func{\tau_1}{\pc'}{\tau_2}} \\
+     \rafjudge{\Pi}{c}{u}
+    }{\TValGpcw{\lamc{x}{\tau_1}{\pc'}{e}}{\func{\tau_1}{\pc'}{\tau_2}}}
+
+    \Rule{App}{%
+      \TValGpcw{e_1}{\func{\tau'}{\pc'}{\tau}}\\\\
+      \TValGpcw{e_2}{\tau'} \\ 
+      \drflowjudge{\Pi}{\pc}{\pc'}\\\\
+      \rafjudge{\Pi}{c}{pc}
+    }{\TValGpcw{e_1~e_2}{\tau}}
+
+    \Rule{UnitM}{
+      \TValGpcw{e}{\tau} \\ 
+      \drflowjudge{\Pi}{\pc}{\ell} \\\\ %pc influences the signature \ell 
+      \rafjudge{\Pi}{c}{pc}  
+%\\ \stflowjudge*{\jmath(\tau)}{\ell}
+    }{\TValGpcw{\return{\ell}{e}}{\says{\ell}{\tau}}}   
+
+     \Rule{Sealed}{
+      \TValGpcw{v}{\tau} \\
+      \rafjudge{\Pi}{c}{pc}   %p{W}{\ell}\\\\
+      %\protjudge*{w^I}{\ell^I} \\ %implicit due to p{c}{pc} and \stflowjudge*{\pc}{\ell}
+      %\protjudge*{\ell^C}{w^C} \\\\
+    }{\TValGpcw{\returnv{\ell}{v}}{\says{\ell}{\tau}}} 
+
+    \Rule{BindM}{%
+      \TValGpcw{e'}{\says{\ell}{\tau'}} \\ 
+      \drflowjudge{\Pi}{\ell \sqcup pc}{\tau} \\\\
+      %\stflowjudge*{\jmath(\tau)} \\ 
+      \TVal{\Pi;\Gamma,x\ty \tau';\ell\sqcup pc;\worker}{e}{\tau} \\ 
+      \rafjudge{\Pi}{c}{pc} 
+    }{\TValGpcw{\bind{x}{e'}{e}}{\tau}}
+    
+\Rule{Run}{
+\TVal{\Pi;\Gamma;\pc';c'}{e}{\tau'} \\
+\drflowjudge{\Pi}{pc}{pc'} \\\\
+\rafjudge{\Pi}{c}{pc} \\
+\rafjudge{\Pi}{c}{\UB{\tau'}}\\\\
+\tau = \says{pc'^{\integ \avail}}{\tau'} \\
+%\rafjudge{\Pi}{\pc'^a}{\tau'^a}
+}
+{\TValGpcw{\runa{\tau}{e}{c'}}{\tau}}
+
+\Rule{Ret}{
+\TValGpcw{e}{\tau} \\
+%\runnable{\Pi}{\tau}{c'} \\\\
+\rafjudge{\Pi}{c'}{\UB{\tau}} \\\\
+\rafjudge{\Pi}{c}{pc} \\
+}
+{\TValGpcw{\ret{e}{c'}}{\says{pc{^{\integ \avail}}}{\tau}}}
+
+\Rule{Compare}{      
+\forall i \in \{1,2\}.\TValGpcw{e_i}{\says{\ell_i}{\tau}} \\\\
+\readjudge{\Pi}{c}{\says{\ell_i}{\tau}} \\
+% j= (j_1 \sqcup j_2 )\\
+\rafjudge{\Pi}{c}{pc}
+}
+{\TValGpcw{\mathsf{compare}{e_1}{e_2}}{\says{(\txcmp{\ell_1}{\ell_2})}{\tau}}}
+
+\Rule{select}{
+\forall i \in \{1,2\}.
+\TValGpcw{e_i}{\says{\ell_i}{\tau}} \\\\
+\rafjudge{\Pi}{c}{pc} \\ 
+}
+{\TValGpcw{\select{e_1}{e_2}}{\says{(\txsel{\ell_1}{\ell_2})}{\tau}}}
+\hfill
+\end{mathpar}
+\end{flushleft}
+}
+\caption{Typing rules for expressions}
+\label{fig:types}
+\end{figure*}
+
+As we have a local and global semantics, we have 
+two corresponding forms of typing judgements: local typing
+judgments for expressions and global typing judgments for the stack.
+Local typing judgments have the form
+$\TVal{\Pi;\Gamma;pc;c}{e}{\tau}$.  $\Pi$ is the program's delegation
+context and is used to derive acts-for relationships with the rules in
+Figures~\ref{fig:partialAF} and~\ref{fig:partialactsforfull}. $\Gamma$ is
+the typing context containing in-scope variable names and their types.
+The $pc$ label tracks the information flow policy on the program
+counter (due to control flow) and on unsealed protected values such as
+in the body of a $\mathsf{bind}$.
+
+Figure~\ref{fig:types} presents a selection of local typing rules.
+Each typing rule includes an acts-for premise of the form $\rafjudge{\Pi}{c}{pc}$. 
+This enforces the invariant that each host principal $c$ has control of the
+program it executes locally. Thus for any judgment $\TVal{\Pi;\Gamma;pc;c}{e}{\tau}$ $\pc$ should never
+exceed the authority of $c$, the principal executing the expression.
+Rules~\ruleref{Fail} and~\ruleref{Expect} type $\mathsf{fail}$ and "expect" terms according to
+their type annotation $\tau$.
+Rule~\ruleref{Lam} types lambda abstractions.  Since functions are first-class values,
+we have to ensure that the $\pc$ annotation on the lambda term preserves the
+invariant $\rafjudge{\Pi}{c}{pc}$.  The \emph{clearance} of a type $\tau$, written $\UB{\tau}$,
+is an upper bound on the $\pc$ annotations of the function types in $\tau$. By checking
+that $\rafjudge{\Pi}{c}{\UB{\func{\tau_1}{pc'}{\tau_2}}}$ holds (along with similar checks in
+\ruleref{Run} and \ruleref{Ret}), we ensure the contents of the lambda term is protected when
+sending or receiving lambda expressions, and that hosts never receive a function they
+cannot securely execute.
+Due to space constraints, the definition of $\UB{}$ is presented in
+Appendix~\ref{sec:ubrules}, Figure~\ref{fig:UBFunction}.
+The \ruleref{App} rule requires the \textsl{pc} label at any function
+application to flow to the function's \textsl{pc} label annotation.
+Hence the premise $\drflowjudge{\Pi}{pc}{pc'}$.
+
+Protected terms $\return{\ell}{e}$ are typed by rule \ruleref{UnitM}
+as $\says{\ell}{\tau}$ where $\tau$ is the type of $e$. Additionally, it
+requires that $\drflowjudge{\Pi}{pc}{\ell}$.  This ensures that any
+unsealed values in the context are adequately protected by policy $\ell$
+if they are used by $e$.
+The \ruleref{Sealed} rule types protected values $\returnv{\ell}{v}$.
+These values are well-typed at any host, and does not require
+$\drflowjudge{\Pi}{pc}{\ell}$ since no unsealed values in the context could be
+captured by the (closed) value $v$.
+ 
+Computation on protected values occurs in bind terms
+$\bind{x}{e'}{e}$.  The policy protecting $e$ must be at least as
+restrictive as the policy on $e'$ so that the occurrences of $x$ in
+$e$ are adequately protected.  Thus, rule \ruleref{BindM} requires
+$\drflowjudge{\Pi}{\ell \join pc}{\tau}$, and furthermore $e$ is typed
+at a more restrictive program counter label $\ell \join \pc$ to reflect
+the dependency of $e$ on the value bound to $x$.
+
+Rule \ruleref{Run} requires that the $\pc$ at the local host flow to
+the $\pc'$ of the remote host, and that $e$ be well-typed at $c'$,
+which implies that $c'$ acts for $\pc'$. Additionally, $c$ must act
+for the clearance of the remote return type $\tau'$ to ensure $c$ is
+authorized to receive the return value. The type of the run expression
+is $\says{pc'^{{\integ}{\avail}}}{\tau'}$, which reflects the fact that
+$c'$ controls the availability of the return value and also has some
+influence on which value of type $\tau'$ is returned. Although $c'$ may
+not be able to \emph{create} a value of type $\tau'$ unless
+$pc'^{{\integ}{\avail}}$ flows to $\tau'$, if $c'$ has \emph{access} to
+more than one value of type $\tau'$, it could choose which one to return.
+Rule \ruleref{Ret} requires that expression $e$ is welltyped at $c$ and
+that $c'$ is authorized to receive the return value based on the clearance of $\tau$.
+
+The \ruleref{Compare} rule gives type $\says{(\txcmp{\ell_1}{\ell_2})}{\tau}$ to
+the expression $\mathsf{compare}{e_1}{e_2}$
+where $e_1$ and $e_2$ have types $\says{\ell_1}{\tau}$ and 
+$\says{\ell_2}{\tau}$ respectively. 
+Additionally, it requires that $c$, the host executing the $\mathsf{compare}$,
+is authorized to fully examine the results of evaluating $e_1$ and $e_2$
+so that they may be checked for equality.\footnote{Assuming a more
+sophisticated mechanism for checking equality that reveals less
+information to the host such as zero-knowledge proofs or a trusted
+execution environment could justify relaxing this constraint.}
+This requirement is captured by the premise
+$\readjudge{\Pi}{c}{\says{\ell_i}{\tau}}$, pronounced ``$c$ \emph{reads} $\says{\ell_i}{\tau}$''.
+The inference rules for the reads judgment are found in Figure~\ref{fig:readjudgment} in
+Appendix~\ref{sec:fullrules}.
+
+Finally, the \ruleref{select} rule gives type 
+$\says{(\txsel{\ell_1}{\ell_2})}{\tau}$ to the expression $\select{e_1}{e_2}$ 
+where $e_1$ and $e_2$ have types $\says{\ell_1}{\tau}$ and 
+$\says{\ell_2}{\tau}$ respectively. 
+
+The typing judgment for the global 
+configuration is presented in Figure~\ref{fig:stacktypes}
+and consists of three rules.
+Rule \ruleref{Head} shows that 
+the global configuration $\distcon{e}{c}{t}$,
+is well-typed if the 
+expression $e$ is well-typed at host 
+$c$ with program counter $pc'$
+where $\drflowjudge{\Pi}{pc}{pc'}$ and the  
+tail $t$ is well-typed.  
+$[\tau']\tau$ means that 
+the tail of the stack is of type $\tau$ 
+while the expression in the 
+head of the configuration is
+of type $\tau'$. We introduced rules
+\ruleref{Tail}(when $t \neq \emptystack$) and 
+\ruleref{Emp}(when $t = \emptystack$) to
+typecheck the tail $t$.
+
+$\stackapp{E[\expecta{{\tau'}}]}{c}{t}$
+is well-typed with type $[\tau']\tau$, 
+if expression $E[\expecta{{\tau'}}]$
+is well-typed with type $\hat{\tau}$ at host c.
+And, the rest of the stack $t$ needs to be well-typed 
+with type $[\hat{\tau}]\tau$.
+%but now the type of the head of the 
+%configuration is updated to $\hat{\tau}$.
+Rule \ruleref{Emp} says the tail is empty
+and the type of the expression in the head of the  
+configuration is $\tau$, 
+in which case the type of the whole stack is $[\tau]\tau$.
+
+\begin{figure}
+%\begin{subfigure}
+  {\small
+\begin{flushleft}
+  %\rulefiguresize
+  \boxed{\TValP{\Gamma;\pc}{\distcon{e}{c}{t}}{\tau}} \\
+\begin{mathpar}
+\Rule{Head}{
+\TVal{\Pi;\Gamma;pc';c}{e}{\tau'} \\ \TValGpcS{t}{[\tau']\tau} \\\\
+\drflowjudge{\Pi}{\pc}{\pc'} \\ 
+\rafjudge{\Pi}{c}{pc} 
+}
+{\TValGpcS{\distcon{e}{c}{s}}{\tau}}
+\end{mathpar}
+ \boxed{\TValP{\Gamma;\pc}{\distS{e}{c}{t}}{[{\tau'}]\tau}} \\
+\begin{mathpar}
+
+\Rule{Tail}{
+\TVal{\Pi;\Gamma;pc';c}{E[\expecta{{\tau'}}]}{\hat{\tau}} \\ 
+\TValGpcS{t}{[\hat{\tau}]\tau} \\\\
+ \drflowjudge{\Pi}{\pc}{\pc'} \\
+\rafjudge{\Pi}{c}{pc} \\
+}
+{\TValGpcS{\distS{E[\expecta{{\tau'}}]}{c}{t}}{[{\tau'}]\tau}} 
+
+\Rule{Emp}{}
+{\TValGpcS{\emptystack}{[\tau]\tau}}
+\end{mathpar}
+\end{flushleft}
+}
+\caption{Typing rules for configuration stack}
+\label{fig:stacktypes}
+\end{figure}
+
+
+\section{Availability Attackers} \label{sec:availAttacks}
+Availability attackers are different from traditional integrity
+and confidentiality attackers.  While an integrity attacker's goal is to
+manipulate data and a confidentiality 
+attacker's goal is to learn secrets, an
+availability attacker's goal is to cause failures. 
+In our model, an availability attacker can substitute a value 
+only with a $\mathsf{fail}$ term.
+Integrity attackers may also cause failures in consensus
+based protocols when consensus is not reached because 
+of data manipulation.
+In FLAQR this scenario is relevant during executing 
+a $\mathsf{compare}$ statement: if one of the values 
+in the $\mathsf{compare}$ statement is substituted with a wrong (mismatching) value
+then a $\mathsf{fail}$ term is returned.
+Thus we need to consider an 
+availability attacker's
+integrity authority when reasoning about its power to $\mathsf{fail}$ a 
+program. 
+Specifically, the authority 
+of principal $\ell$ as an availability
+attacker is $\reachn{\ell}$.
+
+We consider a
+static but active attacker model 
+similar to those used in Byzantine consensus protocols. 
+By static we mean which principal or
+collection of principals can 
+act maliciously is fixed prior 
+to program execution. By active we mean that
+the attackers may manipulate 
+inputs (including higher-order functions) 
+during run time.  We formally define the
+power of an availability attacker with respect to quorum systems.
+
+Availability attackers in FLAQR 
+are somewhat different than 
+integrity and confidentiality attackers 
+because we want to represent
+multiple possible attackers but limit which
+attackers are active for a particular execution.
+This goal supports the bounded fault assumptions
+found in consensus protocols where system configurations
+assume an upper bound on the number of faults possible.
+
+A quorum system $\quo$ is represented as set of sets of hosts (or
+principals) e.g. $\quo = \{q_1, q_2, \ldots, q_n\}$. Here each $q_i$
+represents a set of principals whose consensus is adequate for the
+system to make progress. 
+We define availability attackers in terms
+of the \emph{toleration set} $\trans{\quo}$ of a quorum system $\quo$.
+The toleration set is a set of principals where
+each principal represents an upper bound
+on the authority of an attacker the quorum can tolerate without failing.
+
+\begin{example}\hfill
+  {\small
+\begin{enumerate}
+\item The toleration set for quorum 
+$\quo_1=\{q_1:=\{a,b\};q_2:=\{b,c\};q_3:=\{a,c\}\}$ is
+${\transi{\quo_1}{}} = \{\reachn{a}, \reachn{b}, \reachn{c}\}$,
+%
+\item For heterogeneous quorum system 
+$\quo_2 = \{q_1 := \{p,q\}; q_2 := \{r\}\}$
+the toleration set is
+${{\transi{\quo_2}{}}}= 
+\{ \reachn{p} \wedge \reachn{q}, \reachn{r}\}$ 
+%and attacker set is $\mathcal{A_{\transi{\quo_2}{\avail}}}=$.
+%\end{example}
+
+%\begin{example}
+\item For $\quo_3 = \{q := \{alice\}\}$
+the toleration set is
+${{\transi{\quo_3}{}}}=\{\}$, i.e. $\quo_3$ can
+not tolerate any fault.
+%and attacker set is $\mathcal{A_{\transi{\quo_2}{\avail}}}=$.
+\end{enumerate}
+}
+\end{example}
+
+An availability attacker's authority
+is at most equivalent to a (single) principal's authority in the toleration set.
+We define the set of all such attackers for a quorum  
+$\mathcal{Q}$ as
+$$\mathcal{A_{\transi{\mathcal{Q}}{}}} 
+= \{\ell \mid \exists \ell' \in {\transi{\quo}{}}.
+                             \rafjudge{\Pi}{\ell'}{\ell}\}.$$
+which includes weaker attackers who a principal in the toleration set may act on behalf of.
+
+
+\begin{figure}
+{\footnotesize
+%\begin{flalign*}
+%& \boxed{\recrafjudge{\Pi}{\ell}{\tau}} &
+%\end{flalign*}
+\begin{mathpar}
+	\Rule{A-Pair}
+	{\recrafjudge{\delegcontext}{\ell}{\tau_i} \quad i \in \{1,2\}
+	}
+	{\recrafjudge{\delegcontext}{\ell}{\prodtype{\tau_1}{\tau_2}}} 
+%
+	\Rule{A-Sum}
+	{\recrafjudge{\delegcontext}{\ell}{\tau_i} \quad i \in \{1,2\}
+	}
+	{\recrafjudge{\delegcontext}{\ell}{\sumtype{\tau_1}{\tau_2}}} 
+
+        \Rule{A-Fun}{
+            \recrafjudge{\delegcontext}{\ell}{\tau_2}}
+          {\recrafjudge{\Pi}{\ell}{\func{\tau_1}{\pc'}{\tau_2}}}
+
+	\Rule{A-Type}
+	{
+        \recrafjudge{\Pi}{\ell}{\tau}
+	}
+	{\recrafjudge{\delegcontext}{\ell}{\says{\ell'}{\tau}}}
+%
+%     \Rule{A-TFun}
+%       {\recrafjudge{\delegcontext}{\ell}{\tau}}
+%       {\recrafjudge{\delegcontext}{\ell}{\tfuncpc{X}{\pc'}{\tau}}}
+%
+
+        \Rule{A-Avail}
+        {
+        \rafjudge{\Pi}{\ell^{\avail}}{\ell'^{\avail}}
+        }
+   	{\recrafjudge{\delegcontext}{\ell}{\says{\ell'}{\tau}}}
+	\Rule{A-IntegCom}
+	{\rafjudge{\delegcontext}{\ell^{\integ}}{{{\ell_j}^{\integ}}} 
+	, j\in \{1,2\}}
+	{\recrafjudge{\delegcontext}{\ell}
+        {\says{(\txcmp{\ell_1}{\ell_2})}{\tau}}} \hfill
+\end{mathpar}
+}
+\caption{fails judgments.}
+\label{fig:avail-actsfor}
+\end{figure}
+The fails relation ($\gtrdot$)
+determines whether a principal can cause a program of a particular type to
+evaluate to $\mathsf{fail}$.  Similar to the reads judgment, the fails judgment not only considers the
+outermost "says" principal, but also any nested "says" principals whose propagated
+failures could cause the whole term to fail.
+%
+Figure~\ref{fig:avail-actsfor} defines the fails judgment, written $\recrafjudge{\Pi}{l}{\tau}$,
+which describes when a principal $l$ can fail an expression of type $\tau$ in delegation
+context $\Pi$.
+
+Consider an expression 
+ $\return{\ell}{(\return{\ell'}{e})}$ and an attacker 
+principal $l_a$. If
+$\rafjudge{\Pi}{l_a^{\confid}}{\ell'^{\confid}}$, and
+$\notrafjudge{\Pi}{l_a^{\confid}}{\ell^{\confid}}$, 
+then the attacker learns nothing by evaluating 
+$\return{\ell}{(\return{\ell'}{e})}$.
+%
+Similarly, if $\rafjudge{\Pi}{l_a^{\integ}}{\ell'^{\integ}}$ and
+$\notrafjudge{\Pi}{l_a^{\integ}}{\ell^{\integ}}$, then the attacker 
+cannot influence the value $\return{\ell}{(\return{\ell'}{e})}$.
+%
+
+In contrast, if $\rafjudge{\Pi}{{l_a}^{\avail}}{{\ell'}^{\avail}}$, and
+$\notrafjudge{\Pi}{l_a^{\avail}}{{\ell}^{\avail}}$, 
+an availability attacker may cause
+$\return{\ell'}{e}$ to evaluate to $\faila{\says{\ell'}{\tau}}$,
+%
+which steps to $\faila{\says{\ell}{(\says{\ell'}{\tau})}}$ by
+\ruleref{E-SealedFail}.
+The fails relation reflects this possibility.
+Using \ruleref{A-Type} and 
+\ruleref{A-Avail} ( or \ruleref{A-IntegCom} if $\ell'$
+was of form $(\txcmp{\ell_1}{\ell_2})$ ) we get
+$\recrafjudge{\Pi}{l_a}{\says{\ell}{(\says{\ell'}{\tau})}}$.
+
+
+
+
+
+We use the fails relation and the attacker set to define which
+availability policies a particular quorum system is capable of
+enforcing. We say $\quo$ \emph{guards} $\tau$ if the following rule applies:
+\[
+\Rule{Q-Guard}
+        {
+         %\notrafjudge{\delegcontext}{\ell}{\ell'} \\
+         \forall \ell \in \A_{\transi{\quo}{}}.
+          \notrecrafjudge{\Pi}{\ell}{\tau}
+        }
+        {\protsA{\quo}{\tau}}
+\]
+
+\begin{definition}[Valid quorum type]
+A type $\tau$ is a \emph{valid quorum type}
+with respect to quorum system $\quo$
+and delegation set $\Pi$ if the condition 
+$\protsA{\quo}{\tau}$ is satisfied. 
+\end{definition}
+
+\begin{example}
+{\small
+If
+$\quo=\{q_1:=\{a,b\};q_2:=\{b,c\};q_3:=\{a,c\}\}$ and 
+$\ell_{\quo}= \txsel{(\txcmp{a}{b})}{\txsel{(\txcmp{b}{c})}{(\txcmp{a}{c})}}$
+then $\says{\ell_{\quo}}{(\says{a}{\tau})}$ is not 
+a valid quorum type because 
+$\nprotsA{\quo}{(\says{\ell_{\quo}}{(\says{a}{\tau})})}$ as 
+$\recrafjudge{\Pi}{a^{{\integ}{\avail}}}{\says{\ell_{\quo}}{(\says{a}{\tau})}}$
+and $a^{{\integ}{\avail}} \in \A_{\trans{\quo}}$.      
+But it is a valid quorum type for heterogeneous quorum system  
+$\quo' = \{q_1:=\{a,b\}; q_2:=\{a,c\}\}$ as 
+$a^{{\integ}{\avail}} \notin \A_{\trans{\quo'}}$.
+}
+\end{example}
+
+%Our goal is to ensure low-availability principals 
+%cannot interfere with highly 
+%available outputs. The types of the programs
+%indicate whether the output will be eventually produced 
+%with respect to a certain quorum and 
+%its attacker set, or not.
+%Thus we can reason about availability (along with
+%integrity and confidentiality) of outputs 
+%statically.
+%In section
+%\ref{sec:secPropNI} we show that
+%FLAQR programs ensure noninterference.
+ 
+\section{Security Properties}\label{sec:secProp}
+
+To evaluate the formal properties of FLAQR, we prove that FLAQR
+preserves noninterference for confidentiality, integrity, and
+availability (section \ref{sec:secPropNI}).  
+These theorems state that attackers cannot learn secret
+inputs, influence trusted outputs, or control the failure behavior of
+well-typed FLAQR programs. In addition, we also prove additional
+theorems that formalize the soundness of our type system with
+respect to a program's failure behavior.
+
+\subsection{Soundness of failure}
+\label{blameproofs}
+%
+
+FLAQR's semantics uses the $\mathsf{compare}$ and $\mathsf{select}$ security
+abstractions and the failure propagation rules to model failure and
+failure-tolerance in distributed programs, and FLAQR's type
+system lets us reason statically about this failure behavior.  To verify
+that such reasoning is \emph{sound}, we prove two related theorems
+regarding the type of a program and the causes of potential failures.
+
+
+
+In pursuit of this goal, this section introduces our \emph{blame semantics}
+which reasons about failure-causing (faulty) principals during program
+execution. 
+The goal is to record the set of 
+principals which may cause run-time failures as
+a constraint on the set of faulty nodes $\mathbf{\FN}$.
+Figure~\ref{fig:blame} presents the syntax of \emph{blame constraints}, which are boolean 
+formulas representing a lower bound on the contents of $\FN$.
+Atomic constraints $\inF{\ell}{\FN}$ denote that label $\ell$ is in faulty set $\FN$.
+This initial blame constraint ($\blame_{init}$) is represented 
+using the toleration set of
+the implied quorum system.  
+
+\begin{figure}
+  \small
+  \[
+    \begin{array}{rcl}
+      \blame &::=& \FN = \emptyset \sep \blam \\[0.4em]
+      \blam &::=& \inF{\ell}{\FN} \sep \blam_1 \OR \blam_2 \sep 
+                   \blam_1 \AND \blam_2 \\[0.4em] 
+% \sep \conS \OR \conS \sep \conS \AND \conS
+    \end{array}
+  \]
+  \caption{Blame constraint syntax}
+  \label{fig:blame}
+\end{figure}
+
+
+\begin{figure}
+{\footnotesize
+%\begin{flalign*}
+%& \boxed{\entails{\mathcal{C}_1}{\inF{\ell}{\FN}}} &
+%\end{flalign*}
+\begin{mathpar}
+        \Rule{C-In}{\rafjudge{\Pi}{\ell'}{\ell}}
+        {\entails{\inF{\ell'}{\FN}}{\inF{\ell}{\FN}}}
+
+	\Rule{C-Or}{\entails{\blame_1}{\inF{\ell}{\FN}} \\ \entails{\blame_2}{\inF{\ell}{\FN}}}
+	{\entails{\blame_1 \OR \blame_2}{\inF{\ell}{\FN}}}
+
+        \Rule{C-AndL}{\exists i \in \{1,2\}. ~\entails{\blame_i}{\inF{\ell}{\FN}}}
+        {\entails{\blame_1 \AND \blame_2}{\inF{\ell}{\FN}}} 
+\end{mathpar}
+}
+\caption{Blame membership}
+\label{fig:bmmain}
+\end{figure}
+
+
+
+
+
+
+
+\begin{definition}[Initial blame constraint]
+  \label{bist}
+  For toleration set $\trans{\quo}$ of the form
+  $\{\reachn{(p^1_1 \wedge ... \wedge p^1_{m_1})}, ..., \reachn{(p^{k}_1 \wedge ... \wedge p^{k}_{m_{k}})} \}$ 
+  the initial blame constraint $\blame_{init}$ is defined as a (logical) disjunction
+  of conjunctions:
+  {\small
+  \begin{align*}
+    \blame_{init} \triangleq ~& (\inF{p^1_1}{\FN} \AND ... \AND  \inF{p^1_{m_1}}{\FN}) \OR ... \\
+                            & \qquad \OR (\inF{p^{k}_1}{\FN} \AND ... \AND \inF{p^{k}_{m_{k}}}{\FN}) 
+  \end{align*}
+  }
+\end{definition}
+Each disjunction represents a minimal subset of a possible satisfying assignment
+for the faulty set $\FN$.  For brevity, we will refer to these subsets
+as the \emph{possible faulty sets} implied by a particular blame constraint.
+Observe that for quorum system $\quo$, there is a one-to-one
+correspondence between every  $t_i \in {\transi{\quo}{}}$
+and every possible faulty set $\FN_1, ..., \FN_{k}$ in $\blame_{init}$
+where $\FN_{i}$ is the set implied by the $i^{th}$ disjunction in $\blame_{init}$
+such that $t_i = \reachn{b_i}$, where $b_i = \bigwedge_{p \in \FN_i} p$.
+
+Evaluation rule \ruleref{C-CompareFail}, 
+in Figure \ref{fig:ccomparefail},
+shows how function $\last$ (discussed below) 
+updates the blame constraint from $\blame$ to $\blame'$.  
+%
+We omit the blame-enabled versions of other evaluation
+rules since they simply propagate the blame constraint without
+modification.
+
+\begin{figure*}
+  {\small
+\begin{mathpar}
+\derule{C-CompareFail}{v_1 \neq v_2 \quad \blame':= \last({v_1},{v_2}, \blame,
+\ell_1,\ell_2)}
+{\concon{\mathsf{compare}
+{\returnv{\ell_1}{v_1}}{\returnv{\ell_2}{v_2}}}{c}{s}{\blame}}
+{\concon{\faila{\says{(\txcmp{\ell_1}{\ell_2})}{\tau}}}{c}{s}{\blame'}}
+\end{mathpar}
+}
+\caption{\ruleref{E-CompareFail} with Blame Semantics.}
+\label{fig:ccomparefail}
+\end{figure*}
+
+
+
+\begin{example}\hfill
+\label{ex:fn1}
+
+\begin{enumerate}
+\item Quorum system
+$\quo_1 = \{ q_1=\{a,b\}; q_2=\{b,c\}; q_3=\{a,c\} \}$ 
+has toleration set
+${\transi{\quo_1}{}}= \{ \reachn{a}, \reachn{b}, \reachn{c} \}$
+and three possible faulty sets in $\blame_{init}$:
+$\FN = \{a\}$ or $\FN = \{b\}$ or
+$\FN = \{c\}$
+\item Quorum system
+$\quo_2 = \{q_1:=\{p,q\};q_2:=\{r\}\}$
+has toleration set  
+${{\transi{\quo_2}{}}}= 
+\{ \reachn{p} \wedge \reachn{q}, \reachn{r}\}$ 
+and two possible faulty sets in $\blame_{init}$:
+$\FN = \{p,q\}$ or $\FN = \{r\}$.
+\end{enumerate}
+\end{example}
+
+%
+While $\blame_{init}$ is defined statically according to
+the type of the program, rule \ruleref{C-CompareFail}
+updates these constraints according to actual failures
+that occur during the program's execution. This approach
+identifies ``unexpected'' failures not implied by
+$\blame_{init}$.
+
+For example, 
+$\quo_2 =\{q_1:=\{p,q\};q_2:=\{r\}\}$ has two possible faulty sets
+$\FN=\{p,q\}$ or $\FN=\{r\}$. 
+The initial blame constraint is
+$\blame_{init}  ::=  (\inF{p}{\FN} \AND \inF{q}{\FN})
+            \OR (\inF{r}{\FN})  $
+
+Placing blame for a specific failure in a distributed system is
+challenging, (and often impossible!). For example, when a comparison
+of values signed by $\ell_1$ and $\ell_2$ fails, it is unclear who to blame
+since either principal (or a principal acting on their behalf) could
+have influenced the values that led to the failure. We do know, however,
+that at least one of them is faulty; recording this information
+helps constrain the contents of possible faulty sets.
+
+%\paragraph{Blame membership}
+We can reason about principals that \emph{must} be in
+$\FN$ by considering all possible faulty sets
+implied by the blame constraints. We write
+$\entails{\blame}{\inF{\ell}{\FN}}$ 
+(read as $\blame$ \emph{entails} $\inF{\ell}{\FN}$), 
+when every possible faulty set in $\blame$, 
+has the $\inF{\ell}{\FN}$ clause. 
+Figure~\ref{fig:bmmain} presents inference rules
+for the $\entails{}{}$ relation.
+
+For example, since
+$\ell_1$ is included in all satisfying choices of $\FN$ below, 
+we can say $\entails{\blame}{\inF{\ell_1}{\FN}}$.
+{\small
+\begin{align*}
+\blame  = & (\inF{\ell_1}{\FN} \AND \inF{\ell_2}{\FN}) 
+            \OR (\inF{\ell_1}{\FN} \AND \inF{\ell_3}{\FN})  \\
+          & \OR (\inF{\ell_1}{\FN} \AND \inF{\ell_4}{\FN}) 
+            \OR (\inF{\ell_1}{\FN} \AND \inF{\ell_5}{\FN})
+\end{align*}
+}
+
+The $\last$ function 
+(full definition in Figure~\ref{fig:Blameconst})
+is used by rule \ruleref{C-CompareFail} 
+to update $\blame$.
+For an expression:
+$$\mathsf{compare}a{}{\returnv{\ell_1}{v_1}}{\returnv{\ell_2}{v_2}}$$
+with $v_1 \neq v_2$, $\last({v_1},{v_2}, \blame, \ell_1,\ell_2)$  
+updates the formulas in $\blame$ to reflect that either
+$\ell_1$ or $\ell_2$ is faulty.
+If $\ell_1$ or $\ell_2$ already \emph{must} be faulty, specifically if
+$\entails{\blame}{\inF{\ell_1}{\FN}}$ 
+or $\entails{\blame}{\inF{\ell_2}{\FN}}$, 
+then the function does not update any formulas.  This
+approach avoids blaming honest principals when the
+other principal is already known to be faulty.
+
+If neither $\ell_1$ nor $\ell_2$ are known to be faulty.  then function
+$\last$ is called recursively on inner layers (i.e., nested
+$\returnv{}{}$ expressions) of $v_1$ and $v_2$ until a subexpression
+protected by a known-faulty principal is found. If no such layer is
+present, then the principal protecting the innermost layer is added to
+$\blame$ (or the outer principals if there are no inner layers).  Only
+this principal has seen the unprotected value and thus could have
+knowingly protected the wrong value.  Observe that for well-typed
+$\mathsf{compare}$ expressions, only the outer layer of $\mathsf{compare}$d terms may
+differ in protection level, so there is less ambiguity when blaming an
+inner principal.  
+%See Figure~\ref{fig:Blameconst} for more details on
+%how blame is assigned based on the structure of compared terms.
+
+Updated constraints are kept in disjunctive normal form.
+Specifically, for compared terms $\returnv{\ell_1}{v_1}$ and
+$\returnv{\ell_2}{v_2}$, with $v_1 \neq v_2$, with initial constraint:
+$\blame_{init} ::= (\inF{p}{\FN} \AND \inF{q}{\FN}) \OR
+(\inF{r}{\FN})$, then $\last({v_1},{v_2}, \blame_{init},
+\ell_1,\ell_2)$ returns
+{\small
+\begin{align*}
+\blame'  = & (\inF{p}{\FN} \AND \inF{q}{\FN} \AND \inF{\ell_1}{\FN}) \\
+           & \OR (\inF{p}{\FN} \AND \inF{q}{\FN} \AND \inF{\ell_2}{\FN})  \\
+          & \OR (\inF{r}{\FN} \AND \inF{\ell_1}{\FN}) 
+            \OR (\inF{r}{\FN} \AND \inF{\ell_2}{\FN})
+\end{align*}
+}
+
+We can now state the soundness theorem for our blame semantics,
+and apply it to prove a liveness result.
+Theorem~\ref{th:failresult0} states that for any well-typed FLAQR program
+with a failing execution, and
+the faulty sets $\FN_i$ implied by $\blame'$ (the final constraint computed by
+the blame semantics), it must be the case that the program's type $\tau$
+reflects the ability of the (possibly colluding) principals in $\FN_i$ to fail the
+program.
+
+\begin{restatable}[Sound blame]{theorem}{failresult}
+%                                                 ^ env type  ^ macro name
+\label{th:failresult0}
+Given,
+\begin{enumerate}
+\item $\TValGpcw{\concon{e}{c}{\emptystack}{\blame_{init}}}{\tau}$
+\item $\concon{e}{c}{\emptystack}{\blame_{init}} \stepsto 
+\concon{\faila{\tau}}{c}{\emptystack}{\blame'}$ 
+\end{enumerate} where $e$ is a source-level expression,\footnote{In other words,
+ $e$ does not contain any $\fail$ terms.}
+
+then for each possible faulty set $\FN_{i}$ implied by $\blame'$,
+there is a principal $b_i = \bigwedge_{p \in \FN_i} p$ such that
+$\recrafjudge{\Pi}{\reachn{b_i}}{\tau}$.
+\end{restatable}
+\begin{proof}
+Either $e$ takes single step or multiple steps to produce the
+$\faila{\tau}$ term as the end result. For both the cases 
+we prove it by induction over structure of $e$.
+See \cite{flaqrtr} for full proof.
+\end{proof}
+
+While Theorem~\ref{th:failresult0} characterizes the relationship
+between a program's type and the possible faulty sets for a
+failing execution, it does not explicitly tell us anything about the
+fault-tolerance of a particular program.  Since the type of a FLAQR
+program specifies its availability policy (in addition to its
+confidentiality and integrity), different FLAQR types will be tolerant
+of different failures.  Below, we prove a liveness result for a common
+case, majority quorum protocols.
+
+\begin{definition}[Majority quorum system]
+An $m/n$ majority quorum system is a quorum system that always requires
+at least $m$ of its hosts to reach consensus, where $m>n-m$.
+\end{definition}
+
+\begin{theorem}[Majority Liveness] \label{th:majorityLive}
+If $e$ is a source-level expression and: 
+\begin{enumerate} 
+\item $\TValGpcw{\concon{e}{c}{\emptystack}{\blame_{init}}}
+{\tau}$ 
+\item \label{c:guard} $\protsA{\quo}{\tau}$ 
+\item $\quo$ is a $m/n$ majority quorum system
+\item $\concon{e}{c}{\emptystack}{\blame_{init}} 
+\stepsone^{*} \concon{\faila{\tau}}{c}{\emptystack}{\blame'}$ 
+\end{enumerate}
+then for every possible faulty set $\FN'$ implied by $\blame'$, 
+$\lvert\FN'\rvert > (n-m)$.
+\end{theorem}
+\begin{proof}
+From \eqref{c:guard}, we know
+$\tau$ is a valid quorum type
+for $\quo$ so
+$\forall \ell \in \A_{\transi{\quo}{}}. \notrecrafjudge{\Pi}{\ell}{\tau}$.
+Since $\mathcal{A}_{\transi{\quo}{}}$
+is a superset of $\transi{\quo}{}$,
+we also have $\forall t \in \transi{\quo}{}. \notrecrafjudge{\Pi}{t}{\tau}$.
+%
+Furthermore, from Definition~\ref{bist}, for each possible
+faulty set $\FN_{i}$ implied by $\blame_{init}$, we know there
+is a principal $t_i \in \trans{\quo}$ 
+such that $t_i = \reachn{b_i}$, where $b_i = \bigwedge_{p \in \FN_i} p$.
+Therefore, for each such $b_i$, we know $\notrecrafjudge{\Pi}{\reachn{b_i}}{\tau}$.
+
+%From condition $3.$ we know, 
+Since $\quo$ is an $m/n$ majority quorum system, 
+every quorum is of size $m$ and every faulty set
+in $\blame_{init}$ is of size $(n-m)$. 
+For contradiction, assume there exists a
+faulty set $\FN'$ satisfying
+$\blame'$ that has size $(n-m)$.
+Then by the definition of $\last$, all possible
+faulty sets implied by $\blame'$ also have
+size $(n-m)$ since $\last$ monotonically increases
+the size of all possible faulty sets or none of them.
+Furthermore, each possible faulty set implied by $\blame_{init}$
+is a subset (or equal to) a possible faulty set implied by $\blame'$,
+so $\lvert\FN'\rvert = (n-m)$ implies $\blame_{init}=\blame'$.
+
+From Theorem~\ref{th:failresult0}
+we know for every possible faulty set $\FN'_i$
+implied by $\blame'$, it must be the case that
+$\recrafjudge{\Pi}{\reachn{b'_i}}{\tau}$, where
+$\bigwedge_{p\in \FN'_i}p$. However, since $\blame_{init} = \blame'$,
+we have a contradiction since \eqref{c:guard} implies
+$\notrecrafjudge{\Pi}{\reachn{b'_i}}{\tau}$.
+Thus there cannot exist a possible faulty set of size (at least) $(n-m)$
+implied by $\blame'$, and all possible faulty sets must have size greater
+than $(n-m)$.
+\end{proof}
+
+\subsection{Noninterference}\label{sec:secPropNI}
+
+We prove noninterference by extending
+the FLAQR syntax with bracketed expressions in the
+style of Pottier and Simonet~\cite{ps02}. 
+%Figure \ref{fig:bracketProj} shows bracket projections.
+Figure \ref{fig:brackets} shows selected 
+bracketed evaluation rules and
+Figure \ref{fig:bracketTypes} and 
+\ref{fig:distbracketTypes}
+show the typing rules for bracketed terms.
+The soundness and completeness of the
+bracketed semantics are proved in \cite{flaqrtr}.
+%Appendix~\ref{sec:subjRedRel}
+%(Lemmata \ref{lemma:sound} - \ref{lemma:completedist}).
+
+Noninterference often is expressed
+with a distinct attacker label. 
+We use $H$ to denote the attacker. 
+This means the attacker can 
+read data with label $\ell$ if
+$\drflowjudge{\Pi}{\ell^{\confid}}{H^{\confid}}$
+and can forge or influence it if
+$\drflowjudge{\Pi}{H^{\integ}}{\ell^{\integ}}$
+and can make it unavailable if 
+$\drflowjudge{\Pi}{H^{\avail}}{\ell^{\avail}}$
+
+%FLAQR is a language for writing fault-tolerant programs, 
+%so even programs that successfully terminate may have subexpressions that 
+%fail.
+An issue in typing brackets is how to deal with $\fail$ terms.
+Our confidentiality and integrity results are \emph{failure-insensitive}
+in the sense that they only apply to terminating executions.  This
+is similar to how termination-insensitive noninterference is typically
+characterized for potentially non-terminating programs.
+
+Traditionally, bracketed typing rules require that bracketed terms
+have a restrictive type, ensuring that only values derived from secret
+(or untrusted) inputs are bracketed. In FLAQR, there are several
+scenarios where a bracketed value may not have a restrictive type.
+For example, when a "run" expression is evaluated within a bracket, it
+pushes an element onto the configuration stack, but only in one of the
+executions.  Another example is when a bracketed value occurs in a
+$\mathsf{compare}$ expression, but the result is no longer influenceable by the
+attacker $H$.  For these scenarios, several of the typing rules in
+Figure~\ref{fig:bracketTypes} permit bracketed values to have less
+restrictive types. Because of these rules, subject reduction does not
+directly imply noninterference as it does in most bracketed approaches,
+but the additional proof obligations are relatively easy to discharge.
+
+\begin{table}
+{\small
+\begin{tabular}{ |c|c|c| } 
+ \hline
+  & \multicolumn{2}{l|}{Can have less restrictive type} \\
+ \hline
+ Term & $\pi = \textsf{i}$ & $\pi = \textsf{a}$ \\
+ \hline
+ $\bracket{v}{v'}$ & No & Yes \\ 
+ \hline
+ $\bracket{v}{\faila{\tau}}$ & Yes & No \\ 
+ \hline
+ $\bracket{v}{v}$ & Yes & Yes \\ 
+ \hline
+ $\bracket{\faila{\tau}}{\faila{\tau}}$ & Yes & Yes \\ 
+ \hline
+\end{tabular}
+\caption{Different cases of noninterfering bracketed values}
+}
+\label{table:availIntNI}
+\end{table}
+
+The table above summarizes how bracketed terms are typed depending on
+whether we are concerned with integrity or availability. For
+integrity, unequal bracketed values must have a restrictive type
+(i.e., one that protects $H$), but equal bracketed values may have a
+less restrictive type.  For availability, only bracketed terms where
+one side contains a value and the other a failure must have a
+restrictive type.
+
+\subsubsection{Confidentiality and Integrity Noninterference} \label{sec:congIntNI}
+To prove confidentiality (integrity) noninterference 
+we need to show that given 
+two different secret (untrusted) inputs to 
+an expression $e$ the evaluated 
+public (trusted) outputs are equivalent.
+Equivalence is defined in terms of an observation function $\observe$ adapted from
+FLAC~\cite{jflac} in Appendix \ref{appendix}, Figure \ref{fig:observe}. 
+
+\begin{restatable}[\textsf{c}-\textsf{i} Noninterference]{theorem}{ciNonInterference} 
+\label{th:ciNI}
+If $\TValP{\Gamma,x:\says{\ell'}{\tau'}}
+{\distcon{e}{c}{\emptystack}}{\says{\ell}{\tau}}$ where
+\begin{enumerate}
+\item $\TValGpcw{v_i}{\says{\ell'}{\tau'}}$, $i \in \{1,2\}$
+\item $\distcon{\subst{e}{x}{\bracket{v_1}{v_2}}}{c}{\emptystack}
+\stepsto \distcon{v}{c}{\emptystack}$ 
+\item $\drflowjudge{\Pi}{H^{\pi}}{\ell'}$ and 
+$\ndrflowjudge{\Pi}{H^{\pi}}{\ell}$, $\pi \in \{\mathsf{c},\mathsf{i}\}$.
+\end{enumerate}
+then,
+$\observet{\outproj{v}{1}}{\Pi}{\ell}{\pi} = 
+\observet{\outproj{v}{2}}{\Pi}{\ell}{\pi}$
+%\end{theorem} 
+\end{restatable}
+\begin{proof}
+From subject reduction we can prove that $\outproj{v}{1}$ 
+and $\outproj{v}{2}$ have same type. By induction over the
+structure of projected values, $\outproj{v}{i}$, we can show
+$\observet{\outproj{v}{1}}{\Pi}{\ell}{\pi} =
+\observet{\outproj{v}{2}}{\Pi}{\ell}{\pi}$
+See our technical report \cite{flaqrtr} for full proof.
+\end{proof}
+
+
+
+\subsubsection{Availability Noninterference}\label{sec:availNI}
+Similar to \cite{qimp} our end-to-end 
+availability guarantee is also expressed 
+as noninterference property.
+Specifically, if one run of a well-typed FLAQR program 
+running on a quorum system
+terminates successfully (does not fail),
+then all other runs of the program also terminate.
+
+This approach treats ``buggy'' programs where every execution returns
+$\fail$ regardless of the choice of inputs as noninterfering.  This
+behavior is desirable because here we are concerned with proving the
+absence of failures that attackers can \emph{control}.  For structured
+quorum systems with a liveness result such as
+Theorem~\ref{th:majorityLive} for $m/n$ majority quorums, we can
+further constrain when failures may occur.  For example,
+Theorem~\ref{th:majorityLive} proves failures can only occur when more
+than $(n-m)$ principals are faulty.  In contrast,
+Theorem~\ref{th:availNI} applies to arbitrary quorum systems provided
+they guard the program's type, but cannot distinguish programs where
+all executions fail.
+
+
+
+
+\begin{restatable}[Availability Noninterference]{theorem}{availNonInterference} 
+\label{th:availNI}
+If \\ $\TValP{\Gamma,x:\says{\ell}{\tau'}} {\distcon{e}{c}{\emptystack}}{\says{\ell_{\quo}}{\tau}}$
+where
+\begin{enumerate}
+\item $\TValGpcw{f_i}{\says{\ell}{\tau'}}, i \in \{1,2\}$
+\item $\distcon{\subst{e}{x}{\bracket{f_1}{f_2}}}{c}{\emptystack}
+\stepsto \distcon{f}{c}{\emptystack}$
+\item $\recrafjudge{\Pi}{H}{\says{\ell}{\tau'}}$ and
+$H^{{\integ}{\avail}} \in \A_{\trans{\quo}}~$ and \\
+${\protsA{\quo}{(\says{\ell_{\quo}}{\tau}})}$
+\end{enumerate}
+then $\outproj{f}{1} \neq \faila{\says{\ell_{\quo}}{\tau}} 
+\Longleftrightarrow  \outproj{f}{2} \neq \faila{\says{\ell_{\quo}}{\tau}}$
+\end{restatable}
+\begin{proof}
+From subject reduction (see \cite{flaqrtr}) we know, 
+$\TValGpcw{\outproj{f}{i}}{\says{\ell_{\quo}}{\tau}}$.
+Because ${\protsA{\quo}{(\says{\ell_{\quo}}{\tau})}}$ and
+$\reachn{H} \in \A_{\trans{\quo}}~$ we can write
+$\notrecrafjudge{\Pi}{\reachn{H}}{\says{\ell_{\quo}}{\tau}}$
+from rule \ruleref{Q-Guard}.
+This ensures if
+$\outproj{f}{1} \neq \faila{\says{\ell_{\quo}}{\tau}}$,
+then $\outproj{f}{2} \neq \faila{\says{\ell_{\quo}}{\tau}}$, 
+and vice-versa.
+\end{proof}
+
+
+\section{Examples revisited} \label{sec:examRev}
+%Now that the readers are familiar with
+%FLAQR semantics, type system and security
+%properties 
+We are now ready to implement  
+the examples from section \ref{sec:section2.0}
+with FLAQR semantics.
+To make these implementations intuitive 
+we assume that
+our language supports integer ($int$)
+types, a mathematical
+operator $\mathsf{>}$ (greater than), and ternary operator $\mathsf{:?}$. 
+Beacuse $\mathsf{int}$ is a base type
+$\UB{\mathsf{int}}$ returns $\bot$.
+The examples
+also read from the local state of the 
+participating principals. 
+Which is fine because there are
+standard ways to encode memory (reads/writes)
+into lambda-calculus. 
+%The example codes in \ref{sec:section2.0} did not consider
+%confidentiality, 
+%but the FLAQR implementations here
+%takes confidentiality into account.
+%We will see that
+%With FLAQR semantics programmers 
+%can take care of unavailability
+%failures with blocks of $\mathsf{select}$ constructs.
+%need not check for failures due
+%to unavailability, the $\mathsf{select}$ blocks take care
+%of that. 
+
+\subsection{Tolerating failure and corruption}
+In this FLAQR implementation (Figure \ref{flaqrimpl2.1}) of 
+$2/3$ majority quorum example of section 
+\ref{sec:section2.1}, 
+we refer principals representing
+\texttt{alice}, 
+\texttt{bob} and \texttt{carol} as 
+$a$, $b$ and $c$ respectively.
+%to save space.
+The program is executed at host $c'$ 
+with program counter $pc$. 
+Which means condition 
+$\rafjudge{\Pi}{c'}{pc}$ holds.
+The program body consists of a function
+of type $\tau_f =$($\func{\tau_a}{pc}{\func{\tau_b}{pc}{\func{\tau_c}{pc}{}}}$
+${(\says{(\txsel{(\txcmp{a^{{\integ}{\avail}}}{b^{{\integ}{\avail}}})}
+{\txsel{(\txcmp{b^{{\integ}{\avail}}}
+{c^{{\integ}{\avail}}})}
+{(\txcmp{a^{{\integ}{\avail}}}{c^{{\integ}{\avail}}})}})}{\tau})
+}$)
+and the three arguments 
+to the function are
+"run" statements. 
+Here $\tau$ is $\says{(\textit{a} \wedge \textit{b}
+\wedge \textit{c})^{\confid}}{\mathsf{int}}$.
+Which means $\UB{\tau_f} = pc$. The
+function body can be evaluated at $c'$, as 
+condition $\rafjudge{\Pi}{c'}{pc}$ is true.% already.
+
+\begin{figure*}
+\begin{mdframed}
+\begin{subfigure}{1\textwidth}
+\begin{lstlisting}
+$(\lamc{x}{\tau_a}{pc}{}\lamc{y}{\tau_b}{pc}{}\lamc{z}{\tau_c}{pc}{}$
+$\quad(\selex{}$
+$\quad\quad({\mathsf{compare}{x}{y}}){}{}$ $\label{com1}$
+$\quad\orex$
+$\quad\quad(\selex{}$
+$\quad\quad\quad{(\mathsf{compare}{y}{z)}}$ $\label{com2}$
+$\quad\quad\orex$
+$\quad\quad\quad{(\mathsf{compare}{x}{z})})))$ $\label{com3}$
+$~(\runa{\tau_a}{e_a}{a})~(\runa{\tau_b}{e_b}{b})~(\runa{\tau_c}{e_c}{c})$
+\end{lstlisting}
+\caption[size=2pt]{FLAQR implementation of majority quorum example}
+\label{flaqrimpl2.1}
+\end{subfigure}
+\begin{subfigure}{1\textwidth}
+\begin{lstlisting}
+$(\lamc{arg_1}{\tau_b}{pc}{(\lamc{arg_2}{\tau_{b'}}{pc}{}}$
+$\quad(\selonly$
+$\quad\quad{(\bind{x}{arg_1}{}}({\bind{y}{arg_2}{}}$ $\label{ex:bind1}$
+$\quad\quad\quad(\bind{x'}{x}{}(\bind{y'}{y}{}$ $\label{ex:bind2}$
+$\quad\quad\quad\quad{\returnv{d}{\returnv{(b^{\confid}\wedge b'^{\confid})}{(x'>y'~?~x'~:~y')}}}))))$
+$\quad\orex$
+$\quad(\select{(arg_1)}{(arg_2))})))(\runa{\tau_{b'}}{e'}{b'}))(\runa{\tau_b}{e}{b})$
+\end{lstlisting}
+\caption{FLAQR implementation of available largest balance example}
+\label{flaqrimpl2.2}
+\end{subfigure}
+\end{mdframed}
+\end{figure*}
+
+Here $e_a$, $e_b$ and $e_c$ are the expressions
+that read the balances for 
+account $acct$ from the local
+states of \textit{a}, \textit{b} and 
+\textit{c} respectively.
+The program counter at \textit{a}, 
+\textit{b}, and \textit{c} are
+\textit{a}, \textit{b} and \textit{c}
+respectively.
+The data returned from \textit{a}
+has type $\tau_a$, which is basically 
+$\says{{\textit{a}}^{{\integ}{\avail}}}{\tau}$.
+Similarly $\tau_b$ is
+$\says{{\textit{b}}^{{\integ}{\avail}}}{\tau}$ and
+ $\tau_c$ is
+$\says{{\textit{c}}^{{\integ}{\avail}}}{\tau}$.
+Because each "run" returns a balance, the base type 
+of $\tau$ 
+is an $int$ type, and it is protected
+with confidentiality label
+$(\textit{a} \wedge \textit{b} \wedge \textit{c})^{\confid}$,
+meaning anyone who can read all the three labels
+(\textit{a}, \textit{b} and \textit{c}), 
+can read the returned balances. 
+
+
+In order to typecheck the "run" statements the conditions 
+$\drflowjudge{\Pi}{pc}{a}$,
+$\drflowjudge{\Pi}{pc}{b}$, and 
+$\drflowjudge{\Pi}{pc}{c}$ need to hold.
+The condition $\rafjudge{\Pi}{c'}{\UB{\tau_a}}$
+is trivially true as $\UB{\tau_a}= \bot$.
+Similarly 
+$\UB{\tau_b}= \bot$ and $\UB{\tau_c}= \bot$ as well.
+
+
+The host executing the code need to be 
+able to read the return values from the 
+three hosts. This means conditions
+$\readjudge{\Pi}{c'}{\says{{\textit{a}}^{{\integ}{\avail}}}{\tau}}$
+$\readjudge{\Pi}{c'}{\says{{\textit{b}}^{{\integ}{\avail}}}{\tau}}$ and
+$\readjudge{\Pi}{c'}{\says{{\textit{c}}^{{\integ}{\avail}}}{\tau}}$ need 
+to hold in order to typecheck the $\mathsf{compare}$ statements.
+% Which basically means $c$ can read values with
+% label \textit{a}, \textit{b} and \textit{c}.
+The type of the whole program is 
+$(\says{(\txsel{(\txcmp{a^{{\integ}{\avail}}}
+{b^{{\integ}{\avail}}})}
+{\txsel{(\txcmp{b^{{\integ}{\avail}}}
+{c^{{\integ}{\avail}}})}
+{(\txcmp{a^{{\integ}{\avail}}}{c^{{\integ}{\avail}}})}})}{\tau})$
+%The label $(\txsel{(\txcmp{a}{b})}
+%\txsel{(\txcmp{b}{c})}{(\txcmp{a}{c})}})$
+, which is a valid quorum type for 
+$\quo = \{q_1:=\{a, b\}; q_2:=\{b,c\}; q_3:=\{a, c\}\}$.
+
+
+Based on the security properties defined in section \ref{sec:secProp}
+this program offers the confidentiality, integrity 
+and availability guaranteed 
+by quorum system $\quo$.
+Therefore, the result cannot be learned or influenced by
+unauthorized principals, and will be available 
+as long as two hosts out of \textit{a}, 
+\textit{b}, and \textit{c} are non-faulty.
+
+The toleration set here is
+${\transi{\quo}{}} = \{ \reachn{a}, \reachn{b}, \reachn{c}\}$. 
+So, the program is not safe against an attacker with label
+$l_a=\reachn{a} \wedge \reachn{b}$ 
+(or, $a^{\integ} \wedge b^{\avail}$), for example. 
+This is because 
+$ \nexists t \in {\transi{\quo}{}}.\rafjudge{\Pi}{t}{l_a}$.
+Since $\rafjudge{{\Pi}}{l_a}{\reachn{a}}$, principal $l_a$ can 
+fail two $\mathsf{compare}$ statements on lines \ref{com1} and \ref{com3}. 
+And, because $\rafjudge{{\Pi}}{l_a}{\reachn{b}}$, 
+${l_a}$ can also fail
+another two $\mathsf{compare}$ statements 
+(one overlapping $\mathsf{compare}$ statment)
+on lines \ref{com1} and \ref{com2}.
+Thus the whole program evaluates to $\fail{}$. 
+This FLAQR code also helps prevent
+incorrect comparisons.
+For instance,
+replacing $z$ with $y$
+on line \ref{com3} will not typecheck.
+
+\subsection{Using best available services}
+The code in Figure \ref{flaqrimpl2.2} is the FLAQR implementation 
+of Figure \ref{fig:example2}. 
+The program runs at a host $c$ 
+with program counter $pc$.
+The expressions $e$ and $e'$ 
+read account balances 
+from principals $b$ and $b'$, representing the banks.
+The values returned from $b$ and $b'$ have types 
+$\tau_b = (\says{b^{{\integ}{\avail}}}
+{\says{(b^{\confid}\wedge b'^{\confid})}{\mathsf{int}}})$ 
+and $\tau_{b'} = (\says{b'^{{\integ}{\avail}}}
+{\says{(b^{\confid}\wedge b'^{\confid})}{\mathsf{int}}})$ respectively.
+
+The type of the whole program is 
+$(\says{(\txsel{d}{\txsel{b^{{\integ}{\avail}}}
+{b'^{{\integ}{\avail}}})}}
+{(\says{b^{\confid}\wedge b'^{\confid})}{int}})$.
+Here $d = pc \join b \join b'$.
+In order to typecheck the "run" statements,
+the conditions $\drflowjudge{\Pi}{pc}{b}$ and
+$\drflowjudge{\Pi}{pc}{b'}$ need to hold.
+The program counter at $b$ is $b$ and $b'$
+is $b'$.
+The bind statements (lines \ref{ex:bind1}-\ref{ex:bind2}) 
+typecheck because conditions
+$\drflowjudge{\Pi}{pc\join b^{{\integ}{\avail}}}{d}$, 
+$\drflowjudge{\Pi}{pc\join b^{{\integ}{\avail}} 
+\join b'^{{\integ}{\avail}}}{d}$, 
+$\drflowjudge{\Pi}{pc\join b^{{\integ}{\avail}} 
+\join b'^{{\integ}{\avail}} \join b^{\confid}}{d}$, and  
+$\drflowjudge{\Pi}{pc\join b^{{\integ}{\avail}}
+\join b'^{{\integ}{\avail}} \join b^{\confid} \join b'^{\confid}}{d}$ 
+hold, because of our choice of $d$.
+
+
+
+
+\section{Related work}
+FLAM \cite{flam}\cite{flamtr} offers an algebra to integrate authorization logics and 
+information flow control policies. FLAM also introduces a 
+security condition, robust authorization, that is useful to 
+ensure security when delegations and revocations change the 
+meaning of confidentiality and integrity policies. In FLAQR 
+we extend FLAM algebra with availability policies, 
+and new binary operations to represent 
+integrity and availability policies
+of the output of quorum based protocols.
+FLAC \cite{flac}\cite{jflac} embeds 
+its types with FLAM information flow policies. 
+FLAC supports dynamic delegation of authority, 
+but this feature is omitted in FLAQR. 
+
+
+%
+A limited number of previous approaches~\cite{avail, qimp}
+combine availability with more common confidentiality and integrity
+policies in distributed systems.
+Zheng and Myers \cite{avail} extend the Decentralized Label Model
+\cite{ml-tosem} with availability policies, but 
+focus primarily tracking dependencies rather than applying mechanisms such as
+consensus and replication to improve availability and integrity.
+%
+Zheng and Myers later introduce the language Qimp~\cite{qimp} with a type system
+explicitly parameterized on a quorum system for offloading computation while enforcing
+availability policies.
+%
+Instead of treating quorums specially, FLAQR quorums emerge naturally using $\mathsf{compare}$ and $\mathsf{select}$
+and enable application-specific integrity
+and availability policies that are secure by construction.
+%
+%Qimp also considers availability and integrity to be two separate entities,
+%whereas, our technique shows that there is a trade-off between integrity and
+%availability. In fact, Qimp accepts values whose integrity
+%is compromised, but in FLAQR
+%the outcomes either have the required integrity or they are a $\fail$ term.
+
+Hunt and Sands~\cite{quantale} present a novel generalisation of
+information flow lattices that captures disjunctive flows similar
+to the influence of replicas in FLAQR on a $\mathsf{select}$
+result.  Our partial-or operation was inspired by their treatment of
+disjunctive dependencies.
+
+Models of distributed system protocols are often verified with model
+checking approaches such as TLA+~\cite{plusCal}. Model checking
+programs is typically undecidable, making it ill-suited to integrate
+directly into a programming model in the same manner as a (decidable)
+type system.  To make verification tractable, TLA+ models are often
+simplified versions of the implementations they represent, potentially
+leading to discrepancies.  FLAQR is designed as a core calculus for a
+distributed programming model, making direct verification of
+implementations more feasible.
+
+BFT protocols \cite{pbft,bessani2014state} use consensus and
+replication to protect the integrity and availability of operations on
+a system's state. Each instance of a BFT protocol essentially enforces
+a single availability policy and a single integrity policy.  While composing multiple
+instances is possible, doing so provides no end-to-end availability or integrity
+guarantees for the system as a whole.  FLAQR programs, by constrast, routinely
+compose consensus and replication primitives to enforce multiple policies while
+also providing end-to-end system guarantees.
+
+Our blame semantics presented in Section~\ref{blameproofs} has some
+resemblance to the idea of blame used to detect contract
+violations~\cite{chof} and applied to gradual
+typing~\cite{blamecalc}.
+In our system, blame is necessarily ambiguous
+since perfect fault detection is not possible. Hence, rather than
+identifying a single program point responsible for a contract or type
+violation, our semantics builds constraints that specify a set of
+principals that may be responsible for a given failure.
+
+
+\if 0
+\section{Future Work}
+Although FLAQR already 
+is a strong programming model
+for quorum replication based computations,
+there is a number of ways 
+FLAQR can be extended with.
+Dynamic authorization 
+can be easily added into FLAQR
+by adding "assume" and "where"
+constructs, following FLAC \cite{flac}.
+This is possible because FLAQR security policies
+are built using FLAM principal algebra
+and FLAM integrates authorization logic
+into information flow model.
+Cryptographic mechanisms can also 
+be incorporated into FLAQR.
+For instance, it would be nice 
+to have homomorphic comparisons
+in \ruleref{Compare}, because 
+then the host executing the 
+compare will not require to read 
+the two values, relaxing some 
+restrictions on confidentiality.
+To make distibuted computations
+efficient, FLAQR programming model
+can also be updated with channels
+and prallel processes instead of having
+configuration stacks.
+%\cite{deflate}.
+%, as a future goal 
+\fi
+
+\section{Future work}
+Although FLAQR already is a strong programming model
+for quorum based computations,
+there is a number of ways 
+FLAQR can be extended with.
+Dynamic authorization 
+can be easily added into FLAQR, like it is done for FLAC \cite{flac}.
+This is because FLAQR security policies
+are built using FLAM principal algebra
+and FLAM integrates authorization logic
+into information flow model.
+Cryptographic mechanisms can also 
+be incorporated into FLAQR.
+For instance, it would be nice 
+to have homomorphic comparisons
+in \ruleref{Compare}, because 
+then the host executing the 
+compare will not require to read 
+the two values. This will relax some 
+restrictions on confidentiality.
+To make distibuted computation 
+efficient, FLAQR programming model
+can also be updated with channels
+and prallel processes instead of having
+congiguration stacks, as a future goal.
+Another extension can be to add meta-labels to the security labels.
+
+
+\section{Conclusion}
+%The main contributions of this work are as follows:
+In this work, we extend Flow Limited Authorization Model \cite{flam}
+with availability policies. We introduce a core calculus and 
+type-system, 
+FLAQR, for building decentralized applications 
+that are secure by construction. 
+We identify a trade-off relation between 
+integrity and availability, and introduce two 
+binary operations \emph{partial-and} and \emph{partial-or}, 
+specifically to express integrities of 
+quorum based replicated programs.
+We define $fails$ relation and judgments 
+that help us reason about a principal's 
+authority over availability of a type.  
+We introduce blame semantics that 
+associate failures with malicious 
+hosts of a quorum system 
+to ensure that quorums can 
+not exceed a bounded number of failures
+without causing the
+whole system to fail.
+FLAQR ensures end-to-end information security
+with noninterference for confidentiality, integrity and availability.
+
+\section{Acknowledgements}
+Funding for this work was provided in part by NSF CAREER CNS-1750060 and IARPA
+HECTOR CW3002436.
+
+
+
+
+
+

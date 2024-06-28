@@ -1,0 +1,716 @@
+\newcommand\txsel[2]{{#1}\mathbin{\ominus}{#2}}
+\newcommand\txcmp[2]{{#1}\mathbin{\oplus}{#2}}
+\newcommand\selor[2]{{#1}\mathbin{\boxminus}{#2}}
+\newcommand\comor[2]{{#1}\mathbin{\boxplus}{#2}}
+\newcommand\comand[2]{{#1}\mathbin{\boxplus}{#2}}
+\newcommand\keyword[1]{\mathbf{"#1"}}
+\newcommand{\MATCH}{\keyword{match}}
+\newcommand{\WITH}{\keyword{with}}
+\newcommand{\IF}{\keyword{if}}
+\newcommand{\THEN}{\keyword{then}}
+\newcommand{\ELSE}{\keyword{else}}
+\newcommand{\SKIP}{\keyword{skip}}
+\newcommand{\WHILE}{\keyword{while}}
+\newcommand{\DO}{\keyword{do}}
+\newcommand{\BREAK}{\keyword{break}}
+\newcommand{\UNTIL}{\keyword{until}}
+\newcommand{\TRUE}{\keyword{true}}
+\newcommand{\FALSE}{\keyword{false}}
+\newcommand{\FOR}{\keyword{for}}
+\newcommand{\FETCH}{\keyword{fetch}}
+\newcommand{\RETURN}{\keyword{return}}
+\newcommand{\cond}[3]{\ensuremath{\IF \  #1 \:\THEN\: #2 \:\ELSE\: #3}}
+\newcommand{\while}[2]{\ensuremath{\WHILE \: #1 \:\DO\: #2}}
+\newcommand{\T}[1]{\texttt{#1}}
+\newcommand{\AT}{\keyword{at}}
+\newcommand{\TRUST}{\keyword{trust}}
+\newcommand{\REVOKE}{\keyword{revoke}}
+\newcommand{\TWA}[4]{#1\: \TRUST \: #2 \: \WITH \: #3 \: \AT \:#4} 
+\newcommand{\TIN}[3]{#1\: \TRUST \: #2 \: \keyword{in} \: #3} 
+\newcommand{\RWA}[4]{#1\: \REVOKE \: #2 \: \WITH \: #3 \: \AT \:#4} 
+%%% MACROS for typesetting configurations
+\newcommand{\notbracket}[2]{\{ \lfloor #1 \rfloor_{1} = #1 = \lfloor #1 \rfloor_{2} \}^{\forall #1 \in\{ #2\}}}
+\newcommand{\hasbracket}[2]{#1 \in\{ #2\} \\
+  \lfloor #1 \rfloor_{1} \neq #1 \neq \lfloor #1 \rfloor_{2}}
+\newcommand{\ind}[2]{_{#1}^{#2}}
+\newcommand{\indapprox}[2]{\approx_{#1}^{#2}}
+\newcommand{\indapproxeq}[2]{\approxeq_{#1}^{#2}}
+\newcommand{\notindapprox}[2]{\napprox_{#1}^{#2}}
+\newcommand{\notindapproxeq}[2]{\napproxeq_{#1}^{#2}}
+
+\newcommand{\config}[3]{\mathchoice%
+    {\left\langle{#1},\,{#2},\,{#3}\right\rangle}%
+    {\langle{#1},\,{#2},\,{#3}\rangle}%
+    {\langle{#1},\,{#2},\,{#3}\rangle}%
+    {\langle{#1},\,{#2},\,{#3}\rangle}%
+}
+
+\newcommand{\configh}[3]{\mathchoice%
+    {\left\langle{#1},\,{#2},\,{#3}\right\rangle}%
+    {\langle{#1},\,{#2},\,{#3}\rangle}%
+    {\langle{#1},\,{#2},\,{#3}\rangle}%
+    {\langle{#1},\,{#2},\,{#3}\rangle}%
+}
+\newcommand{\configsc}[4]{\mathchoice%
+    {\left\langle{#1},\,{#2},\,{#3},\,{#4}\right\rangle}%
+    {\langle{#1},\,{#2},\,{#3},\,{#4}\rangle}%
+    {\langle{#1},\,{#2},\,{#3},\,{#4}\rangle}%
+    {\langle{#1},\,{#2},\,{#3},\,{#4}\rangle}%
+}
+\newcommand{\configsch}[4]{\mathchoice%
+    {\left\langle{#1},\,{#2},\,{#3},\,{#4}\right\rangle}%                      {\langle{#1},\,{#2},\,{#3},\,{#4}\rangle}%
+    {\langle{#1},\,{#2},\,{#3},\,{#4}\rangle}%
+    {\langle{#1},\,{#2},\,{#3},\,{#4}\rangle}%
+}
+
+\newcommand{\trans}[1]{{\llbracket {#1} \rrbracket}}
+\newcommand{\blametrans}[1]{\llparenthesis {#1} \rrparenthesis}
+\newcommand{\statex}{\ensuremath{\sigma}}
+\newcommand{\statec}[1]{\ensuremath{\sigma_{#1}}}
+\newcommand{\stateType}[0]{\ensuremath{\MEM \times ( \PHtype \cup \{ \nosnap \}) \times \PHtype}}
+\newcommand{\trace}[1]{\mathrm{Tr}({#1})}
+\newcommand{\tracep}[3]{\mathbf{Tr}/\ind{#1}{#2}{#3}}
+\newcommand{\ttrace}[1]{\mathbf{Tr}^\Downarrow#1}
+\newcommand{\ttracep}[3]{\mathbf{Tr}^\Downarrow/\ind{#1}{#2}#3}
+\newcommand{\stepsto}{\stepsone^*} % large-step
+\newcommand{\stepstot}[1]{\stepsonet{#1}\hspace{-5pt}\raisebox{4pt}{\scriptsize *}\:} % large-step
+\newcommand{\concat}{\cdot} % large-step
+\newcommand{\stepsone}{\longrightarrow} % small-step
+\newcommand{\noevent}{\cdot}
+\newcommand{\stepsonectx}{\longrightarrow\mathrel{\mkern-22mu}\rightarrow\mathrel{\mkern4mu}}
+\newcommand{\stepsonet}[1]{\overset{#1}{\longrightarrow}}
+\newcommand{\stepstoctx}{\stepsonectx^*} % large-step
+\newcommand{\subst}[3]{{#1}[{#2}\mapsto {#3}]}
+\newcommand{\seq}[1]{\textbf{#1}}
+\newcommand{\octx}[2]{\llparenthesis~ #2 ~\rrparenthesis_{#1}}
+\newcommand{\ty}{\ensuremath{\!:\!}}
+\newcommand{\proves}{\ensuremath{\vdash}}
+\newcommand{\nproves}{\ensuremath{\nvdash}}
+\newcommand{\transi}[2]{{\llbracket {#1} \rrbracket}_{#2}}
+\newcommand{\omult}[2]{{#1} \circledast {#2}}
+\newcommand{\A}{\ensuremath{\mathcal A}}
+\renewcommand{\H}{\ensuremath{\mathcal{H}}}
+\newcommand{\low}{\ensuremath{\mathcal{W}}}
+\newcommand{\U}{\ensuremath{\mathcal U}}
+\newcommand{\secret}{\ensuremath{\mathcal S}}
+\newcommand{\trusted}{\ensuremath{\mathcal T}}
+\newcommand{\public}{\ensuremath{\mathcal P}}
+\newcommand{\trelt}[2]{#1_{#2}}
+\newcommand{\trpref}[2]{#1_{..{#2}}}
+\newcommand{\evalctx}[3]{\mathchoice%
+    {\left\langle{#1},\,{#2},\,{#3}\right\rangle}%
+    {\langle{#1},\,{#2},\,{#3}\rangle}%
+    {\langle{#1},\,{#2},\,{#3}\rangle}%
+    {\langle{#1},\,{#2},\,{#3}\rangle}%
+}
+\newcommand{\evalctxsc}[4]{\mathchoice%
+    {\left\langle{#1},\,{#2},\,{#3},\,{#4}\right\rangle}%
+    {\langle{#1},\,{#2},\,{#3},\,{#4}\rangle}%
+    {\langle{#1},\,{#2},\,{#3},\,{#4}\rangle}%
+    {\langle{#1},\,{#2},\,{#3},\,{#4}\rangle}%
+}
+\usepackage{xparse}
+\WithSuffix\newcommand\evalctx*[1]{\evalctx{#1}{t}}
+\WithSuffix\newcommand\evalctx'[1]{\evalctx{#1}{t'}}
+\newcommand{\seteq}[3]{{#2} \indapprox{#1}{}{#3}}
+\WithSuffix\newcommand\seteq*[2]{\seteq{\low}{#1}{#2}}
+\newcommand{\nseteq}[3]{{#2} \notindapprox{#1}{}{#3}}
+\WithSuffix\newcommand\nseteq*[2]{\nseteq{\low}{#1}{#2}}
+\newcommand{\traceeq}[3]{{#2} \indapprox{#1}{\star} {#3}}
+\WithSuffix\newcommand\traceeq*[2]{\traceeq{\low}{#1}{#2}}
+\newcommand{\ntraceeq}[3]{{#2} \notindapprox{#1}{\star} {#3}}
+\WithSuffix\newcommand\ntraceeq*[2]{\ntraceeq{\low}{#1}{#2}}
+\newcommand{\weakseteq}[4]{{#3} \approx\!\!\bullet_{#1}^{#2}\; {#4}}
+\WithSuffix\newcommand\weakseteq*[2]{\weakseteq{\A}{\pi}{#1}{#2}}
+
+\newcommand{\Rule}[4][]{
+  [\textsc{#2}]~
+  \label{rule:#2}
+  %\hfill
+  \ensuremath{\inferrule{#3}{#4}}\ifx{#1}\empty\else~\text{#1}\fi
+  \hfill
+}
+\newcommand{\Rulered}[4][]{
+  [\textsc{\textcolor{red}{#2}}]~
+  \label{rule:#2}
+  \hfill
+  \ensuremath{\inferrule{#3}{#4}}\ifx{#1}\empty\else~\text{#1}\fi
+  \hfill
+}
+
+\newcommand{\join}{\ensuremath{\sqcup}}
+\newcommand{\meet}{\ensuremath{\sqcap}}
+\newcommand{\flowsto}{\ensuremath{{\sqsubseteq}}}
+\newcommand{\actsfor}{\ensuremath{{\succcurlyeq}}}
+\newcommand{\speaksfor}{\ensuremath{\Rightarrow}}
+\newcommand{\sep}{\ensuremath{\:\:\big|\:\:}}
+\newcommand{\pc}{\textsl{pc}}
+\newcommand{\client}{c}
+\newcommand{\worker}{c}
+\newcommand{\void}{()}
+\newcommand{\voidtype}{unit}
+\newcommand{\fail}{\mathsf{fail}}
+\newcommand{\faila}[1]{\mathsf{fail}^{#1}}
+\newcommand{\expect}{\mathsf{expect}}
+\newcommand{\expecta}[1]{{\mathsf{expect}}^{#1}}
+\newcommand{\expecte}[1]{{\mathsf{expect}}^{#1}~\mathsf{e}}
+\newcommand{\basetype}[1]{\mathsf{basetype}{#1}\mathsf{)}}
+\newcommand{\GG}{\ensuremath{\mathrm{\Gamma}}}
+\newcommand{\wctx}{\ensuremath{W}}
+\newcommand{\bctx}{\ensuremath{B}}
+\newcommand{\lctx}{\ensuremath{L}}
+\newcommand\ccont{\mathop{;}}
+\newcommand\varcontext{\ensuremath{\Gamma}\xspace}
+\newcommand\delegcontext{\ensuremath{\Pi}\xspace}
+\newcommand\initdelegcontext{\ensuremath{\delegcontext_\mathit{init}}\xspace}
+\newcommand\lamdelegcontext{\ensuremath{\delegcontext_{\lambda}}\xspace}
+\newcommand\delegationcontext{\delegcontext}
+\newcommand\delegconcat{\ensuremath{\cdot}}
+\newcommand{\TVal}[3]{\ensuremath{{#1} \proves {#2} : {#3}}}
+\newcommand{\TValP}[3]{\ensuremath{\TVal{\Pi;{#1}}{#2}{#3}}}
+\newcommand{\TValGpart}[3]{\ensuremath{\TVal{{\Pi}^{#3};\GG;\pc';\client}{#1}{#2}}}
+\newcommand{\TValGpcS}[2]{\ensuremath{\TVal{\Pi;\Gamma;\pc}{#1}{#2}}}
+\newcommand{\TValGpcSi}[2]{\ensuremath{\TVal{\hat{\Pi};\GG;\pc}{#1}{#2}}}
+\newcommand{\TValGpc}[2]{\ensuremath{\TVal{\GG;\pc}{#1}{#2}}}
+\newcommand{\TValGpcdash}[2]{\ensuremath{\TVal{\Pi;\GG;\pc;c'}{#1}{#2}}}
+\newcommand{\TValGpcdashpc}[2]{\ensuremath{\TVal{\Pi;\GG;\pc';c'}{#1}{#2}}}
+\newcommand{\TValGpcc}[2]{\ensuremath{\TVal{\Pi;\GG;\pc';\client}{#1}{#2}}}
+\newcommand{\TValGput}[2]{\ensuremath{\TVal{\Pi;\GG;\pc;\client}{#1}{#2}}}
+\newcommand{\pubtrust}{\ensuremath{\confid{\bot} \wedge \integ{\top}}\xspace}
+\newcommand{\TValGpccw}[2]{\ensuremath{\TVal{\GG;\pc;\client;\memA}{#1}{#2}}}
+\newcommand{\TValGpbind}[3]{\ensuremath{\TVal{\GG;{#3};\worker;\memA}{#1}{#2}}}
+\newcommand{\TValGpbox}[3]{\ensuremath{\TVal{\GG;{#3};\square;\memA}{#1}{#2}}}
+\newcommand{\TValGpbindbox}[4]{\ensuremath{\TVal{\Pi;\GG;{#3};{#4}}{#1}{#2}}}
+%\newcommand{\TValGpccw}[2]{\ensuremath{\TVal{\GG;\pc;\client}{#1}{#2}}}
+\newcommand{\TValGpcw}[2]{\ensuremath{\TVal{\Pi;\GG;\pc;\worker}{#1}{#2}}}
+\newcommand{\TValGpcinit}[2]{\ensuremath{\TVal{\Pi;\GG;\pc;\worker}{#1}{#2}}}
+\newcommand{\pic}[1]{\hat{\Pi}[{#1}]}
+\newcommand{\TValGpcwinit}[2]{\ensuremath{\TVal{\hat{\Pi[c]};\GG;\pc;\worker}{#1}{#2}}}
+\newcommand{\TValGpcwi}[3]{\ensuremath{\TVal{\Pi;\GG;\pc;{#3}}{#1}{#2}}}
+\newcommand{\TValGpcwipc}[3]{\ensuremath{\TVal{\Pi;\GG;\pc';{#3}}{#1}{#2}}}
+\newcommand{\TValGpcW}[2]{\ensuremath{\TVal{\GG;\pc;\Worker}{#1}{#2}}}
+\newcommand{\TValGpcT}[2]{\ensuremath{\TVal{\GG;\pc;T}{#1}{#2}}}
+\newcommand{\TValGpcbrw}[2]{\ensuremath{\TVal{\GG;{\llbracket \pc \rrbracket}_w;\Worker}{#1}{#2}}}
+\newcommand{\TValGpcwj}[2]{\ensuremath{\TVal{\GG;\pc_j;\worker_j}{#1}{#2}}}
+\newcommand{\TValG}[3]{\ensuremath{\TVal{\GG;{#1}}{#2}{#3}}}
+\newcommand{\TValGb}[3]{\ensuremath{\TValG{β;{#1}}{#2}{#3}}}
+\newcommand{\TValGbpc}[2]{\ensuremath{\TValGb{\pc}{#1}{#2}}}
+\newcommand{\TValGbgpc}[2]{\ensuremath{\Pi;\GG;β;γ;\pc \proves #1 : #2}}
+\newcommand{\nTVal}[3]{\ensuremath{{#1} \nproves {#2} : {#3}}}
+\newcommand{\proj}[2]{\mathsf{proj}_{#1}~#2}
+\newcommand{\pone}[1]{\proj{1}{#1}}
+\newcommand{\ptwo}[1]{\proj{2}{#1}}
+\newcommand{\proji}[1]{\proj{i}{#1}}
+\newcommand{\projj}[1]{\proj{j}{#1}}
+\newcommand{\injname}[1]{\mathsf{inj}_{#1}}
+\newcommand{\inj}[2]{\injname{#1}~#2}
+\newcommand{\ione}[2]{\inj{1}{#2}}
+\newcommand{\itwo}[2]{\inj{2}{#2}}
+\newcommand{\inji}[1]{\inj{i}{#1}}
+\newcommand{\injj}[1]{\inj{j}{#1}}
+\newcommand{\injnamea}[2]{\mathsf{inj}^{#1}_{#2}}
+\newcommand{\inja}[3]{\injnamea{#1}{#2}~#3}
+\newcommand{\ionea}[2]{\inja{#1}{1}{#2}}
+\newcommand{\itwoa}[2]{\inja{#1}{2}{#2}}
+\newcommand{\injia}[2]{\inja{#1}{i}{#2}}
+\newcommand{\injja}[2]{\inja{#1}{j}{#2}}
+\newcommand{\casexp}[4]{\mathsf{case}~{#1}~\mathsf{of}~\injname{1}({#2}).{#3} \mid \injname{2}({#2}).{#4}}
+\newcommand{\casexpan}[5]{\mathsf{case}{^\tau}~{#1}~\mathsf{of}~\injnamea{#5}{1}({#2}).{#3} \mid \injnamea{#5}{2}({#2}).{#4}}
+\newcommand{\casexpa}[1]{\mathsf{case}~{#1}~\mathsf{of}}
+\newcommand{\casexpb}[2]{\ione{\hspace{-3pt}(#1)}.\;{#2}}
+\newcommand{\casexpc}[2]{|~\itwo{\hspace{-3pt}(#1)}.\;#2}
+\newcommand{\caseonly}{\mathsf{case}}
+\newcommand{\says}[2]{#1~\mathsf{says}~#2}
+\newcommand{\Rsays}[1]{#1}
+\newcommand{\bind}[3]{\mathsf{bind}~{#1}={#2}~\mathsf{in}~{#3}}
+\newcommand{\bindl}[4]{\mathsf{bind}~{_#1}~{#2}={#3}~\mathsf{in}~{#4}}
+\newcommand{\atomic}[2]{\mathsf{atomic}~{#1}~\mathsf{or}~{#2}}
+\newcommand{\bracket}[2]{({#1}~|~{#2})}
+\newcommand{\hole}{\ensuremath{\bullet}\xspace}
+\newcommand{\integ}{\tiny{\mathsf{i}}}
+\newcommand{\confid}{\tiny{\mathsf{c}}}
+\newcommand{\avail}{\tiny{\mathsf{a}}}
+\newcommand{\key}{\mathsf{k}^{\confid}}
+\newcommand{\attacker}{\mathcal{A}}
+\newcommand{\aatt}[1]{\mathcal{A}\mathsf{(}{#1}\mathsf{)}}
+\newcommand{\runnablef}[3]{"run'("{#1}","{#2}","{#3}")"}
+\newcommand{\run}[2]{\mathsf{run}~{#1}\mathsf{@}{#2}}
+\newcommand{\runa}[3]{\mathsf{run}^{#1}~{#2}\mathsf{@}{#3}}
+\newcommand{\runonly}{\mathsf{run}}
+\newcommand{\retonly}{\mathsf{ret}}
+\newcommand{\ret}[2]{\mathsf{ret}~{#1}\mathsf{@}{#2}}
+\newcommand{\AND}{~\mathsf{AND}~}
+\newcommand{\OR}{~\mathsf{OR}~}
+\newcommand{\orex}{~\mathsf{or}~}
+\newcommand{\conF}[2]{\mathcal{\hat{C}}"("{#1}","{#2}")"}
+\newcommand{\conS}{"C"}
+\newcommand{\last}{\mathcal{L}}
+\newcommand{\lastd}{\mathcal{L'}}
+\newcommand{\blame}{\mathcal{C}}
+\newcommand{\blam}{\mathcal{B}}
+\newcommand{\tole}{\mathcal{T}}
+\newcommand{\tolef}[1]{"tole("{#1}")"}
+\newcommand{\quo}{\mathcal{Q}}
+\newcommand{\quor}[2]{\langle {#1},{#2} \rangle}
+\newcommand{\readjudge}[3]{{#1} \Vdash {#2} \rhd {#3}}
+\newcommand{\select}[2]{\mathsf{select}~{#1}~\mathsf{or}~{#2}}
+\newcommand{\selectth}[3]{\mathsf{select}~{#1}~\mathsf{or}~{#2}~\mathsf{or}{#3}}
+\newcommand{\selecta}[3]{{\mathsf{select}^{#3}}~~{#1}~\mathsf{or}~{#2}}
+\newcommand{\selex}[1]{\mathsf{select}^{#1}}
+\newcommand{\selonly}{\mathsf{select}~}
+\newcommand{\selone}[1]{select"~{#1}}
+\newcommand{\noeta}[1]{"noeta("~{#1}~")"}
+\newcommand{\compEnd}[3]{{\mathsf{compare}^{#1}~{#2}~\matsf{and}~{#3}}}
+\newcommand{\compare}[2]{{\mathsf{compare}~{#1}~\mathsf{and}~{#2}}}
+\newcommand{\compareth}[3]{\mathsf{compare}~{#1}~\mathsf{and}~{#2}~\mathsf{and}~{#3}}
+\newcommand{\comparea}[3]{\mathsf{compare}^{#1}~{#2}~\mathsf{and}~{#3}}
+\newcommand{\componly}{\mathsf{compare}}
+\newcommand{\distcon}[3]{\langle {#1},{#2} \rangle~ \& ~{#3}}
+\newcommand{\concon}[4]{\langle \langle {#1},{#2} \rangle~ \& ~{#3}\rangle^{#4}}
+\newcommand{\exposure}[1]{\ensuremath{\odot(#1)}}
+\newcommand{\reach}[1]{\ensuremath{\dagger(#1)}}
+\newcommand{\reachn}[1]{\ensuremath{{#1}^{{\integ}{\avail}}}}
+\newcommand{\distconF}[4]{\langle {#1},{#2},{#3} \rangle~ \& ~{#4}}
+\newcommand{\distS}[3]{\langle {#1},{#2} \rangle \: \mathsf{::}\: {#3}}
+\newcommand{\distSF}[4]{{\langle {#1},{#2} \rangle \: \mathsf{::} \: {#3}}_{#4}}
+\newcommand{\stackapp}[3]{\langle {#1},{#2}\rangle \: \mathsf{::}\: {#3}}
+\newcommand{\stackappF}[4]{\langle {#1},{#2},{#3}\rangle \: \mathsf{::}\: {#3}}
+\newcommand{\emptystack}{\mathsf{empty}}
+\newcommand{\cfun}[1]{\mathscr{C}\mathsf{(}{#1}\mathsf{)}}
+\newcommand{\UB}[1]{\mathsf{C(}{#1}\mathsf{)}}
+\newcommand{\sat}[2]{\mathsf{SAT(}{#1}~\mathsf{,}~{#2}\mathsf{)}}
+\newcommand{\PM}[1]{{\textcolor{blue}{#1}}}
+\newcommand{\pmo}[1]{{\textcolor{green}{"pm:" #1}}}
+\newcommand{\owen}[1]{{\textcolor{green}{"owen:" #1}}}
+\newcommand\inA{\ensuremath{\mathcal{I}} \xspace}
+\newcommand\observe{\ensuremath{\mathcal{O}} \xspace}
+\newcommand\observea{\ensuremath{\mathcal{A}} \xspace}
+\newcommand\observefa[1]{\ensuremath{\observea(#1)}}
+\newcommand\observefc[3]{\ensuremath{\observe(#1, #2, #3, \pi)}}
+\newcommand\observet[4]{\ensuremath{\observe(#1, #2, #3, #4)}}
+\newcommand\interaf[3]{\ensuremath{\intera(#1, #2, #3)}}
+\newcommand\tracecat{\ensuremath{,} \xspace}
+\newcommand\lequiv{\ensuremath{\approx} \xspace}
+\newcommand\deduplicate{\ensuremath{\mathcal{U}}\xspace}
+\newcommand\schedule{\ensuremath{\mathcal{S}}\xspace}
+\newcommand\head{"head"}
+\newcommand\tail{"tail"}
+\newcommand{\srafjudge}[3]{{#1}\Vdash{#2}\succ{#3}}
+\newcommand{\recrafjudge}[3]{{#1}\Vdash{#2}\gtrdot{#3}}
+\newcommand{\notrecrafjudge}[3]{{#1}\nVdash{#2}\gtrdot{#3}}
+\newcommand{\dnf}[1]{"dnf("{#1}")"}
+\newcommand{\atthe}[2]{{#1}"@"{#2}}
+\newcommand{\dist}[1]{{\atthe{\transi{#1}{w_1}}{"w_1"}}..."~{\transi{#1}{w_n}}}
+\newcommand\fexp[5]{\ensuremath{#1; #2 ; #3 \vdash #4 \colon #5}\xspace}
+\newcommand\fexpPGT[3]{\ensuremath{\fexp{\delegcontext}{\varcontext}{#1}{#2}{#3}}}
+\newcommand\fexpPGTpc[2]{\ensuremath{\fexp{\delegcontext}{\varcontext}{\pc}{#1}{#2}}}
+\newcommand{\inF}[2]{#1 \in #2}
+\newcommand{\entails}[2]{#1 \vDash #2}
+\newcommand{\nentails}[2]{#1 \nvDash #2}
+\newcommand{\ifexp}[3]{"if"~{#1}~"then"{#2}~"else"~{#3}}
+\newcommand{\downgrade}[2]{"downgrade"~{#1}~"to"~{#2}}
+\newcommand{\pidowngrade}[3]{"down"_{#1}~{#2}~"to"~{#3}}
+\WithSuffix\newcommand\pidowngrade*[2]{\pidowngrade{\pi}{#1}{#2}}
+\newcommand{\cdowngrade}[2]{"decl"~{#1}~"to"~{#2}}
+\newcommand{\idowngrade}[2]{"endorse"~{#1}~"to"~{#2}}
+\newcommand\pf{\ensuremath{\mathit{pf}}}
+\newcommand{\MAC}[2]{"MAC"(#1,#2)}
+\newcommand{\Group}{"G"}
+\newcommand{\alice}{\texttt{alice}}
+\newcommand{\bob}{\texttt{bob}}
+\newcommand{\carol}{\texttt{carol}}
+\newcommand{\closed}[1]{\overline{#1}}
+\newcommand{\vconf}[1]{\raisebox{\depth}{\rotatebox[origin=c]{180}{$\nabla$}}(#1)}
+\newcommand{\tfuncpc}[3]{\ensuremath{\forall{#1}{[#2]}.\,#3}}
+\newcommand{\tlam}[3]{\Lambda {#1}[{#2}].\,#3}
+\newcommand{\tfunc}[3]{\forall{#1}[{#2}].\,#3}
+\newcommand{\lamc}[4]{\lambda ({#1}\ty{#2})\secctxt{#3} .\,#4}
+\newcommand{\lamcs}[3]{\lambda ({#1})\secctxt{#2} .\,#3}
+\newcommand{\clamc}[4]{\closed{\lambda} ({#1}\ty{#2})\secctxt{#3} .\,#4}
+\newcommand{\secctxt}[1]{[#1]}
+\newcommand{\scbox}[1]{\raisebox{0em}[0pt]{#1}}
+\newcommand{\paira}[3]{{\langle #1, #2 \rangle}^{#3}}
+\newcommand{\pair}[2]{{( \ensuremath{#1, #2} )}}
+\newcommand{\delexp}[2]{\langle #1~\actsfor~#2 \rangle}
+\newcommand{\aftype}[2]{(#1 \succcurlyeq #2)}
+\newcommand{\aftypep}[2]{#1 \succcurlyeq #2}
+\newcommand{\flowtype}[2]{(#1 \sqsubseteq #2)}
+\newcommand{\flowtypep}[2]{#1 \sqsubseteq #2}
+\newcommand{\prodtype}[2]{(#1 \times  #2)}
+\newcommand{\sumtype}[2]{(#1 +  #2)}
+\newcommand{\func}[3]{#1 \xrightarrow{#2} #3}
+\newcommand{\reteta}[2]{\eta_{#1}~{#2}}
+\newcommand{\retetav}[2]{\overline{\eta}_{#1}~{#2}}
+\newcommand{\returnp}[2]{{\eta_{#1}}~#2}
+\newcommand{\return}[2]{\reteta{#1}{#2}}
+\newcommand{\returnv}[2]{(\retetav{#1}{#2})}
+\newcommand{\vreturn}[3]{(\vreturnp{#1}{#2}{#3})}
+\newcommand{\returng}[2]{\ensuremath{\overline{\eta}_{#1}~#2}}
+%\newcommand{\spkfor}[3]{{#1}\xRightarrow{#2}{#3}}
+\newcommand{\protsA}[2]{\ensuremath{\Pi~{\Vdash}~{#1}~guards~{#2}}}
+\newcommand{\nprotsA}[2]{\ensuremath{\Pi~{\nVdash}~{#1}~guards~{#2}}}
+\newcommand{\protsI}[2]{\ensuremath{\Pi~{\Vdash}~{#1}~guards~{#2}}}
+\newcommand{\downemitp}[4]{\downarrow^{#1}_{#2},\, \vreturnp{#3}{#4}}
+\usepackage{latexsym}
+\usepackage{cite}
+\usepackage{color}
+\usepackage{colortbl}
+\usepackage[colorlinks]{}
+\usepackage{pgfplots,wrapfig}
+\usepackage{wrapfig}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage{times,graphicx,color,eso-pic}
+\usepackage{upgreek}
+\usepackage{pdfpages}
+\usepackage{relsize}
+\usepackage{amsmath, amsthm, amssymb, stmaryrd}
+\usepackage{textcomp}
+\usepackage{ifthen}
+\usepackage{suffix}
+\usepackage{xspace}
+\usepackage{paralist}
+\usepackage{listings}% http://ctan.org/pkg/listings
+\usepackage{xcolor}
+\usepackage{mathtools}
+\usepackage{dsfont}
+\usepackage{lmodern}
+\usepackage[noend]{algpseudocode}
+%{\textit{Proof:} }{$\square$}
+\usepackage{hyperref}
+\usepackage{enumitem, afterpage}
+\usepackage{mathrsfs}
+\usepackage{paralist}
+\usepackage{listings}% http://ctan.org/pkg/listings
+\usepackage{mdframed,lipsum}
+\usepackage{multicol}
+\usepackage{url} 
+\usepackage{appendix}
+\usepackage{varwidth}
+\usepackage{svg}
+\usepackage{cases}
+\usepackage{mathpartir}
+\usepackage{fontspec}
+\fontencoding{T1}
+  \fontfamily{garamond}
+  \fontseries{m}
+  \fontshape{it}
+  \fontsize{12}{15}
+  \selectfont
+%\renewcommand{\familydefault}{\sfdefault}
+%\defaultfontfeatures{Mapping=tex-text,Scale=MatchLowercase}
+%\setmainfont{Times}
+%\setmonofont{Lucida Sans Typewriter}
+\usepackage{thmtools}
+\usepackage{thm-restate}
+\usepackage[utf8]{inputenc}
+\usepackage{array, caption, floatrow, tabularx, makecell, booktabs}%
+\usepackage{arydshln}
+\usepackage{tabu}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{bold-extra}
+%\usepackage[a4paper, total={7in, 10in}]{geometry}
+%\ssp 
+\usepackage[english]{babel}
+
+\lstset{emph={%  
+    return, fetch%
+    },emphstyle={\color{magenta}}%
+}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{1.0,1.0,1.0}
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\scriptsize\color{codegreen},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{
+    style=mystyle,
+    mathescape
+}
+%\svgpath{{advancement_doc_blank/chapters/pictures}}
+
+
+
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}[theorem]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{proposition}{Proposition}
+\newtheorem{conjecture}{Conjecture}
+\newtheorem{example}{Example}
+
+\newcommand{\plus}{\texttt{+}}
+\newcommand{\minus}{\texttt{-}}
+\newcommand{\Omap}{\textsc{O}}
+\newcommand{\OLDS}{{\sf Z}}
+\newcommand{\NEW}{{\sf NEW}}
+\newcommand{\OLDER}{{\sf OLDER}}
+\newcommand{\OLDEST}{{\sf OLDEST}}
+\newcommand{\OLD}{{\sf OLD}}
+%\newcommand{\I}{{\sf IND}}
+\newcommand{\setup}{\texttt{setup}}
+\newcommand{\OMAP}{\textsc{OMAP}}
+\newcommand{\OMAPA}{\textsc{O$_{cnt}$}}
+\newcommand{\OMAPB}{\textsc{O$_{bin}$}}
+\newcommand{\Search}{\texttt{Search}}
+\newcommand{\Update}{\texttt{Update}}
+\newcommand{\Setup}{\texttt{Setup}}
+\newcommand{\BUF}{\textsc{\textbf{BUF}}}
+\newcommand{\MAP}{\texttt{MAP}}
+\newcommand{\BIN}{\textsc{\textbf{BIN}}}
+\newcommand{\CNT}{\textsc{\textbf{CNT}}}
+\newcommand{\set}{\textsc{\textbf{set}}}
+\newcommand{\Enc}{\textsf{Enc}}
+\newcommand{\get}{\texttt{get}}
+\newcommand{\Dec}{\textsf{Dec}}
+\newcommand{\Dict}{\textsc{Dict}}
+\newcommand{\Append}{\texttt{append}}
+\newcommand{\Put}{\texttt{put}}
+\newcommand{\keyGen}{\texttt{KeyGen}}
+\newcommand{\RND}{\textsf{RND}}
+\newcommand{\load}{\textsf{ld}}
+\newcommand{\SDa}{\ensuremath{{\sf SDa}}\xspace}
+\newcommand{\SDd}{\ensuremath{{\sf SDd}}\xspace}
+\newcommand{\SDdPiBas}{\ensuremath{{\sf SDd[PiBas]}}\xspace}
+\newcommand{\DLoc}{\ensuremath{{\textsf{DLoc}}}\xspace}
+\newcommand{\DLocs}{\ensuremath{{\textsf{DLoc$^*$}}}\xspace}
+\newcommand{\PiBas}{\ensuremath{{\sf {PiBAS}}}\xspace}
+\newcommand{\OneChoice}{\ensuremath{{\sf 1C}}\xspace}
+\newcommand{\TwoChoice}{\ensuremath{{\sf 2C}}}
+\newcommand{\SDDPiBAS}{\ensuremath{{\sf SDd[PiBAS]}\xspace}}
+\newcommand{\TwoChoicePP}{\ensuremath{{\sf 2C^{++}}}}
+\newcommand{\NlogN}{\ensuremath{{\sf N\log N}}\xspace}
+\newcommand{\parhead}[1]{\smallskip\noindent\textbf{#1.}}
+\algnewcommand{\LeftComment}[1]{\Statex \(\triangleright\) #1}
+\newcommand{\al}{\alpha}
+\newcommand{\In}[1]{\ensuremath{\mathcal{I}(#1)}}
+\newcommand{\I}{\ensuremath{\mathcal{I}}}
+%\newcommand{\tred}[1]{\textcolor{red}{#1}}
+\newcommand{\tblue}[1]{\textcolor{blue}{#1}}
+\newcommand{\tpurp}[1]{\textcolor{purple}{#1}}
+\newcommand{\DictF}{\textsf{DictF}}
+\newcommand{\lp}{\mathcal{L}}
+%\newcommand{\algorithmautorefname}{Algorithm}
+
+
+\WithSuffix\newcommand\downemitp*[2]{\downemitp{#1}{ℓ'}{ℓ}{#2}}
+\WithSuffix\newcommand\bracket*[2]{\bracket{#1}{#2}{H}}
+\newcommand\projsans[3][]{\ensuremath{  \lfloor #2 \rfloor^{\ensuremath{\mathsf{#1}}}_{#3}}}
+\newcommand\outproj[2]{\projsans[]{#1}{#2}}
+\newcommand{\guard}[1]{\operatorname{grd}({#1})}
+\newcommand\drafjudge[3]{{#1} \proves {#2} \succcurlyeq {#3}}
+\WithSuffix\newcommand\drafjudge*[2]{\drafjudge{\Pi;\pc}{#1}{#2}}
+\newcommand\notdrafjudge[3]{{#1} \nvdash {#2} \succcurlyeq {#3}}
+
+\WithSuffix\newcommand\notdrafjudge*[2]{\notdrafjudge{\Pi;\pc}{#1}{#2}}
+\newcommand\drafrule[5][\Pi;\pc]{
+  \drafrule*[#1]{#2}{#3}{#4}{#5}
+}
+\WithSuffix\newcommand\drafrule*[5][\Pi;\pc]{
+  [\textsc{#2}]~
+  \label{rule:#2}
+  \hfill
+  \ensuremath{\inferrule{#3}{\drafjudge{#1}{#4}{#5}}}
+  \hfill
+}
+%
+\newcommand\ruleref[1]{%
+  \@ifundefined{r@rule:#1}{%
+    \textsc{#1} %
+  }{%
+    \hyperref[rule:#1]{\textsc{#1}}%
+  }%
+}
+\newcommand\drflowjudge[3]{{#1} \Vdash {#2} \sqsubseteq {#3}}
+\WithSuffix\newcommand\drflowjudge*[2]{\drflowjudge{\Pi;\pc}{#1}{#2}}
+\newcommand\notdrflowjudge[3]{{#1} \nvdash {#2} \sqsubseteq {#3}}
+\newcommand\ndrflowjudge[3]{{#1} \nVdash {#2} \sqsubseteq {#3}}
+\WithSuffix\newcommand\notdrflowjudge*[2]{\notdrflowjudge{\Pi;\pc}{#1}{#2}}
+
+\newcommand\drflowrule[5][\Pi;\pc]{
+  \drflowrule*[#1]{#2}{#3}{#4}{#5}
+}
+
+\WithSuffix\newcommand\drflowrule*[5][\Pi;\pc]{
+  [\textsc{#2}]~
+  \label{rule:#2}
+  \hfill
+  \ensuremath{\inferrule{#3}{\drflowjudge{#1}{#4}{#5}}}
+  \hfill
+}
+
+\newcommand\erule[5][]{
+  [\textsc{#2}]~
+  \label{rule:#2}
+  \hfill
+  \ensuremath{\inferrule{#3}{#4 \stepsone #5}}\ifx{#1}\empty\else~\text{#1}\fi
+  \hfill
+}
+\newcommand\edrule[4][]{
+  \hfill
+  \ensuremath{\inferrule{#2}{#3 \stepsone #4}}\ifx{#1}\empty\else~\text{#1}\fi
+  \hfill
+}
+\newcommand\derule[5][]{
+  [\textsc{#2}]~
+  \label{rule:#2}
+  %\hfill
+  \ensuremath{\inferrule{#3}{#4 \Longrightarrow #5}}\ifx{#1}\empty\else~\text{#1}\fi
+  \hfill
+}
+\newcommand\derulesplit[5][]{
+  [\textsc{#2}]~
+  \label{rule:#2}
+  %\hfill
+  \ensuremath{\inferrule{#3}{{#4} \Longrightarrow \\ {#5}}}\ifx{#1}\empty\else~\text{#1}\fi
+  \hfill
+}
+\newcommand\conrule[5][]{
+  [\textsc{#2}]~
+  \label{rule:#2}
+  \hfill
+  \ensuremath{\inferrule{#3}{#4 \Longrightarrow #5}}\ifx{#1}\empty\else~\text{#1}\fi
+  \hfill
+}
+\newcommand\defrule[6][]{
+  [\textsc{#2}]~
+  \label{rule:#2}
+  \hfill
+  \ensuremath{\inferrule{#3}{#4 \Longrightarrow^{^{#6}} #5}}\ifx{#1}\empty\else~\text{#1}\fi
+  \hfill
+}
+
+\newcommand\berule[5]{
+  [\textsc{#1}]~
+  \label{rule:#1}
+  \hfill
+  \ensuremath{\inferrule{#2}{#3
+      \ifthenelse{\equal{#5}{}}
+          {\stepsone}
+          {\stepsonet{#5}} #4}}
+  \hfill
+}
+\WithSuffix\newcommand\berule*[5]{\berule{#1}{#2}{#3}{#4}{#5}}
+
+\newcommand\erulong[2][]{
+  [\textsc{#2}]~
+  \label{rule:#2}
+  \ifx{#1}\empty\else~\text{#1}\fi
+}
+\newcommand\erulelemma[5][]{
+	    \label{rule:#2}
+	      \hfill
+	        \ensuremath{\inferrule{#3}{#4 \stepsone #5}}\ifx{#1}\empty\else~\text{#1}\fi
+		  \hfill
+		  }
+		  
+\newcommand\erulet[6][]{
+  [\textsc{#2}]~
+  \label{rule:#2}
+  \hfill
+  \ensuremath{\inferrule{#3}{#4 \stepsone_{#6} #5}}\ifx{#1}\empty\else~\text{#1}\fi
+  \hfill
+}
+
+\newcommand\erulectx[5][]{
+  [\textsc{#2}]~
+  \label{rule:#2}
+  \hfill
+  \ensuremath{\inferrule{#3}{#4 \stepsonectx #5}}\ifx{#1}\empty\else~\text{#1}\fi
+  \hfill
+}
+
+\newcommand\protjudge[3]{\ensuremath{#1 \proves {#2} \sqsubseteq {#3}}}
+\newcommand{\N}{\mathcal{N}} % names
+\newcommand{\Var}{\mathcal{V}} % the variable domain
+\newcommand{\FN}{\mathcal{F}}
+\newcommand{\fv}[1]{\slop{FV}\,(#1)} % Free Variables
+\newcommand{\imply}{\proves}
+\newcommand{\prim}[1]{\slop{storable}(#1)} % primitive types (no lambda terms)
+\newcommand{\refmakeapprule}[2]{\ifcompleteappx\ref{#2}\else\makeappxrule{#1}{#2}\fi}
+\newcommand{\makeappxrule}[2]{#1\label{#2}}
+
+\newcommand{\dummy}{\ensuremath{\mathtt{\bot}}}
+
+% Acts-for robust judgement
+\newcommand\rafjudge[3]{%
+  \ensuremath{{#1} \Vdash {#2} \succcurlyeq {#3}}%
+}
+\newcommand\notrafjudge[3]{\ensuremath{{#1} \nVdash {#2} \succcurlyeq {#3}}}
+
+% Acts-for robust judgement with common-case context
+\WithSuffix\newcommand\rafjudge*[2]{\rafjudge{\Pi;\pc;\pc}{#1}{#2}}
+\WithSuffix\newcommand\notrafjudge*[2]{\notrafjudge{\Pi;\pc;\pc}{#1}{#2}}
+
+
+
+\newcommand\flowjudge[3]{%
+  \ensuremath{{#1} \vdash {#2} \sqsubseteq {#3}}%
+}
+
+% Flows-to judgement (abstract context)
+\WithSuffix\newcommand\flowjudge*[2]{\flowjudge{\Pi;\pc;\pc}{#1}{#2}}
+
+% Flows-to robustly judgement
+\newcommand\rflowjudge[3]{%
+  \ensuremath{{#1} \Vdash {#2} \sqsubseteq {#3}}%
+}
+\newcommand\notrflowjudge[3]{{#1} \nVdash {#2} \sqsubseteq {#3}}
+
+
+\WithSuffix\newcommand\rflowjudge*[2]{\rflowjudge{\Pi;\pc;\pc}{#1}{#2}}
+\WithSuffix\newcommand\notrflowjudge*[2]{\notrflowjudge{\Pi;\pc;\pc}{#1}{#2}}
+\newcommand{\new}[1]{\textcolor{black}{#1}}
+\newcommand{\neww}[1]{\textcolor{black}{#1}}
+\newcommand{\LSDd}{{{\sf L-SD$_d$}}}
+%\newcommand{\PiBas}{\ensuremath{{\sf {PiBAS}}}}
+%\newcommand{\OneChoice}{\ensuremath{{\sf 1C}}}
+%\newcommand{\TwoChoice}{\ensuremath{{\sf 2C}}}
+%\newcommand{\SDDPiBAS}{\ensuremath{{\sf SDd[PiBAS]}\xspace}}
+%\newcommand{\TwoChoicePP}{\ensuremath{{\sf 2C^{++}}}}
+%\newcommand{\NlogN}{\ensuremath{{\sf{N{\log}N}}}}
+\newcommand{\Ns}{\ensuremath{{\sf{sN}}}}
+\newcommand{\sN}{\ensuremath{{\sf{sN}}}}
+\newcommand{\D}{\mathcal{D}}
+\newcommand{\adv}{\textsf{Adv}}
+\newcommand{\Tethys}{\textsf{Tethys}}
+\newcommand{\bO}{\textsc{O}}
+\newcommand{\omerge}{\texttt{oblMerge}}
+\newcommand{\tbO}{\ensuremath{\tilde{\textsc{O}}}}
+\newcommand{\TbO}{\ensuremath{\Tilde{\textsc{O}}}}
+%\newcommand{\A}{\adv}
+\usepackage{mathtools}
+%\newcommand{\Dict}{\textsf{Dict}}
+\newcommand{\Index}{\textsc{Ind}}
+\newcommand{\Ind}{\textsc{Ind}}
+\newcommand{\simomerge}{\texttt{Sim-oblMerge}}
+\newcommand{\simosort}{\texttt{Sim-OSort}}
+\newcommand{\simocompact}{\texttt{Sim-OCompact}}
+\newcommand{\simPibas}{\texttt{Sim-Pibas}}
+\usepackage{minted}
+\usepackage{upquote}
+
+\usetikzlibrary{shapes,arrows,fit,backgrounds}
+\usetikzlibrary{decorations.markings}
+\usetikzlibrary{decorations.pathreplacing,calligraphy,backgrounds}
+\usetikzlibrary{shapes,arrows,positioning, calc}
+\usepackage{tikz-3dplot}
+
+%\usepackage{subcaption}

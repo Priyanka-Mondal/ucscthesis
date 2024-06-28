@@ -1,0 +1,348 @@
+\section{Introduction}
+%Data outsourcing to remote servers for storage and efficient processing has become commonplace, both for individuals and enterprises alike. At the same time, contemporary privacy concerns and privacy policy regulations make it essential to protect one's data, even against the service provider that stores it. Data encryption can be used to achieve such protection but ``standard'' encryption techniques remove any ability to compute directly on the data without first decrypting it. Focusing on the fundamental computational task of searching on the encrypted data, one candidate solution is \emph{searchable encryption}~\cite{song2000practical} or more generally \emph{structured encryption}~\cite{chase10}, which builds encrypted indexes over the data in a way that allows the data owner to later enable the server to perform searches. Additionally, schemes that allow the owner to modify the encrypted dataset (inserting/removing/modifying records) are referred to as \emph{dynamic searchable encryption (DSE)}.
+
+%\todo{32.Provide a compelling real-world use-case example}
+Searchable encryption has been the topic of a huge line of research (e.g.,~\cite{song2000practical,dsse1,curtmola2006searchable,chase10,kurosawa2012uc, Chamani0KD22,dsse3,cash2013highly,cash2014dynamic,SDa, Lai1, Song1, wanshan1, Wang1, Sun1, He1, Chen1, Xu1, Rizomiliotis,GoldreichSqRoot,OstrovskyHeirarchy,demertzis2016practical,demertzis2018practical,chamani2021multi,wang2021multi,wang2023multi,kornaropoulos2022leakage}). %kamara2013parallel missing
+At the same time, it has been proposed for use in a number of different applications, e.g., for encrypted relational and graph databases~\cite{Seal,Kamara16,cash2021improved,chamani2023graphos}, annotated image search~\cite{pixek}, encrypted email~\cite{MidorikawaTK18}, or maintaining a secure {gun} registry service~\cite{kamara2021decentralized}. In fact, very recently, MongoDB announced support for a mode called \emph{queryable} encryption, using techniques inspired by this line of research. 
+The approach followed by most works is to strive for a high performance at the cost of well-defined \emph{leakages} observed by the server storing the encrypted dataset. I.e., although it is required that the server never accesses decrypted data, \emph{search} query on the data allows \neww{the server} to learn some information %\tgreen{metadata or no dash} 
+that typically includes which entries are accessed for a query (\emph{access pattern leakage}), which queries are for the same term %\tgreen{term not defined} 
+(\emph{search pattern leakage}), and how many entries are returned {(\emph{volume pattern leakage})}. Dynamic Searchable Encryption (DSE) schemes have additional leakage considerations related to updates, i.e., do not reveal any {connection of} newly modified entries to previous ones, {or do not reveal information of deleted entries during queries that take place after the deletion}. DSE schemes that protect against both these leakages are called \emph{forward-and-backward private}\cite{bost2017forward}. 
+
+%\tilde{O}
+\begin{figure*}[!ht]
+%\begin{table}
+	\centering
+	\resizebox{2.1\columnwidth}{!}
+	{
+		\begin{tabular}{|c|c||c|c|c||c||c|c|}
+			\hline
+	{\textbf{Scheme}} & {\textbf{Storage}} & \multicolumn{3}{c||}{\textbf{Search}} & {\textbf{Update}}& \textbf{FP / BP} & \textbf{HDD / SSD /}  \\
+	& & \textbf{Locality} & \textbf{Read Efficiency} & \textbf{Page Efficiency} & \textbf{Cost} & & \\
+			\hline
+			\hline
+   
+    
+         
+	\hline	
+
+ %    \rowcolor{Gray}
+	% \SDa[\PiBas]\cite{SDa} & $\bO(N)$&  $\bO(n_w+\log N)$ & $\bO(\log N)$  & {$\bO(p+\log N)$} & $\bO(\log N)(am.)$&{\Large{\textbf{\tgreen{\checkmark}}}}/ II & RAM
+ %    \\ 
+ %    \hline
+
+ %    \rowcolor{Gray}
+ %    \SDd[\PiBas] \cite{SDa}& $\bO(N)$ &$\bO(n_w+\log N)$ & $\bO(\log N)$ & $\bO(p+\log N)$&$\bO(\log^3 N)$ &{\Large{\textbf{\tgreen{\checkmark}}}}/ II & RAM \\
+ %    \hline
+
+    
+    \rowcolor{Gray}
+    \LayeredSSE\cite{LocalLayeredSSECrypto22}& $\bO(N)$ &$\bO(n_w/p + \log N)$ &$\bO(\log \log N) $ &$\bO(\log \log N)$ &$\bO(n_w)$ &  \tred{\Large{\textbf{\texttimes}}} / \tred{\Large{\textbf{\texttimes}}} & SSD
+    \\
+    \hline
+
+    \rowcolor{Gray}
+    \LocalLayeredSSE\cite{LocalLayeredSSECrypto22}\textcolor{red}{\textbf{*}}& $\bO(N)$ &$\bO(1)$ &$\Tilde{ \bO}(\log \log N) $ &$\Tilde{ \bO}(\log \log N) $  &$\bO(n_w)$ &  \tred{\Large{\textbf{\texttimes}}} / \tred{\Large{\textbf{\texttimes}}} & HDD
+    \\
+    \hline
+
+
+   
+    \hline
+    \hline
+			\SDa[\OneChoice\cite{onechoice}] & $\bO(N)$& $\bO(\log N)$ & $\bO(\log N)$ & $\bO(\log N)$&   $\bO(\log N)(am.)$& {\Large{\textbf{\tdgreen{\checkmark}}}}/ II & HDD\\ 
+			\hline	
+			\SDa[\TwoChoice\cite{onechoice}]\textcolor{red}{\textbf{*}} & $\bO(N)$ &  $\bO(\log N)$ & {$\bO(\log N)$}& $\bO(\log N)$& $\bO(\log^2 N)(am.)$&  {\Large{\textbf{\tdgreen{\checkmark}}}}/ II & HDD \\ 
+			\hline	
+			%\SDa[\TwoChoicePP] & $\bO(N)$&$\bO(\log N)$ & $\bO(\log \log \log N+\epsilon(n_w)^{-1})$ & $\bO(\log \log \log N+\epsilon(n_w)^{-1}+ \log N)$ & {$\bO(\log N)$(am)} & Y/II  \\ 
+			%\hline	
+			\SDa[\NlogN\cite{onechoice}] & $\bO(N\log N)$ &  $\bO(\log N)$ & $\bO(\log N)$ &$\bO(\log N)$  & $\bO(\log^2 N)(am.)$&{\Large{\textbf{\tdgreen{\checkmark}}}}/ II & HDD/SSD\\ 
+			\hline	
+			\SDa[\Ns\cite{Demertzis17}] & $\bO(sN)$ & $\bO(N^{\frac{1}{s}}+ \log N)$ & $\bO(\log N)$  & $\bO(N^{\frac{1}{s}}/p+\log N)$ & $\bO(s\log N)(am.)$&{\Large{\textbf{\tdgreen{\checkmark}}}}/ II & HDD/SSD \\ 
+   \hline
+
+   %\rowcolor{Gray}
+    % \SDa[\Tethys\cite{BFF21}] & $\bO(N)$  &  $\bO(n_w/p + \log N)$ & $\bO(p)$ & $\bO(\log N)$ &  $\bO(N \log N)(am.)$ & {\Large{\textbf{\tgreen{\checkmark}}}}/ II   & SSD\\ 
+    % \hline
+    % \SDa[\Tethys\cite{BFF21}] & $\bO((2+\epsilon)N)$  &  $\bO(n_w/p + \log N)$ & $\bO(p)$ & $\bO(\log N)$ &  $\bO(N^2)(am.)$ & {\Large{\textbf{\tgreen{\checkmark}}}}/ II   & SSD\\ 
+
+    %\rowcolor{Gray}
+    \SDa[\Tethys/\Pluto\cite{BFF21}] & $\bO(N)$  & $\bO(n_w/p + \log N)$ & $\bO(p)$ &$\bO(\log N)$ & $\bO(N \log N)(am.)$ & {\Large{\textbf{\tdgreen{\checkmark}}}}/ II  & SSD\\ 
+    \hline
+    
+    % \tblue{\SDa[\Pluto\cite{BFF21}]} & $\bO((2+\epsilon)N)$  &\tblue{$\bO(\log N)$} &\tblue{$\bO(p)$} &$\bO(\log N)$ & \tblue{$\bO(N^2)(am.)$} & {\Large{\textbf{\tgreen{\checkmark}}}}/ II  & SSD\\ 
+    
+    %\rowcolor{Gray}
+    %\tblue{\SDa[\Nilus$_t$\cite{BFF21}]} & $\bO((1+2/e)^{t-1}N)$  &\tblue{$\bO(\log N)$} &\tblue{$\bO(p)$} &$\bO(\log N)$ & \tblue{$\bO(N^2)(am.)$} & {\Large{\textbf{\tgreen{\checkmark}}}}/ II  & SSD\\
+   %\SDa[\textsf{Ns$^*$}] & $\bO(Ns)$ & {$\bO(N^{\frac{1}{s}}+ \log N)$} & $\bO(1)$  & $\bO(\log N)$ & $\bO(s\log N)(am.)$&{\Large{\textbf{\tgreen{\checkmark}}}}/ II  & HDD/SSD\\ 
+   	%		\hline	
+    
+     \LSDd[\OneChoice\cite{onechoice}] & $\bO(N)$ &$\bO(\log N)$ &$\tbO(\log N)$ &$\tbO(\log N)$ &{$\bO(\log^2 N)$} & {\Large{\textbf{\tdgreen{\checkmark}}}}/ II & HDD\\
+    \hline
+     \LSDd[\TwoChoice\cite{onechoice}]\textcolor{red}{\textbf{*}} & $\bO(N)$ &$\bO(\log N)$ &{$\tbO(\log N)$} &$\bO(\log N)$ &{$\bO(\log^2 N)$} & {\Large{\textbf{\tdgreen{\checkmark}}}}/ II & HDD\\
+    \hline
+     \LSDd[\NlogN\cite{onechoice}] & $\bO(N\log N)$ &$\bO(\log N)$ &$\bO(\log N)$ &$\bO(\log N)$ &{$\bO(\log^3 N)$} & {\Large{\textbf{\tdgreen{\checkmark}}}}/ II & HDD/SSD\\
+    \hline
+    \LSDd[\Ns\cite{Demertzis17}] & $\bO(sN)$ &{$\bO(N^{\frac{1}{s}}+ \log N)$}&$\bO(\log N)$ & $\bO(N^{\frac{1}{s}}/p +\log N)$&{$\bO(s\log^2 N)$} & {\Large{\textbf{\tdgreen{\checkmark}}}}/ II & HDD/SSD\\
+    \hline
+		\end{tabular}
+    	}
+ %\captionsetup{font=small}
+	\caption{Comparison of different \emph{locality-aware} and \emph{page-efficient} DSE schemes. For any function $f(N)$ the nonation $\tbO(f(N))$ denote $O(f(N)(\log f(N))^x)$ for some constant $x$; $n_w$ denotes the number of updates for a keyword $w$, and $p$ denotes memory page size and \textit{am.} stands for amortized complexity. \textbf{FP} and \textbf{BP} stands for forward privacy and backward privacy respectively; all the schemes except the schemes from \cite{LocalLayeredSSECrypto22} satisfy \textbf{FP} and \textbf{BP-II}. The sources of the schemes that \SDa[$\cdot$]\ and \LSDd[$\cdot$]\ are instantiated with are cited inside the brackets. The schemes marked with \textcolor{red}{\textbf{*}} restrict keyword-lists' size to be at most $N^{1-{1}/{\log \log N}}$.}
+	\label{table:SDaLoc} 
+%\end{table}
+\end{figure*}
+
+
+\smallskip\noindent\textbf{I/O overhead of DSE schemes.} 
+%todo{8.Describe what is the actual goal behind having I/O efficiency} 
+Existing state-of-the-art DSE schemes achieve 
+ {extremely low} computational overhead for search and update queries, typically in the order of a few milliseconds or even microseconds, even for massive datasets~\cite{SDa,cash2014dynamic}. The key reason for this is that they employ extremely lightweight symmetric-key cryptographic techniques, mainly pseudorandom functions (PRF) and symmetric key encryption. At a high level, most existing schemes use some variation of an {\emph{encrypted map} index}~\cite{cash2014dynamic}, a key-value storage data structure where the values are encrypted tuples of the form $(w,id)$ (where $w$ is a keyword/term, and $id$ is the identifier of a record from the dataset, and the tuple attests to ``$w$ appears in $id$)\footnote{\neww{In our constructions the tuple also contain the operation type: \emph{(w,id,op).}}}
+ %\tblue{(in our case it is $(w,id,op)$)} 
+ and keys are computed \emph{pseudorandomly} with a PRF. This not only simplifies subsequent searches significantly, but also, due to the PRF usage, tuples are placed in random-looking positions in the index, which is crucial for minimizing the information revealed to the server about structure of the underlying dataset.
+
+While this random placement does not significantly affect DSE performance when the encrypted index is stored in RAM %---"it surely does, say its not the bottleneck for DSE in memory"}, 
+it can have a major negative impact, when it is stored on hard-disk. 
+%(which is the typical scenario for large datasets, or for providers serving multiple data owners).
+To see why, we need to consider that the I/O-related overhead of accessing disk data consists also of moving the disk head (a {``}mechanical{''} component). When using DSE to retrieve a result of $R$ tuples, due to their random placement, {causes} (close to) $R$ such head ``jumps'' \new{(i.e. disk seeks in HDDs)} if the index is sufficiently large. In this case, this turns out to be the main DSE bottleneck! Reading data from consecutive location costs orders of magnitude less than reading from random positions. 
+%\dimitris{Good spot to give some numbers, e.g., reading consecutive vs. non-consecutive data-- \tblue{Reading data from consecutive location costs order of microseconds, while one random jump costs around 3-10 miliseconds}}.
+In the {relevant} literature, the number of such jumps required for one DSE search query is referred to as \emph{locality}. Cash and Tessaro~\cite{cash2014locality} identified different interesting trade-offs between \emph{locality} and \emph{read efficiency}, i.e., the number of extra data that needs to be retrieved beyond the result itself %\tgreen{not clear that it defines read-efficiency}
+(e.g., if we just want to minimize locality we can just retrieve and locally decrypt the entire dataset; clearly not a favorable trade-off in this case).  Subsequent works~\cite{onechoice,locCrypto18,Demertzis17} proposed improved schemes both from a theoretical perspective~\cite{onechoice} and with good practical performance~\cite{onechoice,Demertzis17}. For the case of SSDs, recent works \cite{BFF21,LocalLayeredSSECrypto22} indicate that the search performance depends on another metric which is called \emph{page efficiency}, which is the ratio of the 
+number of pages retrieved for the encrypted results to the number of pages that would have 
+been retrieved for the plaintext result.
+
+%which aims to read as few pages as possible 
+%\tgreen{the metric does not aim to do anything its just a definition}.
+Unfortunately, all of these  schemes with bounded \emph{locality} and \emph{page efficiency} are restricted in the \emph{static} dataset case, without support for updates. The work closest to ours %\footnote{\new{Minaud and Reichle \cite{hermes} independently and concurrently presented two theoretical page-efficient DSE schemes that are forward private. However, their constructions target only SSDs (and cannot be used for HDDs) require up to $O(N)$ client storage and its updates are very inefficient (similar to \cite{LocalLayeredSSECrypto22}).}} 
+is the recent work of Minaud and Reichle~\cite{LocalLayeredSSECrypto22} from CRYPTO'22, which suffers from two important drawbacks.
+%To the best of our knowledge, the only existing I/O efficient DSE 
+%\dimitris{Can we agree to use a specific term for good-locality schemes? It gets annoying referring to them otherwise. How about local DSE?} 
+%is from the very recent work of Minaud and Reichle~\cite{LocalLayeredSSECrypto22} from CRYPTO'22, which suffers from two important drawbacks. %\tblue{IO-DSSE NDSS 2017} 
+First, its updates are very inefficient--the overhead of adding a single $(w,id)$ tuple is proportional to the number of entries that already contain $w$. This is as costly as running a search for $w$, whereas prior DSE 
+%(that do not care about locality) 
+achieve constant or, at worst, {logarithmic cost w.r.t the dataset size}. Second, and arguably most important, the DSE of~\cite{LocalLayeredSSECrypto22} \emph{is not forward-private}. In practice, it stores all tuples for the same keyword directly in consecutive locations in the encrypted index (which {very} naturally gives it good locality), so just looking at the location a new entry is stored during an update, the server infers information about whether it is related to prior entries. Forward privacy has been shown to be very important in practice, not only because it allows the dataset to be incrementally built 
+%\tgreen{on the fly}, 
+but also because it impairs existing privacy attacks against DSE~\cite{zhang16all}.
+
+\smallskip\noindent\textbf{Forward-privacy AND ``good'' locality?} 
+At first glance, these two properties seem inherently contradicting. 
+Forward-privacy seeks to ``eliminate'' any information about new entries 
+that can be inferred from where they are placed in the encrypted index 
+(e.g., using random placement). On the other hand, good locality requires 
+that entries for the same keyword are placed close to each other, 
+ideally in contiguous disk locations! Indeed, the authors of~\cite{LocalLayeredSSECrypto22} 
+claim that the two properties, {\emph{locality} and \emph{forward privacy},} \textit{``seem to be fundamentally at odds.''} Prior to this, Bost~\cite{bost2016ovarphiovarsigma} claimed that the two are \textit{``irreconcilable notions.'' }
+
+\smallskip\noindent\textbf{Our results: I/O Efficient DSE with forward and backward privacy.}
+Based on the above observation, it may seem that we cannot hope to achieve both of these properties. In this work, we {disprove} this by proposing the first DSE schemes that reconcile the two properties achieving bounded (logarithmic or polylogarithmic) \emph{locality} and \emph{page efficiency}, good overall practical performance, and forward-and-backward privacy!
+Our results can be {summarized} as follows. 
+%\todo{1. explain novelty}
+%\todo{16.17. Explain how we achieve FP+BP}
+\underline{First}, we observe that the generic ``static-to-dynamic'' transformation of Demertzis et al.~\cite{SDa},
+called \SDa, also works as a locality-preserving compiler that can produce forward and backward private DSE from existing \emph{locality-aware}\footnote{Schemes with good locality are referred as \emph{locality-aware} schemes} static schemes with just an extra logarithmic {overhead} for locality.
+%, and the same search performance as the underlying static ones. 
+This approach yields the first such DSE in the literature, albeit with ``amortized'' updates, as the client needs to periodically merge indexes into larger ones. In practice, while most updates are fast, some of them are significantly more resource-consuming. 
+
+\underline{Second}, aiming for schemes with de-amortized updates, we begin with the de-amortized version of 
+\SDa\ presented as the \SDd\ scheme in~\cite{SDa}. \SDd\ relies on oblivious dictionaries~\cite{wang2014oblivious},\cite{mishraoblix} for the de-amortization, which makes updates computationally intensive and requires multiple rounds of interaction. \neww{
+In this work, we revisit this de-amortization strategy and \emph{refine} it to make it work for a variety of schemes based on our  computationally lighter {approach of} \emph{oblivious-merge}. Our \emph{oblivious-merge} merges encrypted indexes into bigger ones through multiple oblivious passes and oblivious-sort~\cite{bucketSort} and compaction operations in order to compute important metadata, decide about the placement of the input-elements, adjust properly the required dummy records and do the final placement. These operation require to operate on elements in chunks/batches, as opposed to the individual,
+one-by-one manner of \SDd. This necessitates multiple oblivious passes on these chunks and de-amortized oblivious-sort and compaction implementations in a manner that preserves forward and backward privacy.
+}
+%{We present a new \neww{protocol}, called the \emph{oblivious merge}, to merge two indexes obliviously; \new{this is one of the main novelties of this work}. 
+\neww{We named this new \emph{locality-aware-deamortized} \SDa\ to be \LSDd}. 
+%In section \ref{subsec:de-amortized} we also highlight the properties (called decomposability and obliviousness) that are necessary for merging two indexes in a de-amortized and oblivious fashion.} 
+Using \emph{oblivious sorting} based \emph{oblivious merge}, instead of oblivious dictionaries as~\cite{SDa}, asymptotically improves our update overhead by a logarithmic factor and also reduces the amount of interaction. 
+%\todo{2. general overview of the transformation}
+
+\underline{Third}, we instantiate our two \neww{transformations} \SDa[$\cdot$]~ and \LSDd[$\cdot$]~ with several static schemes with (i) good \emph{locality} (i.e. \emph{locality-aware schemes}), {well suited} for HDD storage, i.e., the One Choice Allocation (\OneChoice), Two Choice Allocation (\TwoChoice), \NlogN~ from~\cite{onechoice} and \cite{Demertzis17}; (ii) and with good \emph{page efficiency}, well suited for SSD storage, i.e., the \NlogN, \cite{Demertzis17} and Tethys/Pluto from~\cite{BFF21}. \neww{While \SDa[$\cdot$]~ can be instantiated with any static SE scheme, \LSDd[$\cdot$] can be instantiated only with One-Choice-Allocation, Two-Choice-Allocation and \NlogN\ schemes.}  Figure~\ref{table:SDaLoc} provides an overview of the asymptotic performance of the multiple schemes we achieve in this way from the literature~\cite{SDa,LocalLayeredSSECrypto22}. 
+%For instance, when instantiated with any of $\bO(1)$-locality static schemes of~\cite{onechoice,Demertzis17}, this yields  DSE with $\bO(\log N)$ locality for a dataset with size $N$ (Section~\ref{sec:SDalocality}). 
+Interestingly, not only our schemes are the \emph{first} to combine I/O efficiency with forward and backward privacy, but they also asymptotically \emph{outperform} prior (non forward-private) works.
+%\todo{5.Clearly explain that SDd[] works only with 1C/2C/NlogN and not scheme-agnostic}
+
+\underline{Finally}, we experimentally evaluate all of the proposed new DSE in HDD, SSD, and RAM for variable dataset and result sizes, considering both synthetic and real datasets~\cite{crimes}. {We plan to make our code publicly available after publication.} Our experimental results are very encouraging; it shows DSE with good I/O performance and strong privacy is not only possible but yields schemes with good practical performance. Below, we discuss our evaluation in more detail.
+%\todo{11. Explain how our technique reduces number of interactions/round-trips}
+%\todo{3.what challenges faced while combining I/O and FP+BP}
+
+\smallskip\noindent\textbf{Experimental evaluation.} We implemented all of our schemes and compare their search and update computation time with the state-of-the-art forward/backward private DSE schemes in HDD and SSD settings (Section~\ref{sec:eval}). In particular, we implement \OneChoice, \TwoChoice, \NlogN\ schemes with \SDa[$\cdot$]\ and \LSDd[$\cdot$]\footnote{\new{Referred as \SDa[\OneChoice],\SDa[\TwoChoice], \LSDd[\NlogN] etc.}}, and compared them with the original \PiBas\ based \SDa\ and \SDd\ of~\cite{SDa}. % i.e. with \SDa[\PiBas] and \SDd[\PiBas]  respectively.
+%The keyword counter of \PiBas\ based \SDd\ in \cite{SDa} is stored in the oblivious dictionary.
+ In terms of search, \SDa[\NlogN] has the best performance among the schemes at the cost of more storage. However, all of our amortized (\SDa[\OneChoice], \SDa[\TwoChoice], and \SDa[\NlogN]) and de-amortized  (\LSDd[\OneChoice] and \LSDd[\NlogN]) schemes with "good-locality" outperform \PiBas\ based \SDa\ and \SDd.  I.e., they are up to \textbf{two} and \textbf{three} orders of magnitude faster in SSD and HDD settings respectively. Regarding the update computation time, \PiBas\ based \SDa\ has the worst update time. Turning to the de-amortized schemes, \LSDd[\OneChoice] has the best performance in memory and disk and is up to \textbf{4$\times$} and \textbf{179$\times$} faster than \SDd[\PiBas]\footnote{\new{\SDd\ is the original version of \cite{SDa} based on \PiBas, and \SDd[\PiBas] is our new framework instantiated with \PiBas, 
+which are equivalent.}} respectively. \new{Although we do asymptotic comparisons of our schemes with \LayeredSSE\ and \LocalLayeredSSE\ \cite{LocalLayeredSSECrypto22} in Figure \ref{table:SDaLoc}, we did not implement them, as these schemes are rather a theoretical work. }
+% \new{(replaced $a_w$ with $n_w$ everywhere for consistency, and updated the page-efficiency of SDa[sN] scheme}
+%\new{Additional prior work paragraph removed.)} 
+%\todo{4.Explain difference between SDd+Pibas and SDd[PiBas]}
+%\todo{7.Clarify which scheme targets which storage and which metrices}
+%\tgreen{SSDs missing} %Furthermore, \LSDd[\NlogN] outperforms \SDd[\PiBas] in HDD (e.g., it is up to \textbf{8$\times$} faster in big database sizes).
+
+\smallskip\noindent\textbf{Comparison with additional prior works.} 
+\neww{Minaud and Reichle \cite{hermes} independently and concurrently presented two theoretical page-efficient DSE schemes that are forward private. The selection of the construction is based on a relationship between the number of entries, page size, and number of keywords, which leaks more information than our approaches do (setup leakage). In addition, their constructions target only SSDs (and cannot be used for HDDs) require up to $O(N)$ client storage and its updates are very inefficient (similar to \cite{LocalLayeredSSECrypto22}). The concept of using oblivious sorting periodically and then de-amortizing it to equalize average and worst-case scenarios has been adopted in previous works, such as in the rebuilding of square-root ORAM \cite{GoldreichSqRoot} and hierarchical ORAMs \cite{OstrovskyHeirarchy} when inputs exceed trusted client memory. We are not the first to employ and de-amortize oblivious sort. Oblivious-sort was utilized also by \cite{ShiNDSS14}. However, their construction does not achieve backward privacy. Their solution was tailored to ensure quasi-optimal search time (i.e., search time independent of the deleted records), which is not our primary objective. Oblivious sort is used to avoid contiguous memory locations of deleted entries through binary search and to obliviously-sort/permute their indexes with sublinear available client memory (mirroring challenges faced by hierarchical and square-root ORAMs in prior works).}
+%[57] was the first paper presenting the concepts of forward and backward privacy. However, their construction does not achieve backward privacy. Their solution was tailored to ensure quasi-optimal search time (i.e., search time independent of the deleted records), which is not our primary objective. It is an interesting future work to design a forward/backward private I/O-efficient DSE with quasi-optimal search time. Our approach handles deletions through cancellation tuples and it is not quasi-optimal. In addition, the technique of oblivious-sort was utilized by [57] (i) to avoid contiguous memory locations of deleted entries through binary search and (ii) to obliviously-sort/permute their indexes with $O(N^\epsilon)$ available oblviously client memory (mirroring challenges faced by hierarchical and square-root ORAMs in prior works)}
+
+\smallskip\noindent\textbf{Limitations.} \neww{ A parallel line of research concentrates on leakage-abuse attacks for SE \cite{islam2012access,cash2015leakage,Volat,dautrich2013compromising,kornaropoulosdata,kornaropoulos2020state,kornaropoulos2021response}, as well as on defenses and mitigation techniques \cite{Seal,multimap,stefanov2013path}. Our work does not offer new insights into leakage-abuse attacks or mitigation techniques. Instead, it adheres to the standard forward and backward privacy leakage profile for DSE.}
+
+\if 0
+\smallskip\noindent\textbf{Additional prior Work.} \tpurp{some of these are already cited before}
+\tblue{The notion of SE was first introduced by Song et al.~\cite{song2000practical}. Later, Curtmola et al.~\cite{curtmola2006searchable} proposed the modern security definition of SSE. }Chase and Kamara~\cite{chase10} introduced the broader notion of structured encryption.
+%that allows controlled disclosure of some predicate of the data. 
+Dynamic SE schemes were first introduced by Kamara et al.~\cite{kamara2012dynamic} and \tblue{Kamara and Papamanthou~\cite{dsse3}.
+%, with the latter reducing the amount of leakage of the first one.
+The notion of forward privacy was first introduced in~\cite{dsse1}.} Since then, a line of forward private SE schemes have been proposed ~\cite{ShiNDSS14,hahn2014searchable,cash2014dynamic,naveed2014dynamic,bost2016ovarphiovarsigma,kim2017forward,garg2016tworam,etemad2018efficient,simplefsse1}. 
+The notion of backward privacy was first introduced by Stefanov et al.~\cite{ShiNDSS14}, and was later formally defined by Bost et al~\cite{bost2017forward}.
+There are other kinds of works on SE that focus on more expressive queries~\cite{cash2013highly,Kamara17,chase10,Meng15,Kamara16,Demertzis16}, multi-user settings~\cite{musse1,musse2}, and combining SE with ORAM~\cite{naveed2014dynamic,garg2016tworam}.
+\fi 
+% The \SDa~and \SDd~schemes presented in ~\cite{SDa} transforms static SE schemes to dynamic ones, and are of our special interest. 
+% For making the schemes practical for real-world applications
+% one also needs to think about the efficiency of the schemes. 
+% A line of work focuses on making the SE techniques efficient 
+% in terms of \emph{locality} and \emph{read efficiency}
+% ~\cite{cash2014locality,miers2016io,onechoice,Demertzis17}.
+% We already discussed locality-aware schemes \OneChoice, \TwoChoice~and \NlogN\ 
+% from ~\cite{onechoice}, presented by Asharov et al. 
+%  Later, Demertzis et al.~\cite{locCrypto18}
+% showed that this read efficiency can be improved to
+% $\bO(\log^{\frac{2}{3}+\delta}N)$, by dividing the keyword lists of
+% different sizes into four groups and using four different
+% allocation algorithm for each of them.
+% There are few other works in the area of locality aware static SE
+% schemes~\cite{Demertzis17,cash2014locality,TwoChoicePPCrypto18}. 
+% All these above mentioned works 
+% only considered Hard Disk Drives (HDDs) as the underlying 
+% storage media. %The idea of \emph{locality} becomes irrelevant 
+% When Solid State Drives(SSDs) are used, the performance 
+% needs to be determined by \emph{page efficiency}~\cite{BFF21} instead of 
+% \emph{read efficiency} and \emph{locality}. %\emph{Page efficiency}
+% %is defined as the ratio of number of pages read by the server during a query 
+% %to the number of pages actually required to store the data 
+% %that is needed to be accessed during the query. 
+% The static \emph{page-efficient}
+% construction by Bossuat et al.\cite{BFF21} (called Tethys) achieves $\bO(1)$
+% storage efficiency, $\bO(1)$ page efficiency, and a $\omega({\log \lambda})$
+% client storage.
+% All the \emph{locality-aware} and \emph{page-efficient} constructions we mentioned 
+% so far are static. %There have been a very few work on \emph{locality-aware} 
+%Dynamic SE schemes.
+%In~\cite{MM17} they 
+
+
+
+
+% more detailed explanation Page Efficient literature
+% \tblue{
+% \noindent{\textbf{DSE for SSDs--Page-Efficiency/Space}.}
+% Locality and read efficiency are not meaningful metrics when solid state drives (SSD) are used as the underlying 
+% storage device. For SSDs, the memory accesses are done in terms of memory pages, and the performance 
+% is mainly determined by the number of these pages accessed, regardless of whether they are contiguous 
+% pages or not. Bossuat et al. \cite{BFF21} present a new criterion called \emph{page efficiency} 
+% to capture performance of an SE scheme whose data is stored on SSDs.
+% The \emph{page efficiency} is defined as the number of pages that 
+% the server must access to process a client's query, 
+% divided by the number of pages of the plaintext answer to
+% the query. In the same paper the authors presented a \emph{page efficient} static 
+% searchable encryption scheme (\textbf{PE-SE}) called Tethys. 
+% Storage efficiency in this model is the number of
+% pages needed to store the encrypted database, divided by the number of 
+% pages of the plaintext database. Tethys offers $\bO(1)$ page efficiency 
+% and $\bO(1)$ storage efficiency, but the client storage is not optimal $ \bO{p \log \lambda}$,
+% where $p$ is the page size and $\lambda$ is the security parameter. 
+% The authors in \cite{BFF21} claims that page efficiency is 
+% an excellent predictor of SSD performance and they supported their claim with experiments as well.
+% In~\cite{LocalLayeredSSECrypto22} Minaud and Reichle presented two DSE schemes.
+% The first one is a dynamic page efficient SE (\textbf{PE-DSE})
+% scheme, called \LayeredSSE, that offers 
+% \tpurp{$\bO(\log \log N )$} page efficiency, and $\bO(1)$ storage efficiency and client 
+% storage. The second scheme takes a PE-SE scheme as 
+% an input parameter and runs it along with an overflowing SE (which they call OSSE) scheme. 
+% %The basic idea is that if a keyword list overflows, then the 
+% %overflowing items will be stored in 
+% %the PE-SE scheme, rest will be stored in the OSSE scheme.
+% They use a variant of One-Choice Allocation as their OSSE scheme, 
+% that supports new updates but ignores the overflowing items.
+% There are $\log N$ instances of the PE-SE scheme. If a keyword-list
+% of size $k$ overflows then the overflowing items
+% go to $\ceil{\log{k}}^{th}$ instance of PE-SE.
+% This scheme offers $\bO(1)$ locality, 
+% $\bO(1)$ storage efficiency, and \tpurp{$\bO(\log \log N )$}
+% read efficiency, but under the condition that the longest list
+% is of size $N^{1-\frac{1}{\log \log N}}$. These schemes do not
+% ensure $FP$ and $BP$.
+% }
+% \tblue{
+% For PE-DSE schemes, we classify the \emph{page efficiency} metric into two:
+% \emph{Search Page Efficiency} and \emph{Update Page Efficiency}.
+% \begin{itemize}
+%  %\itemsep-0.3em 
+%  \item \emph{Search Page Efficiency:} the number of pages that 
+% the server must access to process a search query, 
+% divided by the number of pages of the plaintext answer to the search query
+%  \item \emph{Update Page Efficiency:}  the number of memory pages accessed 
+%  during one update (i.e., insert/delete of one $(w,id,op)$ tuple).%\footnote{Similar to \emph{Update Efficiency}, one can define  \emph{Update Page Efficiency} as the ratio of the total number of pages read/retrieved during a batch of updates over the size of the batch in terms of pages.}
+% \end{itemize}
+% }
+
+
+
+%========
+
+%na to kanw uncomment
+% \noindent\textbf{Improve Locality---Attempt 1:} We can replace \PiBas\ with a locality-aware SSE scheme, such as \OneChoice \cite{onechoice} (see Figure \ref{fig:1C} in the Appendix). 
+% \OneChoice.\texttt{setup} achieves (\textsf{P1}) and (\textsf{P2})
+% in a similar way as \SDd[\PiBas]; however, the \Update s are not \emph{forward private} anymore. %(\textsf{P1})is decomposable into multiple steps (\textsf{P2}) and achieves \textsf{(P1)} \tpurp{should we elaborate as we did for \PiBas ?}
+
+
+% In Figure {\ref{fig:fpViolation}}, we show an example where \PiBas is 
+% naively replaced with \OneChoice.
+% We are moving entries from {\sf OLDEST$_{i-1}$} to {\sf NEW$_{i}$} while 
+% placing the entries to proper bin positions using \OneChoice.\MAP\ function.
+% There are three bins in level $(i-1)$ and four bins in level $i$ . 
+% The two blue balls are placed in the second and third bins in ${\sf OLDEST}_{i-1}$. 
+% %During both moves the client queries the \OMAP~ to get the keyword-counter. 
+% During an update, the \OneChoice.\MAP\ function  assigns 
+% the first blue ball from ${\sf OLDEST}_{i-1}$ 
+% to the first bin in \NEW$_i$. 
+% Needless to say, the second blue ball will be assigned to the second bin. 
+% %As soon as the second blue ball is placed in the second bin, 
+% This is when the server can infer that these two balls are related. 
+% This will also reveal information about previous queries 
+% which fetched the second and the third bins of ${\sf OLDEST}_{i-1}$.
+% Even if we use an OMAP (similar to \SDd${[\PiBas]}$) to remember how many entries of the same keyword have been seen before, the location (i.e the bin) that we need to write an entry is now a function of the keyword (\tpurp{isnt it a function of the keyword in \PiBas too-- how do we differentiate the two?})---clear violation of forward-privacy. 
+% %violating forward privacy. 
+
+
+% Note here that the previous work of {\sf Local[LayeredSSE]} \cite{LocalLayeredSSECrypto22} which is \OneChoice-based approach is not forward private because it performs updates via fetching 
+% the whole bin locally, revealing the destination bin position of the newly added 
+% entry similar to this example. 
+% We need to find a way to break the correlation between the elements in 
+% $\OLDEST_{i-1} \cup \OLDER_{i-1}$ and $\NEW_i$. 
+% This is why we introduced a third property \textsf{P3}, that is a necessary condition
+% for ensuring \emph{forward privacy} in \emph{locality aware}
+% DSE schemes.
+
+% \begin{itemize}
+% \item \tblue{{\textsf{P3:}} \emph{Time-locality independence} (\tpurp{how about spatial independence})---
+%     Given two input arrays of size $s$, the \omerge\ protocol needs to output an array of size $2.s$, in a way that no one other than the client can 
+%     map the position of the entries in the input arrays to their positions 
+%     in the output array.}
+% \end{itemize}
+
+    
+% %    \tpurp{P1 - oblivious movement; P3 - oblivious placement}
+% \tblue{
+% \smallskip\noindent\underline{\textsf{(P3):}} 
+% \SDd[\PiBas] violates \textsf{P3} 
+% as the server can see 
+% which entries form $\OLDEST_{i-1} \cup \OLDER_{i-1}$ 
+% is moved to which location in 
+% $\NEW_i$. But this does not leak any information about the keywords to the server.
+% This is because, with \PiBas\ every update for a keyword is written at a pseudo random location, independent of the previous entries of the very same keyword.
+% Moreover, keyword counters are stored in an OMAP. 
+% The pseudo random writes and the use of OMAPs together 
+% ensures forward privacy of \SDd[\PiBas].
+% On the other hand, \SDd\ instantiated with a locality-aware scheme has to satisfy 
+% \textsf{P3} as the position of a newly inserted 
+% keyword is not independent of 
+% its previous entries.
+% %\tpurp{decompose bitonic sort}
+% }
+
+% \noindent\textbf{Improve Locality---Attempt 2:} In the sections below, we present our constructions that overcome the aforementioned problem with the use of an oblvious-sort algorithm, which is used to create \omerge\ protocols that achieve all of \textsf{(P1)}, \textsf{(P2)} and \textsf{(P3)}. In a nutshell, the use of the oblivious-sort will hide any information regarding the final location of each input entry.
+
+%\tgreen{why dont you implement LayeredSSE, or SDa[Tethys]}
+%\tgreen{define obliviousness}

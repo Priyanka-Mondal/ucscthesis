@@ -293,10 +293,10 @@
 } \\
 \bigskip \bigskip
 \hfill\rule{2.6in}{0.5pt}\\
-\hfill\makebox[2.6in][l]{\@chair, Chair }\\
+\hfill\makebox[2.6in][l]{\@chair, Co-chair }\\
 \bigskip \medskip
 \hfill\rule{2.6in}{0.5pt}\\
-\hfill\makebox[2.6in][l]{\@committeememberone}\\
+\hfill\makebox[2.6in][l]{\@committeememberone, Co-chair}\\
 \bigskip \smallskip
 \hfill\rule{2.6in}{0.5pt}\\
 \hfill\makebox[2.6in][l]{\@committeemembertwo}\\
