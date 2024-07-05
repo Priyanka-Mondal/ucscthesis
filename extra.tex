@@ -1,0 +1,57 @@
+\newcommand{\var}[1]{\text{\texttt{#1}}}
+\newcommand{\func}[1]{\text{\textsl{#1}}}
+\newcounter{phase}[algorithm]
+\newlength{\phaserulewidth}
+\newcommand{\setphaserulewidth}{\setlength{\phaserulewidth}}
+\newcommand{\phase}[1]{%
+  \vspace{-1.25ex}
+  % Top phase rule
+  \Statex\leavevmode\llap{\rule{\dimexpr\labelwidth+\labelsep}{\phaserulewidth}}\rule{\linewidth}{\phaserulewidth}
+  \Statex\strut\textit{$\triangleright$ #1 }% Phase text
+  % Bottom phase rule
+  \vspace{-1.25ex}\Statex\leavevmode\llap{\rule{\dimexpr\labelwidth+\labelsep}{\phaserulewidth}}\rule{\linewidth}{\phaserulewidth}}
+\setphaserulewidth{.7pt}
+
+\begin{algorithm}
+  \caption{Voting Protocol}
+  \label{alg:phoenix-voting}
+  \begin{algorithmic}[1]
+    \phase{\textbf{as a replica k}} \\
+    When replica \texttt{j} is suspected\\
+    \hskip 1em broadcast $\langle VOTE, j, getLatestDec(\texttt{DecLog})$, \O $\rangle_{\sigma_{k}}$\\
+  \vspace{0.1cm}
+    When replica \texttt{j} is detected with Proof \\
+    \hskip 1em broadcast $\langle VOTE, j, getLatestDec(\texttt{DecLog}), Proof \rangle_{\sigma_{k}}$\\
+  \vspace{0.1cm}
+    When received m : $\langle VOTE, j, Cert, Proof \rangle_{\sigma_{i}}$ from
+    replica \texttt{i}\\
+    \hskip 1em \textbf{if} \texttt{i} in \texttt{Conf} $\land$ \texttt{m.j} in
+    \texttt{Conf} $\land$ isValidCert(\texttt{m.Cert})\\
+\end{algorithmic}
+\end{algorithm}
+
+First, let us 
+\begin{figure}
+  \begin{minted}[xleftmargin=0.6cm, linenos]{haskell}
+availLarBal :: Choreo IO (Async Int @ "client")
+availLarBal = do 
+  bal1 <-
+    bank1 `locally` \_ -> do putStrLn "Enter balance at bank1::"
+      readLn :: IO Int
+
+  bal2 <-
+    bank2 `locally` \_ -> do putStrLn "Enter balance at bank2::"
+      readLn :: IO Int
+  
+  bal1' <- (bank1, bal1) ~> client
+  bal2' <- (bank2, bal2) ~> client
+  availBal <- client `locally` \un ->  select (un bal1') (un bal2') 
+  largeBal <- client `locally` \un ->  getLargest (un bal1') (un bal2')
+  largestAvailBal <- client `locally` \un -> select (un largeBal) (un availBal) 
+
+  client `locally` \un -> do 
+    a <- wait $ un largestAvailBal
+    putStrLn $ "largest available balance:" ++ show a
+\end{minted}
+\caption{\HasChor\ (fault-tolerant features added) implementation of largest available balance}
+\end{figure}

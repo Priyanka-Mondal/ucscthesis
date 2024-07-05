@@ -1,3 +1,27 @@
+\usetikzlibrary{shapes,arrows,fit,backgrounds}
+\usetikzlibrary{decorations.markings}
+\usetikzlibrary{decorations.pathreplacing,calligraphy,backgrounds}
+\usetikzlibrary{shapes,arrows,positioning, calc}
+\usepackage{tikz-3dplot}
+
+\algtext*{EndIf}
+\algtext*{EndFor}
+\algtext*{EndWhile}
+\algnewcommand{\IIf}[1]{\State\algorithmicif\ #1\ \algorithmicthen}
+\algnewcommand{\EndIIf}{\unskip\ \algorithmicend\ \algorithmicif}
+\algnewcommand{\ElsIIf}[1]{\State\algorithmicelse\ \algorithmicif \ #1\ \algorithmicthen}
+\algnewcommand{\ElsI}[1]{\State\algorithmicelse\ #1}
+\algnewcommand{\FFor}[1]{\State\algorithmicfor\ #1\ \algorithmicdo}
+%\pdfsuppresswarningpagegroup=1
+%\fontencoding{T1}
+%  \fontfamily{garamond}
+%  \fontseries{m}
+%  \fontshape{it}
+%  \fontsize{12}{15}
+%  \selectfont
+%%%%%%%%Here i did if0
+\newcommand{\pair}[2]{{( \ensuremath{#1, #2} )}}
+
 \newcommand\txsel[2]{{#1}\mathbin{\ominus}{#2}}
 \newcommand\txcmp[2]{{#1}\mathbin{\oplus}{#2}}
 \newcommand\selor[2]{{#1}\mathbin{\boxminus}{#2}}
@@ -109,19 +133,19 @@
     {\langle{#1},\,{#2},\,{#3},\,{#4}\rangle}%
     {\langle{#1},\,{#2},\,{#3},\,{#4}\rangle}%
 }
-\usepackage{xparse}
-\WithSuffix\newcommand\evalctx*[1]{\evalctx{#1}{t}}
-\WithSuffix\newcommand\evalctx'[1]{\evalctx{#1}{t'}}
+
+%\WithSuffix\newcommand\evalctx*[1]{\evalctx{#1}{t}}
+%\WithSuffix\newcommand\evalctx'[1]{\evalctx{#1}{t'}}
 \newcommand{\seteq}[3]{{#2} \indapprox{#1}{}{#3}}
-\WithSuffix\newcommand\seteq*[2]{\seteq{\low}{#1}{#2}}
+%\WithSuffix\newcommand\seteq*[2]{\seteq{\low}{#1}{#2}}
 \newcommand{\nseteq}[3]{{#2} \notindapprox{#1}{}{#3}}
-\WithSuffix\newcommand\nseteq*[2]{\nseteq{\low}{#1}{#2}}
+%\WithSuffix\newcommand\nseteq*[2]{\nseteq{\low}{#1}{#2}}
 \newcommand{\traceeq}[3]{{#2} \indapprox{#1}{\star} {#3}}
-\WithSuffix\newcommand\traceeq*[2]{\traceeq{\low}{#1}{#2}}
+%\WithSuffix\newcommand\traceeq*[2]{\traceeq{\low}{#1}{#2}}
 \newcommand{\ntraceeq}[3]{{#2} \notindapprox{#1}{\star} {#3}}
-\WithSuffix\newcommand\ntraceeq*[2]{\ntraceeq{\low}{#1}{#2}}
+%\WithSuffix\newcommand\ntraceeq*[2]{\ntraceeq{\low}{#1}{#2}}
 \newcommand{\weakseteq}[4]{{#3} \approx\!\!\bullet_{#1}^{#2}\; {#4}}
-\WithSuffix\newcommand\weakseteq*[2]{\weakseteq{\A}{\pi}{#1}{#2}}
+%\WithSuffix\newcommand\weakseteq*[2]{\weakseteq{\A}{\pi}{#1}{#2}}
 
 \newcommand{\Rule}[4][]{
   [\textsc{#2}]~
@@ -247,6 +271,7 @@
 \newcommand{\last}{\mathcal{L}}
 \newcommand{\lastd}{\mathcal{L'}}
 \newcommand{\blame}{\mathcal{C}}
+\newcommand{\view}[1]{\triangle"("{#1}")"}
 \newcommand{\blam}{\mathcal{B}}
 \newcommand{\tole}{\mathcal{T}}
 \newcommand{\tolef}[1]{"tole("{#1}")"}
@@ -256,8 +281,9 @@
 \newcommand{\select}[2]{\mathsf{select}~{#1}~\mathsf{or}~{#2}}
 \newcommand{\selectth}[3]{\mathsf{select}~{#1}~\mathsf{or}~{#2}~\mathsf{or}{#3}}
 \newcommand{\selecta}[3]{{\mathsf{select}^{#3}}~~{#1}~\mathsf{or}~{#2}}
-\newcommand{\selex}[1]{\mathsf{select}^{#1}}
-\newcommand{\selonly}{\mathsf{select}~}
+\newcommand{\selex}[1]{\texttt{select}^{#1}}
+\newcommand{\selonly}{\texttt{select}~}
+\newcommand{\comonly}{~\texttt{compare}~}
 \newcommand{\selone}[1]{select"~{#1}}
 \newcommand{\noeta}[1]{"noeta("~{#1}~")"}
 \newcommand{\compEnd}[3]{{\mathsf{compare}^{#1}~{#2}~\matsf{and}~{#3}}}
@@ -295,6 +321,7 @@
 \newcommand\schedule{\ensuremath{\mathcal{S}}\xspace}
 \newcommand\head{"head"}
 \newcommand\tail{"tail"}
+%\newcommand{\compEnd}[3]{"compare"^{#1}~{#2}~"and"~{#3}}
 \newcommand{\srafjudge}[3]{{#1}\Vdash{#2}\succ{#3}}
 \newcommand{\recrafjudge}[3]{{#1}\Vdash{#2}\gtrdot{#3}}
 \newcommand{\notrecrafjudge}[3]{{#1}\nVdash{#2}\gtrdot{#3}}
@@ -310,7 +337,7 @@
 \newcommand{\ifexp}[3]{"if"~{#1}~"then"{#2}~"else"~{#3}}
 \newcommand{\downgrade}[2]{"downgrade"~{#1}~"to"~{#2}}
 \newcommand{\pidowngrade}[3]{"down"_{#1}~{#2}~"to"~{#3}}
-\WithSuffix\newcommand\pidowngrade*[2]{\pidowngrade{\pi}{#1}{#2}}
+%\WithSuffix\newcommand\pidowngrade*[2]{\pidowngrade{\pi}{#1}{#2}}
 \newcommand{\cdowngrade}[2]{"decl"~{#1}~"to"~{#2}}
 \newcommand{\idowngrade}[2]{"endorse"~{#1}~"to"~{#2}}
 \newcommand\pf{\ensuremath{\mathit{pf}}}
@@ -330,7 +357,6 @@
 \newcommand{\secctxt}[1]{[#1]}
 \newcommand{\scbox}[1]{\raisebox{0em}[0pt]{#1}}
 \newcommand{\paira}[3]{{\langle #1, #2 \rangle}^{#3}}
-\newcommand{\pair}[2]{{( \ensuremath{#1, #2} )}}
 \newcommand{\delexp}[2]{\langle #1~\actsfor~#2 \rangle}
 \newcommand{\aftype}[2]{(#1 \succcurlyeq #2)}
 \newcommand{\aftypep}[2]{#1 \succcurlyeq #2}
@@ -347,71 +373,19 @@
 \newcommand{\vreturn}[3]{(\vreturnp{#1}{#2}{#3})}
 \newcommand{\returng}[2]{\ensuremath{\overline{\eta}_{#1}~#2}}
 %\newcommand{\spkfor}[3]{{#1}\xRightarrow{#2}{#3}}
+\newcommand{\normal}[1]{"NORM("{#1}")"}
 \newcommand{\protsA}[2]{\ensuremath{\Pi~{\Vdash}~{#1}~guards~{#2}}}
 \newcommand{\nprotsA}[2]{\ensuremath{\Pi~{\nVdash}~{#1}~guards~{#2}}}
 \newcommand{\protsI}[2]{\ensuremath{\Pi~{\Vdash}~{#1}~guards~{#2}}}
 \newcommand{\downemitp}[4]{\downarrow^{#1}_{#2},\, \vreturnp{#3}{#4}}
-\usepackage{latexsym}
-\usepackage{cite}
-\usepackage{color}
-\usepackage{colortbl}
-\usepackage[colorlinks]{}
-\usepackage{pgfplots,wrapfig}
-\usepackage{wrapfig}
-\usepackage{booktabs}
-\usepackage{microtype}
-\usepackage{times,graphicx,color,eso-pic}
-\usepackage{upgreek}
-\usepackage{pdfpages}
-\usepackage{relsize}
-\usepackage{amsmath, amsthm, amssymb, stmaryrd}
-\usepackage{textcomp}
-\usepackage{ifthen}
-\usepackage{suffix}
-\usepackage{xspace}
-\usepackage{paralist}
-\usepackage{listings}% http://ctan.org/pkg/listings
-\usepackage{xcolor}
-\usepackage{mathtools}
-\usepackage{dsfont}
-\usepackage{lmodern}
-\usepackage[noend]{algpseudocode}
-%{\textit{Proof:} }{$\square$}
-\usepackage{hyperref}
-\usepackage{enumitem, afterpage}
-\usepackage{mathrsfs}
-\usepackage{paralist}
-\usepackage{listings}% http://ctan.org/pkg/listings
-\usepackage{mdframed,lipsum}
-\usepackage{multicol}
-\usepackage{url} 
-\usepackage{appendix}
-\usepackage{varwidth}
-\usepackage{svg}
-\usepackage{cases}
-\usepackage{mathpartir}
-\usepackage{fontspec}
-\fontencoding{T1}
-  \fontfamily{garamond}
-  \fontseries{m}
-  \fontshape{it}
-  \fontsize{12}{15}
-  \selectfont
-%\renewcommand{\familydefault}{\sfdefault}
-%\defaultfontfeatures{Mapping=tex-text,Scale=MatchLowercase}
-%\setmainfont{Times}
-%\setmonofont{Lucida Sans Typewriter}
-\usepackage{thmtools}
-\usepackage{thm-restate}
-\usepackage[utf8]{inputenc}
-\usepackage{array, caption, floatrow, tabularx, makecell, booktabs}%
-\usepackage{arydshln}
-\usepackage{tabu}
-\usepackage{multirow}
-\usepackage{enumitem}
-\usepackage{bold-extra}
+%%%% here i did
+
+
 %\usepackage[a4paper, total={7in, 10in}]{geometry}
-%\ssp 
+%\ssp
+
+%% here i did 
+
 \usepackage[english]{babel}
 
 \lstset{emph={%  
@@ -445,7 +419,6 @@
     mathescape
 }
 %\svgpath{{advancement_doc_blank/chapters/pictures}}
-
 
 
 \newtheorem{definition}{Definition}
@@ -492,6 +465,9 @@
 \newcommand{\DLoc}{\ensuremath{{\textsf{DLoc}}}\xspace}
 \newcommand{\DLocs}{\ensuremath{{\textsf{DLoc$^*$}}}\xspace}
 \newcommand{\PiBas}{\ensuremath{{\sf {PiBAS}}}\xspace}
+\newcommand{\Real}{\mathsf{Real}}
+\newcommand{\Ideal}{\mathsf{Ideal}}
+\newcommand{\mergeSplit}{\textsf{MergeSplit}}
 \newcommand{\OneChoice}{\ensuremath{{\sf 1C}}\xspace}
 \newcommand{\TwoChoice}{\ensuremath{{\sf 2C}}}
 \newcommand{\SDDPiBAS}{\ensuremath{{\sf SDd[PiBAS]}\xspace}}
@@ -503,12 +479,16 @@
 \newcommand{\In}[1]{\ensuremath{\mathcal{I}(#1)}}
 \newcommand{\I}{\ensuremath{\mathcal{I}}}
 %\newcommand{\tred}[1]{\textcolor{red}{#1}}
+\renewcommand{\P}{\ensuremath{\mathcal P}}
 \newcommand{\tblue}[1]{\textcolor{blue}{#1}}
 \newcommand{\tpurp}[1]{\textcolor{purple}{#1}}
 \newcommand{\DictF}{\textsf{DictF}}
 \newcommand{\lp}{\mathcal{L}}
 %\newcommand{\algorithmautorefname}{Algorithm}
+\newcommand{\ceil}[1]{\ensuremath{\lceil #1 \rceil}}
 
+
+%%% here i did
 
 \WithSuffix\newcommand\downemitp*[2]{\downemitp{#1}{ℓ'}{ℓ}{#2}}
 \WithSuffix\newcommand\bracket*[2]{\bracket{#1}{#2}{H}}
@@ -644,6 +624,8 @@
 \newcommand{\fv}[1]{\slop{FV}\,(#1)} % Free Variables
 \newcommand{\imply}{\proves}
 \newcommand{\prim}[1]{\slop{storable}(#1)} % primitive types (no lambda terms)
+
+%% uncomment this 
 \newcommand{\refmakeapprule}[2]{\ifcompleteappx\ref{#2}\else\makeappxrule{#1}{#2}\fi}
 \newcommand{\makeappxrule}[2]{#1\label{#2}}
 
@@ -680,12 +662,6 @@
 \newcommand{\new}[1]{\textcolor{black}{#1}}
 \newcommand{\neww}[1]{\textcolor{black}{#1}}
 \newcommand{\LSDd}{{{\sf L-SD$_d$}}}
-%\newcommand{\PiBas}{\ensuremath{{\sf {PiBAS}}}}
-%\newcommand{\OneChoice}{\ensuremath{{\sf 1C}}}
-%\newcommand{\TwoChoice}{\ensuremath{{\sf 2C}}}
-%\newcommand{\SDDPiBAS}{\ensuremath{{\sf SDd[PiBAS]}\xspace}}
-%\newcommand{\TwoChoicePP}{\ensuremath{{\sf 2C^{++}}}}
-%\newcommand{\NlogN}{\ensuremath{{\sf{N{\log}N}}}}
 \newcommand{\Ns}{\ensuremath{{\sf{sN}}}}
 \newcommand{\sN}{\ensuremath{{\sf{sN}}}}
 \newcommand{\D}{\mathcal{D}}
@@ -695,22 +671,37 @@
 \newcommand{\omerge}{\texttt{oblMerge}}
 \newcommand{\tbO}{\ensuremath{\tilde{\textsc{O}}}}
 \newcommand{\TbO}{\ensuremath{\Tilde{\textsc{O}}}}
-%\newcommand{\A}{\adv}
-\usepackage{mathtools}
-%\newcommand{\Dict}{\textsf{Dict}}
+
 \newcommand{\Index}{\textsc{Ind}}
 \newcommand{\Ind}{\textsc{Ind}}
 \newcommand{\simomerge}{\texttt{Sim-oblMerge}}
 \newcommand{\simosort}{\texttt{Sim-OSort}}
 \newcommand{\simocompact}{\texttt{Sim-OCompact}}
 \newcommand{\simPibas}{\texttt{Sim-Pibas}}
-\usepackage{minted}
-\usepackage{upquote}
+\newcommand{\FLAQR}{\textsf{FLAQR}}
+\newcommand{\FLAQRp}{\textsf{FLAQR}\ensuremath{^{+}}}
+\newcommand{\keys}{\ensuremath{\mathcal{K}}}
+\newcommand{\FLAME}{\textsf{FLAME}}
+\newcommand{\Flame}{\textsf{FLAME}}
+\newcommand{\HasChor}{\textsf{HasChor}}
+\newcommand{\FlameChor}{\textsf{FlameChor}}
+\newcommand{\combine}[2]{"combine"^{#1}~{#2}}
+\newcommand{\comb}[4]{"combine"~{#1}={#2}"@"{#3}~"in"~{#4}}
+\newcommand{\comba}[5]{"combine"^{#1}{#2}={#3}"@"{#4}~"in"~{#5}}
+\newcommand{\splits}[2]{"split"_{#1}~{#2}}
+\newcommand{\splitsa}[3]{"split"^{#1}_{#2}~{#3}}
+%\newcommand{\PM}[1]{\textcolor{blue}{#1}}
+\definecolor{Gray}{gray}{0.9}
+\newcommand{\tred}[1]{\textcolor{red}{#1}}
+\definecolor{darkgreen}{HTML}{007500}
+\newcommand{\tdgreen}[1]{\textcolor{darkgreen}{#1}}
+\newcommand{\Y}{\textsc{\textbf{Y}}}
+\newcommand{\Pluto}{\textsf{Pluto}}
+\newcommand{\Nilus}{\textsf{Nilus}}
+\newcommand{\LayeredSSE}{\textsf{LayeredSSE}}
+\newcommand{\LocalLayeredSSE}{\textsf{Local[LayeredSSE]}}
 
-\usetikzlibrary{shapes,arrows,fit,backgrounds}
-\usetikzlibrary{decorations.markings}
-\usetikzlibrary{decorations.pathreplacing,calligraphy,backgrounds}
-\usetikzlibrary{shapes,arrows,positioning, calc}
-\usepackage{tikz-3dplot}
 
-%\usepackage{subcaption}
+\newcommand{\FLAC}{\textsf{FLAC}}
+\newcommand{\FLAM}{\textsf{FLAM}}
+\newcommand{\hs}[1]{\mintinline{haskell}{#1}}

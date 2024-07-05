@@ -13,7 +13,13 @@ Contrary to that, in this work, we ``reconcile'' {for the first time} forward an
 
 % In this area, many recent works achieve the  of forward-and-backward privacy; however, none of these simultaneously achieves good I/O-performance when running from disk storage.
 % % (forward privacy nullifies the leakage during updates; backward privacy controls during search the leaked information about deleted records).
+\input{chapters/iodse/introduction}
 \input{chapters/iodse/preliminaries}
 \input{chapters/iodse/SDa}
-\input{chapters/iodse/SDdFramework}
-%\input{chapters/iodse/experiment}
+\input{chapters/iodse/SDd}
+\input{chapters/iodse/experiment}
+%\input{chapters/iodse/futureWork}
+\section{Conclusion }
+In this work, we proposed the first I/O efficient DSE schemes with forward/backward privacy by re-visiting prior "static-to-dynamic" compilers. First, we came up with a new \emph{oblivious merge} framework, that enabled us to place entries for the same keyword close to each other (preserving locality). Moreover, we optimized performance by replacing oblivious data structures for more lightweight and easier-to-implement oblivious sorting algorithms and linear scans. 
+We implemented both amortized and de-amortized transformations with I/O-efficient static schemes, such as \OneChoice, \TwoChoice, \NlogN, and \sN~(for s = 3 and 6), and compared their search and update times with prior works, overall showcasing our schemes' superior performance in various settings and configurations.
+

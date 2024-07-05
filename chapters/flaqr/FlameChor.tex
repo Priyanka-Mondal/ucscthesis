@@ -1,0 +1,1485 @@
+\chapter{FlameChor: Integrating Fault-Tolerant Features and Flow-Limited Authorization into Choreographic Programming}\label{ch:flamechor}
+
+
+%\section{abstract}
+This work presents an approach to enhancing choreographic programming with fault-tolerant language features and Information Flow Control. Our work involves extending the \HasChor\ programming model—a functional choreographic programming framework—with \FLAQR-inspired fault-tolerant language constructs to offer a powerful framework for building secure quorum based distributed systems. Unlike \FLAQR, which ensures data safety through Flow-limited Authorization Model (FLAM), \HasChor\ lacks explicit mechanisms for ensuring data safety. To address this gap, we introduce an extension of the \FLAME-a library that implements Flow-Limited Authorization Model in Haskell, which was originally designed for ensuring data confidentiality and integrity, to encompass availability policies. This extended \FLAME\ library is then integrated into \HasChor, enabling Flow-limited authorization within the choreographic programming paradigm.
+
+The outcome of our efforts is \FlameChor, a Haskell library that merges the  capabilities of \FLAME\ with the choreographic programming paradigm offered by \HasChor\ and \FLAQR\ based fault-tolerant language features. %FlameChor extends the repertoire of choreographic programming frameworks by incorporating fault-tolerant features and comprehensive data safety measures, encompassing both data integrity and availability concerns.
+%\end{abstract}
+
+%\section{Introduction}
+\section{Background}
+\subsection{Choreographic programming}
+Choreographic programming is a paradigm in distributed systems and concurrent programming where the focus is on specifying the interaction patterns (or Choreographies) between nodes. In this approach, the programmer defines a global view of how nodes interact, ensuring that the communication and coordination between them adhere to a well-defined protocol. The process of deriving local behaviors (or local programs) from the global protocol is called end-point projection. Each end point's behavior is specified based on its role in the global choreography, ensuring that when each component follows its local behavior, the overall system adheres to the global protocol. By designing the system from a global perspective, choreographic programming helps ensure that the system is free from certain classes of errors (e.g., deadlocks, race conditions) by construction. This is because the interactions are specified in a way that prevents these issues from arising. Choreographic programming is particularly useful in complex distributed systems where multiple components need to communicate and collaborate to achieve a common goal. It can simplify the development and maintenance of such systems by providing clear specifications of how components should interact. For example see Figure \ref{fig:majQChoreo}, that represents a global view (i.e. a Choreography) of a 2/3 majority quorum program between four end-points: the client, host A, host B and host C. Where as, Figures \ref{fig:majQA}, \ref{fig:majQB}, \ref{fig:majQC} and \ref{fig:majQClient} represents the actual end-point programs for the four hosts.
+
+\hspace{2cm}
+\begin{figure}
+    \begin{minipage}{0.4\textwidth}
+        \begin{minted}[xleftmargin=0.6cm, linenos]{haskell}
+A :: Network IO (Int)
+A = do
+  putStrLn "Enter value at A:"
+  a <- readLn :: IO Int
+  send a "client"
+ \end{minted}
+ \caption{Program at A}
+ \label{fig:majQA}
+    \end{minipage}
+\hfill
+\begin{minipage}{0.4\textwidth}
+\begin{minted}[xleftmargin=0.6cm, linenos]{haskell}
+B :: Network IO (Int)
+B = do
+  putStrLn "Enter value at B:"
+  b <- readLn :: IO Int
+  send b "client"
+ \end{minted}
+ \caption{Program at B}
+ \label{fig:majQB}
+\end{minipage}
+ %\caption{}
+\vspace{0.5cm}
+\begin{minipage}{0.4\textwidth}
+\begin{minted}[xleftmargin=0.6cm, linenos]{haskell}
+C :: Network IO (Int)
+C = do
+  putStrLn "Enter value at C:"
+  c <- readLn :: IO Int
+  send c "client"
+ \end{minted}
+ \caption{Program at C}
+ \label{fig:majQC}
+\end{minipage}
+\hfill
+%\end{figure}
+\hfill
+%\begin{figure}
+\begin{minipage}{0.4\textwidth}
+\begin{minted}[linenos]{haskell}
+client :: Network IO (Int)
+client = do
+  a <- recv "A"
+  b <- recv "B"
+  c <- recv "C"
+  abc <- select (( compare a b) 
+    select ((compare b c) (compare c a))  
+  return abc
+        \end{minted}
+        \caption{Program at client}
+        \label{fig:majQClient}
+    \end{minipage}
+   % \label{fig:majClient}
+    \caption{The end-point programs running at nodes A, B, C and Client respectively(assume that \FLAQR\ style \hs{compare} and \hs{select} constructs exists)}
+    \label{fig:majQAll}
+\end{figure}
+
+\begin{figure}
+  \begin{minted}[xleftmargin=0.6cm, linenos]{haskell}
+majorityQuorum :: Choreo IO ( Int @ "client")
+majorityQuorum = do 
+  a <- locA `locally` \_ -> do
+      putStrLn "Enter value at A::"
+      readLn :: IO Int
+
+  b <- locB `locally` \_ -> do
+      putStrLn "Enter value at B::"
+      readLn :: IO Int
+
+  c <- locC `locally` \_ -> do
+      putStrLn "Enter value at C::"
+      readLn :: IO Int
+
+  a' <- (locA, a) ~> client
+  b' <- (locB, b) ~> client
+  c' <- (locC, c) ~> client
+
+  abc <- client `locally` \un -> do 
+    select (compare (un a') (un b')) (select ( compare (un b') (un c')) 
+                              (compare (un c') (un a')))
+  
+  return abc
+    
+\end{minted}
+\caption{Choreography of the Majority quorum example}
+\label{fig:majQChoreo}
+\end{figure}
+% bc <- client `locally` \un -> do compare (un b') (un c')
+%  ca <- client `locally` \un -> do compare (un c') (un a')
+
+  %bcca <- client `locally` \un -> do select (un bc) (un ca)%
+  %abc <- client `locally` \un -> do select (un ab) (un bcca)
+
+\subsection{Fault-tolerance and consensus in \FLAQR}
+\FLAQR\ is a general purpose programming model which ensures program safety with its type-system. One of the primary novelties of \FLAQR\ is in the introduction of \comonly\ and \selonly\ terms for expressing consensus and fault-tolerant-based operations. Let us briefly recap how they operate.
+
+The consensus operation in \FLAQR\ is realized as a comparison of two values with the same underlying type but distinct outer security labels
+(see \ruleref{Compare}). The security labels represent the principals that created these values.  If the two compared values match, the result is produced. 
+%having the combined integrity of the outer principals.  
+If the values do not match, a $\fail$ value is returned, i.e. in this case the principals (i.e. the hosts) failed to reach consensus. Failures are tolerated with replication using \selonly. A \selonly\ of two terms will evaluate to a value as long as at least one of the terms produces a value, i.e. does not fail (see \ruleref{Select}).
+
+Recall the two motivating examples from the last chapter (Figures \ref{} and \ref{}). The first one (Figure \ref{xyz}) outputs a value returned by the majority (i.e. two nodes) of the nodes out of the three nodes. The second one (Figure \ref{xyz}) outputs the largest available balance from two banks. We also saw the \FLAQR\ implementation of these two examples (Figure \ref{x} and \ref{yy}). In this chapter, we will see how we can implement the same functionality choreographically.
+
+%The majority quorum example in Figure \ref{xyz} only shows the code running at the client. So, first let us see how the individual programs look like in all of the four nodes, i.e. nodes A, B, C and the client. See Figures \ref{fig:majQAB},
+%\ref{fig:majQC},   and \ref{fig:majQClient}. 
+% Next, we will see how the \HasChor\ implementation of majority quorum example look like. But, before that we need to briefly understand some of the \HasChor\ concepts.
+%If we implement the same majority quorum example in \HasChor, it will look like Figure \ref{fig:majQChoreo}.
+
+
+%(Explain the below programs, explain locally $~>$ , un,  choreo monad, )
+
+
+
+\subsection{Useful concepts from the HasChor API}
+\HasChor\ is a new model for functional choreographic programming where choreographies are expressed as computations in a monad. \HasChor\ is implemented as a Haskell library. With \HasChor, 
+programmers can write choreographic programs while fully utilizing the extensive Haskell environment. 
+\noindent In this section we will discuss some of the main HasChor \cite{haschor} features that we will need in the later sections of this chapter.  
+\subsubsection{Locations and located values.} 
+\noindent Each node in the distributed system is referred as a location in \HasChor. \HasChor\ tags each value with a location and ensures that only that location can access it. These are called \emph{located values}, and written as \hs{a @ l}. \HasChor\ implementation (see Figure \ref{fig:Haschorlocval}) ensures that only location \hs{l} is allowed to unwrap the value \hs{a @ l} to \hs{a} and use it.
+\begin{figure}
+\begin{minted}{haskell}
+  type LocTm = String -- term-level location
+  type LocTy = Symbol -- type-level location
+  data a @ (l :: LocTy) = Wrap a | Empty
+\end{minted}
+\caption{HasChor located values}
+\label{fig:Haschorlocval}
+\end{figure}
+To provide a type-level location at the term level, \HasChor\ uses the standard \hs{Proxy} datatype.
+%
+For example, the \hs{client} in the \hs{majority quorum} choreography below is defined as a \hs{Proxy} of type \hs{Proxy "client"}:
+%
+\begin{figure}[!h]
+\begin{minted}{haskell}
+  client :: Proxy "client"
+  client = Proxy -- a term-level proxy for a type-level location
+\end{minted}
+\end{figure}
+
+\begin{minted}{haskell}
+data a @ (l :: LocTy) = Wrap a | Empty
+\end{minted}
+The two constructors of located value are \hs{Wrap} and \hs{Empty}.
+\hs{Wrap} represents a located value of type \hs{a} for location \hs{l}. 
+\hs{Empty} represents a located value from locations other
+than l’s point of view.
+% 
+\subsubsection{Choreo monad.}
+\noindent The \HasChor\ programs are structured around a freer monad, called the \hs{Choreo} monad.
+%
+Freer monads provide an elegant way to handle monadic computations without the need for writing boilerplate code to define monad instances.
+%
+The freer monad in ~\cite{kiselyov-more-ext-effs} is defined as follows:
+
+\begin{figure}
+\begin{minted}{haskell}
+data Freer f a where
+Return :: a -> Freer f a
+Do :: f b -> (b -> Freer f a) -> Freer f a
+\end{minted}
+\caption{fig:Freer}
+\label{fig:freer}
+\end{figure}
+
+"Freer f a" is a freer monad that represents an effectful computation whose return type is "a". 
+%
+The parameter "f" in "Freer f a" represents a functor (the effect type), which encapsulates the operations or effects.
+%
+The "Return" constructor defines a pure computation, which is a computation that immediately returns a value without performing any effects. It takes a value of type "a" and produces a "Freer f a".
+%
+The \hs{Do} constructor represents a computation that involves an effectful operation. 
+It takes two parameters. 
+%
+The first parameter \hs{f b} represents an effectful operation represented by the functor \hs{f}, which is applied to type \hs{b}. 
+%
+This encapsulates the actual effect or operation to be performed.
+%
+The second parameter \hs{b -> Freer f a} is a continuation, which is a function that takes the result of the effectful operation \hs{b} and returns the rest of the computation \hs{Freer f a}.
+%
+The monad instance of \hs{Freer f} is automatically a monad for any effect signature \hs{f}. 
+
+\begin{figure}
+\begin{minted}{haskell}
+instance Monad (Freer f) where
+return = Return
+(Return r) >>= f = f r
+(Do eff k) >>= f = Do eff (k >=> f)
+\end{minted}
+\caption{Monad instance of \hs{Freer f}}
+\label{fig:monadInstanceOfFreer}
+\end{figure}
+
+The Monad instance of (in Figure \ref{fig:monadInstanceOfFreer}) for \hs{Freer f} specifies how the \hs{return} and the bind operation \hs{(>>=)} works.
+%
+The monadic \hs{return} corresponds to the \hs{Return} constructor. This means that \hs{return x} creates a Freer monad that contains the value \hs{x} without performing any effects.
+%
+The bind operation \hs{(>>=)} defines how to sequence two computations. 
+%
+When the first argument of the bind operation is a \hs{Return r}, 
+it directly applies the function \hs{f} to \hs{r}.
+%
+When the first argument of the bind operation is a \hs{Do eff k}, it creates a new \hs{Do} 
+with the same effect \hs{eff} and a composed continuation function.
+%
+Here, \hs{(k >=> f)} uses the Kleisli composition operator \hs{(>=>)}, which means that the result of 
+\hs{k} will be fed into \hs{f} after applying the effect \hs{eff}.
+\begin{minted}{haskell}
+(>=>) :: Monad m => (a -> m b) -> (b -> m c) -> a -> m c
+f >=> g = \x -> f x >>= g
+\end{minted}
+%
+An advantage of using freer monads is that they clearly separate the interface (what effects are possible) from the implementation (how those effects are executed). This separation provides flexibility and modularity, as it allows different interpretations of the same set of effects.
+%
+To interpret the effects accumulated in a freer monad, \HasChor\ uses a function called \hs{interpFreer}. We will not go into the detail of \hs{interpFreer}, but the high level idea is that this function takes a \hs{handler} for the effects and a Freer monad, then processes the effects according to the \hs{handler}, eventually producing a result in another monad \hs{g}.
+\begin{figure}
+\begin{minted}{haskell}
+interpFreer :: Monad g => (forall a. f a -> g a) -> Freer f a -> g a
+interpFreer handler (Return r) = return r
+interpFreer handler (Do eff k) = handler eff >>= interpFreer handler . k
+\end{minted}
+\caption{Function to interpret the effects in \hs{Freer} monad}
+\label{fig:interpFreer}
+\end{figure}
+To use an effectful operation within the Freer monad, we need to lift the operation into the Freer monad. This is achieved by wrapping the effect in the \hs{Do} constructor with \hs{Return} as the continuation.
+\begin{minted}{haskell}
+toFreer :: f a -> Freer f a
+toFreer eff = Do eff Return
+\end{minted}
+Now that we have discussed about Freer monads, we are ready to see details of the \hs{Choreo} monad. 
+As already mentioned, all \HasChor\ choreographies are computations of a Freer monad type \hs{Choreo m a}.
+%
+The \hs{Choreo} monad is defined as follows:
+%type Choreo m a 
+%instance Functor (Choreo m)
+%instance Applicative (Choreo m)
+%instance Monad (Choreo m)
+\begin{figure}
+\begin{minted}{haskell}
+type Unwrap l = forall a. a @ l -> a
+data ChoreoSig m a where
+  Local :: Proxy l -> (Unwrap l -> m a) -> ChoreoSig m (a @ l)
+  Comm :: Proxy l -> a @ l -> Proxy l' -> ChoreoSig m (a @ l')
+  Cond :: Proxy l -> a @ l -> (a -> Choreo m b) -> ChoreoSig m b
+  
+type Choreo m = Freer (ChoreoSig m)
+\end{minted}
+\caption{Effect signature for the asynchronous version of the Choreo monad.}
+\label{fig:haschorChoreoMonad}
+\end{figure}
+
+The monad \hs{m} is user-supplied \emph{local monad}, which means the participating locations in a choreography \hs{Choreo m a} can run \emph{local computations} of type \hs{m a}.
+%
+The local monad \hs{m} can be any monad but it needs to subsume \hs{IO}, i.e.it needs to be an instance of \hs{MonadIO} (as each node should be able to send and receive messages).
+%
+%For example, the \hs{bookseller} choreography in \Cref{fig:bookseller-choreo} has type \hs{Choreo IO (Maybe Day)}.
+
+\paragraph{Local computation. } The \hs{locally} function performs local computation at a specified location.
+%
+A located value a @ l represents a value of type a located at location l:
+%
+It takes a location \hs{l} and a local computation of type \hs{m a}, and returns a value of type \hs{a} located at \hs{l}:
+%
+\begin{minted}{haskell}
+  locally :: Proxy l -> (Unwrap l -> m a) -> Choreo m (a @ l)
+  locally l m = toFreer (Local l m)
+\end{minted}
+%
+%The type of \hs{locally}'s second argument calls for some additional explanation.
+%
+The local computation is given an unwrap function of type \hs{Unwrap l}, which is an alias for \hs{forall a. a @ l -> a}.
+%
+The unwrap function allows the local computation to unwrap values located at \hs{l} in the context, but not values located at any other locations.
+%
+For example, host \hs{C} in the majority quorum choreography in Figure \ref{fig:majQChoreo} uses the following code to get input from the user.
+%
+\begin{minted}{haskell}
+  c <- locC `locally` \_ -> do
+      putStrLn "Enter value at C::"
+      readLn :: IO Int
+\end{minted}
+%
+The client first unwraps a and b that it received from A and B respectively, and then calls \comonly on them and stores the result in ab.
+    
+\paragraph{Communication. }
+In \HasChor\ the communication between a sender and a receiver is done via the 
+communication construct \hs{(}$\sim$\hs{>)}, which takes 
+%The \hs{(~>)} function takes 
+a pair of the sender's location and a value of type \hs{a} located at the sender, and a receiver's location, and returns a value of the same type \hs{a} but located at the receiver:
+%
+\begin{minted}[escapeinside=||]{haskell}
+  (|$\sim$|>) :: (Proxy l, a @ l) -> Proxy l' -> Choreo m (a @ l')
+  (|$\sim$|>) (l, a) l' = toFreer (Comm l a l')
+\end{minted}
+%
+For example, node C in the majority quorum choreography in \ref{fig:majQChoreo} uses the following code to send the local input value to the client:
+%
+\begin{minted}[escapeinside=||]{haskell}
+  c' <- (c, locC) |$\sim$|> client
+\end{minted}
+
+%
+ A Choreo computation is executed as a local program with the runChoreo function, see Figure \ref{fig:runChoreo}.
+ (\tblue{we never used cond in our flamechor examples, so no need here}): 
+
+\begin{figure}
+\begin{minted}{haskell}
+runChoreo :: Monad m => Choreo m a -> m a
+runChoreo = interpFreer handler
+where
+handler :: Monad m => ChoreoSig m a -> m a
+handler (Local _ m) = wrap <$> m unwrap
+handler (Comm _ a _) = return $ (wrap (unwrap a))
+handler (Cond _ a c) = runChoreo $ c (unwrap a)
+\end{minted}
+\caption{The \hs{runChoreo} function.}
+\label{fig:runChoreo}
+\end{figure}
+
+
+\subsection{Asynchronous Communication in Choreographies}
+Asynchronous communication is critical for building efficient distributed applications. 
+%
+We need to support asynchronous interactions in Choreographies as well, 
+allowing locations to communicate without the sender waiting for the receiver to receive the message. 
+%
+The idea is that, the sender should be able go forward in its local program and its message will reside in the receiver's queue. 
+%
+The receiver will asynchronously read the message from its queue, when it is ready.  
+%
+This idea is not entirely novel, but \HasChor\ does not support asynchronous communication. 
+%
+Hence, we have added this functionality on top of \HasChor. 
+%
+To understand how the asynchronous communication works, see Figure \ref{fig:Async}. It shows the server sends an integer value \hs{a} to the client. And, without waiting for the client to receive the value, it proceeds in its local program. 
+%
+The client receives the message from its queue using the \hs{wait} keyword when its ready. 
+%
+Figure \ref{fig:ServerClientAsync} shows the corresponding choreography of the server-client codes of 
+Figure \ref{fig:Async}.
+%
+To prevent deadlock, every receiver should have a separate message queue for every sender. 
+%
+Figure \ref{fig:haschorAsyncChoreoSig} represents the signature of the \hs{Choreo} monad that supports 
+asynchronous (\hs{Async}) communication. The new definition only differs in terms of the \hs{Comm} constructor. The return type of \hs{Comm} is now \hs{ChoreoSig m (Async a @ l')} instead of 
+\hs{ChoreoSig m (a @ l')}.  \hs{ChoreoSig m (Async a @ l')}  specifies that the result of this operation is an asynchronous value of type \hs{a} located at  \hs{l'}. The corresponding definition of \hs{locally} and \hs{((}$\sim$\hs{>)} are shown in Figure \label{fig:haschorAsyncChoreoSig}. 
+
+
+\tblue{I can not comment on the async implementaion of "cond" as I have never used it in my examples.}
+
+
+\begin{figure}
+\begin{minted}{haskell}
+type Unwrap l = forall a. a @ l -> a
+data ChoreoSig m a where
+  Local :: (KnownSymbol l)
+        => Proxy l -> (Unwrap l -> m a) -> ChoreoSig m (a @ l)
+  Comm :: (Show a, Read a, KnownSymbol l, KnownSymbol l')
+       => Proxy l -> a @ l -> Proxy l' -> ChoreoSig m (Async a @ l')
+ type Choreo m = Freer (ChoreoSig m)
+\end{minted}
+\caption{Effect signature for the asynchronous version of the \hs{Choreo} monad.}
+\label{fig:haschorAsyncChoreoSig}
+\end{figure}
+
+\begin{figure}
+\begin{minted}{haskell}
+ locally :: KnownSymbol l => Proxy l -> (Unwrap l -> m a) -> Choreo m (a @ l)
+ locally l m = toFreer (Local l m)
+
+(~>) :: (Show a, Read a, KnownSymbol l, KnownSymbol l')
+     => (Proxy l, a @ l) -> Proxy l' -> Choreo m (Async a @ l')
+(~>) (l, a) l' = toFreer (Comm l a l')
+\end{minted}
+\caption{Asynchronous version of \hs{locally} and $(\sim>)$.}
+\label{fig:haschorAsyncfunctions}
+\end{figure}
+
+%\end{figure}
+
+\begin{figure}
+    \begin{minipage}{0.2\textwidth}
+        \begin{minted}[xleftmargin=0.6cm, linenos]{haskell}
+server :: Network IO ()
+server = do
+  putStrLn "Enter value at server:"
+  a <- readLn :: IO Int
+  send a "client"
+  putStrLn "Do other stuff!"
+ \end{minted}
+    \end{minipage}
+\hfill
+\begin{minipage}{0.4\textwidth}
+\begin{minted}[xleftmargin=0.6cm, linenos]{haskell}
+client :: Network IO (Int)
+client = do
+ client `locally` \un -> do
+   q <- wait "server"
+ \end{minted}
+\end{minipage}
+\caption{The programs running at server and client respectively}
+\label{fig:Async}
+\end{figure}
+
+\begin{figure}
+\hfill
+\begin{minipage}{\textwidth}
+\begin{minted}[escapeinside=||, xleftmargin=0.6cm, linenos]{haskell}
+asyncServerClient :: Choreo IO (Async Int @ "client")
+asyncServerClient = do
+  a <- server `locally` (\_ -> do
+             putStrLn "Enter value at server:"
+             getLine
+
+  c <- server |$\sim$|> client
+  client `locally` \un -> do
+     q <- wait (un abc)
+  server `locally` (\_ -> putStrLn "Do other stuff!"
+ return q
+ \end{minted}
+\end{minipage}
+\hfill
+\caption{Example Choreography with asynchronous communication}
+\label{fig:ServerClientAsync}
+\end{figure}
+%\section{Integrating \FLAME\ with \HasChor}
+\section{The \FlameChor\ API}
+ \subsection{\FLAME\ background}
+Flame \cite{nmifc} is a Haskell library for enforcing information flow control policies in Haskell programs. 
+%
+Flame is implemented based on the Flow-Limited Authorization Calculus (\FLAC) \cite{flac}. 
+%
+\FLAC, is a programming model that reasons about secure authorization and information flow control using \FLAM \cite{flam}. 
+%
+Flame works by wrapping sensitive information in a monad, that includes a principal type parameter that represents confidentiality and integrity of the information (later we will show how to extend this for availability as well). 
+%
+The monadic effect in \FLAME\ is modeled using a type class called \hs{IFC}. 
+The \hs{IFC} type class has two parameters \hs{e} and \hs{n} (see Figure. \ref{fig:flameCore}). 
+The \hs{e} parameter represents an effect we want to control (in this thesis we will only consider IO effects). The \hs{n} is an instance of the \hs{Labeled} type class that enforce noninterference on pure computation.
+
+\begin{figure*}
+%\begin{minipage}{0.4\textwidth}
+\begin{minted}[escapeinside=||]{haskell}
+class Labeled (n :: KPrin -> * -> *) where
+  label     :: a -> n l a
+  unlabel :: (l |$\sqsubseteq$|  l') => n l a -> (a -> n l' b) -> n l' b
+  unsafeUnlabel :: n l a -> a
+  
+  relabel :: (l |$\sqsubseteq$|  l') => n l a -> n l' a
+  relabel a = unlabel a label
+  
+class (Monad e, Labeled n) => IFC m e n where
+  protect :: (pc |$\sqsubseteq$|  l) => a -> m e n pc l a
+  use :: (l |$\sqsubseteq$| l', pc |$\sqsubseteq$| pc', l |$\sqsubseteq$| pc') => 
+          m e n pc l a -> (a -> m  e n pc' l' b) -> m e n pc' l' b
+  runIFC :: m e n pc l a -> e (n l a)
+\end{minted}
+%\end{minipage}
+\caption{Core information flow control operations in Flame}
+\label{fig:flameCore}
+\end{figure*}
+The protect function in figure \ref{fig:flameCore} has type \hs{m e n pc l a}. The simplest way to interpret this type is as follows: it associates a label \hs{l} with the result of a computation of type \hs{a}, 
+and a program counter label "pc" which bounds the confidentiality and integrity of side-effects \hs{e}. The \hs{protect} function realizes the \ruleref{UnitM} rule, i.e. given any term, \hs{protect} labels the term and lifts it into \hs{IFC} type where \hs{pc} $\sqsubseteq$ \hs{l}. The \hs{use} function realizes the \ruleref{Bind} rule. 
+Given a protected value of type \hs{m e n pc l a} and a function on a value of type \hs{a} with return type \hs{m e n pc' l' b}, the \hs{use} function returns the result of applying the function, provided 
+that \hs{l} $\sqsubseteq$ \hs{l'} and (\hs{pc} $\sqcup$ \hs{l}) $\sqsubseteq$ $pc$'. 
+The \hs{runIFC} function executes a protected computation, which results in a labeled value of type \hs{(n l a)} in the desired effect \hs{e}.
+
+
+%\PM{use later: \FLAME\ supports types that are polymorphic in the principals they refer to.}
+
+\begin{figure*}
+\begin{minipage}{0.4\textwidth}
+\begin{minted}[escapeinside=()]{haskell}
+data Prin =
+Top
+| Bot
+| Name String
+| Conj Prin Prin
+| Disj Prin Prin
+| Conf Prin
+| Integ Prin
+| ({\color{blue}{Avail Prin}})
+\end{minted}
+\caption{The principal data type for
+run-time principals.}
+\label{fig:flamePrincipalsa}
+\end{minipage}
+\hfill
+\begin{minipage}{0.4\textwidth}
+\begin{minted}[escapeinside=()]{haskell}
+data KPrin =
+KTop
+| KBot
+| KName Symbol
+| KConj KPrin KPrin
+| KDisj KPrin KPrin
+| KConf KPrin
+| KInteg KPrin
+| (\color{blue}{KAvail KPrin})
+\end{minted}
+\caption{The principal kind for typelevel principals.}
+\label{fig:flamePrincipalsb}
+\end{minipage}
+\caption{Flame principals (newly added availability pricipals are highlighted in blue)}
+\label{fig:flamePrincipals}
+\end{figure*}
+
+\begin{figure*}
+\begin{minted}[escapeinside=**]{haskell}
+type (*$\top$*) = KTop
+type (*$\bot$*) = KBot
+type N s = KName s
+type C p = KConf p
+type I p = KInteg p
+*\color{blue}type A p = KAvail p*
+type p *$\wedge$* q = KConj p q
+type p *$\vee$* q = KDisj p q
+
+type p *$\sqcup$* q = (C p *$\wedge$* C q) *$\wedge$* (I p *$\vee$* I q)
+type p *$\sqcap$* q = (C p *$\vee$* C q) *$\wedge$* (I p *$\wedge$* I q)
+type Public = C KBot
+type Secret = C KTop
+type Trusted = I KTop
+type Untrusted = I KBot
+*\color{blue}type Available = A KTop*
+*\color{blue}type Unavailable = A KBot*
+type PTA = Public *$\wedge$* Trusted *$\wedge$* *\color{blue}Available*
+type SUU = Secret *$\wedge$* Untrusted *$\wedge$* *\color{blue}Unavailable*
+\end{minted}
+\caption{Some useful type synonyms for Flame principals (the new additions are shown in blue)}
+\label{fig:flamesynonym}
+\end{figure*}
+
+\begin{figure*}
+\begin{minted}[escapeinside=&&]{haskell}
+data SPrin :: KPrin -> * where
+STop :: SPrin KTop
+SBot :: SPrin KBot
+SName :: forall (n :: Symbol). Proxy n -> SPrin (KName n)
+SConj :: SPrin p -> SPrin q -> SPrin (KConj p q)
+SDisj :: SPrin p -> SPrin q -> SPrin (KDisj p q)
+SConf :: SPrin p -> SPrin (KConf p)
+SInteg :: SPrin p -> SPrin (KInteg p)
+&\color{blue}{SAvail :: SPrin p -> SPrin (KAvail p)}&
+(&$\leftarrow$&) p = SConf p
+(&$\rightarrow$&) p = SInteg p
+(&\color{blue}{$\uparrow$) p = SAvail p}&
+
+(* &$\wedge$& ) p q = SConj p q
+(* &$\vee$& ) p q = SDisj p q
+(* &$\sqcup$& ) p q = ((p*&$\leftarrow$&) *&$\wedge$& (q*&$\leftarrow$&)) *&$\wedge$& ((p*&$\rightarrow$&) *&$\vee$& (q*&$\rightarrow$&)) &\color{blue}{*$\wedge$ ((p*$\uparrow$) *$\vee$  (q*$\uparrow$))}&
+(* &$\sqcap$& ) p q = ((p*&$\leftarrow$&) *&$\vee$& (q*&$\leftarrow$&)) *&$\wedge$& ((p*&$\rightarrow$&) *&$\wedge$& (q*&$\rightarrow$&)) &\color{blue}{*$\wedge$ ((p*$\uparrow$) *$\wedge$  (q*$\uparrow$))}&
+\end{minted}
+\caption{A GADT defining singleton types for each member of KPrin and functions for
+notational convenience.}
+\end{figure*}
+\subsubsection{Run-time and type-level principals of \Flame}
+%
+\Flame\ has data types to represent principals
+both at run time and compile time. 
+%
+Figure \ref{fig:flamePrincipalsa} shows the data type for representing
+Flame's run-time principals. 
+%
+The "Top" and "Bot" are special principals conrrespond to the principals $\top$ and $\bot$.
+%
+The "Name" constructor in Figure \ref{fig:flamePrincipalsa} is used to 
+create a primitive principal, which is basically a string.
+%
+"Conj" and "Disj" constructors are used to represent conjunction and disjunction of two principals respectively.
+%
+"Conf" and "Integ" represent the authority projections of principals for confidentiality and integrity respectively. 
+%
+The newly added authority projection for availability is shown in \tblue{blue}.
+%
+Flame defines a principal kind, to represent the principals at the type level. 
+%
+As we know, a kind classifies types. 
+When we define a principal kind, we're creating a class of types just for principals.
+%
+%In Haskell, all terms must have types in the * kind. 
+%
+This means all types in other kinds are uninhabited (no term exists with that type) and not represented at run time. 
+%
+Hence, types in the * kind may be parameterized by types of other kinds since these parameters are not represented at run time. 
+%
+Therefore, using types parameterized by principals in our principal kind allows us to enforce policies during compilation.
+%
+The principal kind is defined using the DataKinds \cite{datakind} extension to GHC. 
+% 
+DataKinds creates a kind by “promoting” the constructors in the "KPrin" data type, shown in Figure \ref{fig:flamePrincipalsb}. 
+%
+Each data constructor in "KPrin" becomes a type constructor for 
+types in kind "KPrin". 
+%
+These constructors can be used to construct type-level principals and instantiate type variables. 
+%
+For example, the data type "data T (p::KPrin) a" 
+has a type parameter that ranges over the principal kind. With this we can construct types like "T KTop String" and "T (KAvail KBot) Int". 
+%
+Flame defines several type synonyms, shown in Figure \ref{fig:flamesynonym} for convenience. The extensions for availability components are shown in \tblue{blue}.
+%
+%The primary difference between Prin and KPrin is in the Name and KName constructors for primitive principals. KName principals are created using a member of the Symbol kind, which are the symbols known at compile time. The Name constructor 
+%creates a principal from any string value, and may not be known at compile time. For
+%instance, string literals are known at compile time, so we can create a type-level principal KName “Alice” and a run-time principal Name “Alice”. For a string arg provided
+%on the command-line, however, we can only create Name arg.
+%A singleton type is a type that has a unique inhabitant. For instance, the unit type ()
+%is a singleton type since it has only one inhabitant, also written (). Singleton types are
+%useful for emulating dependently typed programming since they provide a link between
+%values and types. By knowing that a function has a unit return type, we know the value
+%returned must be ().
+%By generalizing this idea, we can provide a link between run-time and type-level
+%principals. Figure 5.4 defines SPrin, a generalized algebraic data type (GADT) for
+%principal singletons, along with additional notation definitions analogous to those for
+%KPrin. In general, we use the convention that SPrin operations are prepended with an
+%asterisk *.
+
+
+\subsubsection{Information-flow control in \HasChor.}
+
+\color{black}
+\subsubsection{The Labeled Monad.}
+To add Flame style information flow control in HasChor, the first step was to refactor \Flame\ to use Freer monads. 
+Hence, we define \hs{LabeledSig} data type, in the similar style to \hs{ChoreoSig}. This \hs{LabeledSig} data type is the substitution for the \hs{IFC} class in the original version of \Flame. 
+%
+\hs{LabeledSig} has three constructors: \hs{Protect}, \hs{Use} and \hs{Restrict}. 
+The \hs{Protect} constructor mirrors the \hs{protect} function of \hs{IFC} class in \Flame, i.e. it realizes the \ruleref{Sealed} operation on \FLAQR.  The \hs{protect} constructor 
+simply protects a value of type \hs{a} with the security label \hs{l} inside the labeled computation in the monad \hs{m}.
+%
+The \hs{Use} constructor mirrors the \hs{use} function of the \hs{IFC} class, i.e. it realizes the \ruleref{Bind} rule of \FLAQR. 
+%
+To put it in the simplest way, this constructor allows the use of a labeled value in a computation. It takes two arguments. The first argument \hs{l'!b} represents a value of type \hs{b} labeled with security label \hs{l'}. 
+%
+The second argument is a function of type \hs{ (b -> Labeled m pc' (l!a))}, that takes a value of type \hs{b} and returns a labeled computation resulting in a value of type \hs{a} labeled with security label 
+\hs{l}.
+%
+Finally, the return value is of type \hs{LabeledSig m pc (l!a)}, representing a labeled computation in the monad 
+\hs{m} that results in a value of type \hs{a} labeled with \hs{l}.
+%
+The \hs{Restrict} constructor is defined in order to incorporate \Flame\ computations with \HasChor\ computations. 
+ It takes the program counter \hs{pc}, and a \hs{Clearance} function that produces a monadic value \hs{m a}. %within a labeled computation. 
+\hs{Restrict} works as a wrapper and ensures that communications and effects external to \Flame\ layer happen
+at a certain program counter level. It can be thought of as an interface between the two libraries.
+%   The parameter !(SPrin pc) represents the principal pc, which is a security label constructed using the SPrin data type.
+ 
+%This defines Clearance pc as a function type that, for any a and l, takes a value l!a (a value a with label l) and returns a, given that l ⊑ pc. This implies that a Clearance pc function can "clear" the label l to produce the underlying value a, provided l is less than or equal to pc in the security hierarchy.
+%We call this Freer monad of Flame the \hs{Labeled} monad.
+
+
+Like \HasChor\ where choreographies are computations of type \hs{Choreo m a}, in \FlameChor\ the computations are of type \hs{Labeled m a}, where \hs{m} can be \hs{Choreo m'} when dealing with choreographies, or \hs{m'} i.e. any other monad, when dealing with computations local to a node. Similar to \HasChor\ the user can choose the local monad as they wish, with the only requirement being that the local monad needs to be an instance of \hs{MonadIO} (i.e. \hs{m'} subsumes \hs{IO}). %This is because each node should be able to send and receive messages.
+
+
+\begin{figure}
+\begin{minted}[escapeinside=||]{haskell}
+type Clearance pc = forall a l. (l |$\sqsubseteq$| pc) => l!a -> a
+
+data LabeledSig m (pc::KPrin) a where
+    Protect  :: (Monad m, pc |$\sqsubseteq$| l) => a -> LabeledSig m pc (l!a)
+    Use      :: (Monad m, l' |$\sqsubseteq$| l, l' |$\sqsubseteq$| pc') =>
+                l'!b -> (b -> Labeled m pc' (l!a)) -> LabeledSig m pc (l!a) 
+    Restrict :: (Monad m, pc |$\sqsubseteq$| l) => !(SPrin pc) -> 
+                (Clearance pc -> m a) -> LabeledSig m pc (l!a)
+type Labeled m pc = Freer (LabeledSig m pc)
+\end{minted}
+\end{figure}
+
+\begin{figure}
+\begin{minted}[escapeinside=||]{haskell}
+restrict :: SPrin pc -> (Monad m, pc |$\sqsubseteq$| l) 
+            => (Clearance pc -> m a) -> Labeled m pc (l!a)
+restrict pc ma = toFreer (Restrict pc ma)
+
+protect :: (Monad m, pc |$\sqsubseteq$| l) => a -> Labeled m pc (l!a)
+protect a = toFreer (Protect a)
+
+use :: (Monad m, l' |$\sqsubseteq$| l, l' |$\sqsubseteq$| pc') 
+        => l'!b -> (b -> Labeled m pc' (l!a)) -> Labeled m pc (l!a)
+use b k = toFreer (Use b k)
+
+\end{minted}
+\end{figure}
+
+\begin{figure}
+\begin{minted}[escapeinside=||]{haskell}
+label :: forall l a. a -> l!a
+label = runIdentity . runLabeled . protect
+
+relabel :: forall l l' a. l |$\sqsubseteq$| l' => l!a -> l'!a
+relabel = runIdentity . runLabeled . \x -> use x protect
+
+runLabeled :: forall pc m a. Monad m => Labeled m pc a -> m a
+runLabeled = interpFreer handler
+  where
+    handler :: forall pc m a. Monad m => LabeledSig m pc a -> m a
+    handler (Restrict pc ma) = ma unseal <&> Seal
+    handler (Protect a) = pure (Seal a)
+    handler (Use (Seal b) k)  = runLabeled $ k b 
+
+\end{minted}
+\end{figure}
+%BreadcrumbsFlameChor/flame-runtime/src/Flame/TCB/Freer/IFC.hs
+
+
+The first step towards building \FlameChor\ is to add Information flow control policies 
+implemented in \FLAME\ library to \HasChor\ functions \hs{locally} and \hs{(}$\sim$\hs{>)}.
+
+\subsubsection{Local computation.}
+The \hs{sLocally} function (similar to \hs{locally} in \hs{HasChor}) performs local computation at a specified location that respects certain security properties and information flow constraints. The function first set of inputs are polymorphic type variable for the \emph{pc}, location (which is a known string), location's \emph{pc} and the security label. The second argument to \hs{sLocally} is a function\hs{(Unwrap loc -> Labeled m loc_pc (l!a))}: 
+the unwrap function allows the local computation to unwrap values located at \hs{loc} in the context, and the return type is a protected value of type \hs{a}. The return type of \hs{sLocally} is a labeled computation within the Choreo monad, labeled with \hs{pc}, producing a value of type \hs{(l!a)} at location \hs{loc}.
+%
+%It takes a location \hs{l} and a local computation of type \hs{m a}, and returns a value of type \hs{a} located at \hs{l}:
+%
+\begin{figure}
+\begin{minted}[escapeinside=||]{haskell}
+ sLocally :: forall pc loc_pc l loc m a. 
+             (Monad m, KnownSymbol loc, pc |$\sqsubseteq$| loc_pc, |$\sqsubseteq$| l)
+              => (SPrin pc, SPrin (N loc), SPrin loc_pc, SPrin l)
+              -> (Unwrap loc -> Labeled m loc_pc (l!a))
+              -> Labeled (Choreo m) pc ((l!a) @ loc)
+              
+ sLocally (pc, loc, loc_pc, l) k = do
+    result <- restrict pc (\_ -> locally (sym loc) (\un -> runLabeled $ k un))
+  return $ joinLoc (labelIn result)
+\end{minted}
+\caption{\hs{sLocally} replicates the same functionality as \hs{locally} in \HasChor\ , but with IFC }
+\label{fig:slocally}
+\end{figure}
+%
+
+\subsubsection{Communication.}
+%A \FlameChor\ the communication between a sender and a receiver is done via the communication construct \hs{(~>)}, which
+%The \hs{(~>)} function takes 
+%a pair of the sender's location and a value of type \hs{a} located at the sender, and a receiver's location, and returns a value of the same type \hs{a} but located at the receiver:
+% -- (N loc') actsfor (C pc), 
+ %-- (N loc) actsfor (I pc))
+ %-- ^ A triple of a sender's location, a clearance, 
+                                          % -- and a value located   
+                                        % -- at the sender
+The \hs{(}$\sim$\hs{>:)} function in \FlameChor\ is the counter part of \hs{(}$\sim$\hs{>)}
+from \HasChor. The first argument to it is a quadruple of sender's location, a clearance pc, security label, and a value located at the sender The second argument is the receiver's location, and the output is an \hs{Async} value labeled with \hs{l} and the pc, inside the \hs{Labeled} monad. The implementation uses the \hs{restrict} function as it works as a wrapper for safe interaction between \HasChor\ \hs{(}$\sim$\hs{>)} and \Flame. The \hs{labelInA} and \hs{joinLoc} functions are shown in \ref{fig:helpers}.
+\begin{figure}
+\begin{minted}[escapeinside=||]{haskell}
+(|$\sim$|>:) :: (Show a, Read a, KnownSymbol loc, KnownSymbol loc')
+     => (Proxy loc, SPrin pc, SPrin l, (l!a) @ loc)  
+     -> Proxy loc'                          
+     -> Labeled (Choreo m) pc (Async (pc!(l!a)) @ loc')
+(|$\sim$|>:) (loc, pc, l, la) loc' = do
+       result <- restrict pc (\_ -> (loc, la) |$\sim$|> loc')
+       return $ labelInA result
+\end{minted}
+\caption{($\sim$\hs{>:}) replicates the same functionality as ($\sim$\hs{>}) in \HasChor\ , but with IFC }
+\label{fig:scomm}
+\end{figure}
+%\section{The \FlameChor\ API}
+
+% But before explaining local computation and communication functions we need to first learn some helper functions.
+%\subsubsection{Helper functions.}
+\begin{figure}
+\begin{minted}{haskell}
+labelIn :: l!(a @ loc) -> (l!a) @ loc
+labelIn (Seal asl) = case asl of
+                        Wrap as -> Wrap $ Seal as
+                        Empty   -> Empty
+                        
+labelInA :: l!(Async a @ loc) -> Async (l!a) @ loc
+labelInA (Seal asl) = case asl of
+                        Wrap as -> Wrap $ Prelude.fmap Seal as
+                        Empty   -> Empty
+\end{minted}
+
+\begin{minted}{haskell}
+joinLoc :: forall l l' l'' loc a. (l flowsto l'', l' flowsto l'') => 
+                        (l!(l'!a)) @ loc -> (l''!a) @ loc
+joinLoc (Wrap lla) = Wrap $ join lla
+joinLoc Empty      = Empty
+\end{minted}
+\caption{Helper functions for \hs{sLocally} and ($\sim$\hs{>:})}
+\label{fig:helpers}
+\end{figure}
+
+
+\subsection{Implementation of \FLAQR\ language constructs in \FlameChor}
+
+\subsection{Implementation of the $\fail$ term in \FlameChor}
+In Chapter \ref{ch:flaqr}, we discussed the $\fail$ term in detail. This term is produced in a \FLAQR\ program when a host fails to produce a result or hosts do not reach consensus. We need to implement the similar idea in \FlameChor\ as we want to tolerate failures with out programs, without getting stuck. 
+
+\hs{data Failed = Fail} in Figure \ref{fig:flamechorfails1} defines a simple data type Failed with a single constructor Fail to represent failure. The \hs{CanFail} type class defines a framework for handling failures in computations.
+%The \hs{class CanFail} defines a type class \hs{CanFail}
+%for a monadic type \hs{m}; 
+The class provides six methods. The \hs{ready} method checks if the computation is ready.
+The \hs{failed} method Checks if the computation has failed. The \hs{force} method forces the 
+computation to complete and returns either a failure or the result of type \hs{a}.
+The \hs{forceEither} method forces two computations and returns the result of either one, 
+wrapped in an \hs{Either} type. 
+The \hs{forceUntil} method forces a computation with a timeout.
+This method takes an integer as the timeout duration and a monadic computation of type \hs{m a}, 
+and uses the timeout to wait for the computation to complete.
+If the computation completes successfully within the timeout, it returns \hs{Right a}.
+If the computation fails or the timeout is reached, it returns \hs{Left Fail}, 
+indicating the computation has failed.
+The \hs{forceEitherUntil} method is similar to \hs{forceUntil} but works with two computations.
+It takes an integer \hs{n} as the timeout duration, and two monadic computations 
+of type \hs{m a} and \hs{m b}; it waits for either of the computations to complete.
+If one of the computations completes successfully within the timeout, it returns the 
+corresponding result of the computation. 
+If neither computation completes successfully within the timeout, it returns \hs{Left (Left Fail)}, 
+indicating a failure. The \hs{forceEither} and \hs{forceEitherUntil} is already implemented, 
+i.e. any instance of the \hs{CanFail} class needs to implement only the first four methods.
+
+\begin{figure}
+\begin{minted}{haskell}
+data Failed = Fail
+class CanFail m where
+  ready  :: m a -> IO Bool 
+  failed :: m a -> IO Bool
+  force  :: m a -> IO (Either Failed a)
+  forceEither :: m a -> m b -> IO (Either (Either Failed a) (Either Failed b))
+
+  -- | Blocks until force completes or timeout is reached
+  forceUntil :: Int -> m a -> IO (Either Failed a)
+  forceUntil n a = timeout n (force a) >>= \case 
+                     Just (Right a) -> return $ Right a
+                     _ -> return $ Left Fail
+
+  -- | Blocks until force on a or b completes or timeout is reached.
+  forceEitherUntil :: Int -> m a -> m b -> 
+                      IO (Either (Either Failed a) (Either Failed b))
+  forceEitherUntil n a b = timeout n (forceEither a b) >>= \case 
+                     Just (Left ea) -> return $ Left ea
+                     Just (Right eb) -> return $ Right eb
+                     Nothing -> return $ Left (Left Fail)
+eitherToCanFail :: Either e a -> Either Failed a
+eitherToCanFail = either (const $ Left Fail) Right
+\end{minted}
+\caption{The \hs{CanFail} class defines a framework for handling failures in computations}
+\label{fig:flamechorfails1}
+\end{figure}
+
+The \hs{eitherToCanFail} function in Figure \ref{fig:flamechorfails1} 
+takes an \hs{Either e a} (\hs{e} represents the type of the failed value and \hs{a} 
+is the type of the success value) type and converts it to an \hs{Either Failed a}.
+If the input is a \hs{Left} value (i.e. an error), it converts it to \hs{Left Fail}.
+If the input is a \hs{Right} value (i.e. a success), it keeps the value as \hs{Right}.
+
+Figure \ref{fig:flamechorfails2} represents an instance of \hs{CanFail} class for 
+\hs{Async}, and the implementation of the corresponding (four) methods of the class.
+Figure \ref{fig:flamechorfails3} represents another instance of \hs{CanFail} class for 
+\hs{Either Failed}. % and the implementation of the corresponding (four) methods of the class.
+\begin{figure}
+\begin{minted}{haskell}
+instance (CanFail Async) where
+  -- | Returns true if Async has completed (successfully or not)
+  ready a = poll a >>= \r -> return $ isJust r
+  -- | Returns true if Async has completed with an exception
+  failed a = poll a >>= \r -> return (isJust r && isLeft (fromJust r))
+  -- | Blocks until Async completes 
+  force a = waitCatch a >>= \case
+    Left exc -> return $ Left Fail
+    Right a'' -> return $ Right a''
+  -- | Blocks until Async completes 
+  forceEither a b = waitEitherCatch a b >>= \case
+      Left ea  -> return $ (Left  . eitherToCanFail) ea
+      Right eb -> return $ (Right . eitherToCanFail) eb
+\end{minted}
+\caption{An instance of \hs{CanFail} class with \hs{Async}}
+\label{fig:flamechorfails2}
+\end{figure}
+
+
+\begin{figure}
+\begin{minted}{haskell}
+instance (CanFail (Either Failed)) where
+  ready a = return True
+  failed = return . isLeft
+  force = return
+  forceEither a b = do 
+    case a of
+      Left ea -> case b of 
+        Left eb -> return $ (Right (Left Fail)) -- ?? Left (Left Fail)
+        Right b' -> return $ Right (Right b') --(Right . eitherToCanFail) b
+      Right a' -> return $ Left (Right a') --(Right . eitherToCanFail) b
+\end{minted}
+\caption{An instance of \hs{CanFail} class with \hs{Either Failed}}
+\label{fig:flamechorfails3}
+\end{figure}
+
+\subsection{Implementation of \selonly\ and \comonly}
+\paragraph{Select.} The \hs{sSelect} in Figure \ref{fig:flamechorselect} mirrors the \ruleref{Select} rule from \FLAQR. 
+The \hs{sSelect} function uses the \hs{CanFail} type class to handle computations that may fail. It also enforces  security policies. The function takes two labeled computations as its inputs,  and tolerates the failure of either one. The function is polymorphic over security labels 
+\hs{l1} and \hs{l2}, monad \hs{m} and program counter label \hs{pc}. The constraint is that the monad \hs{m} should have a \hs{CanFail} instance and program counter label \hs{pc} should flow to \hs{l1} and \hs{l2}. The label of the output is updated following the \ruleref{Select} rule
+in \FLAQR. That is, the confidentiality and availability of the output is combined confidentiality 
+(\hs{C(l1 }$\wedge$\hs{ l2)}) and availability (\hs{A(l1 }$\wedge$\hs{ l2)}) of the input labels respectively. Whereas the integrity is at most \hs{I(l1)} or \hs{I(l2)}. In \FLAQR\ it is represented with the \emph{partial-or} operation. Here, for simplicity we use (\hs{I(l1 }$\vee$\hs{ l2)}), but it will be very straightforward to introduce a new binary operator in the \Flame\ codebase. 
+%(\hs{l1}$^{\confid}\wedge$\hs{l2}$^{\confid}$) and 
+%availability(\hs{l1}$^{\avail}\wedge$\hs{l2}$^{\avail}$) 
+
+\begin{figure}
+\begin{minted}[escapeinside=||]{haskell}
+sSelect :: forall l1 l2 m a pc. (CanFail m, Eq a, pc |$\sqsubseteq$| l1, pc |$\sqsubseteq$| l2) 
+  => (SPrin pc)
+  -> Labeled IO pc (m (l1!a)) 
+  -> Labeled IO pc (m (l2!a))
+  -> Labeled IO pc (pc!(Either Failed ((C (l1 |$\sqcup$| l2) |$\wedge$| 
+  I(l1 |$\vee$| l2) |$\wedge$| A(l1 |$\wedge$| l2))!a)))
+sSelect pc a' b' = do
+  a <- a'
+  b <- b'  
+  restrict pc (\_ ->
+    (liftIO $ forceEitherUntil timeOut a b) >>= \case
+        Right (Left Fail) -> return $ Left Fail
+        Left (Left Fail) -> return $ Left Fail
+        Left (Right (Seal a')) -> return $ Right (Seal a')
+        Right (Right (Seal b')) -> return $ Right (Seal b')
+        )
+\end{minted}
+\caption{Implementation of $\selonly$}
+\label{fig:flamechorselect}
+\end{figure}
+
+\paragraph{Compare.} The \hs{sCompare} (Figure \ref{fig:flamechorcompare}) mirrors the \ruleref{Compare} from \FLAQR. 
+Similar to \hs{sSelect} function \hs{sCompare} uses the \hs{CanFail} type class to handle computations that may fail and is polymorphic over security labels \hs{l1} and \hs{l2}, monad \hs{m} and program counter label \hs{pc}. The function takes two labeled computations as its inputs, returns a labeled output if the inputs' base value match. 
+%The constraint is that the monad \hs{m} should have a \hs{CanFail} 
+%instance and program counter label \hs{pc} shoudl flow to \hs{l1} and \hs{l2}. 
+The label of the output is updated following the \ruleref{Compare} rule
+in \FLAQR. That is, the confidentiality of the output is combined confidentiality 
+(\hs{C(l1 }$\wedge$\hs{ l2)}) of the inputs but the availability is the lower bound (\hs{A(l1 }$\wedge$\hs{ l2)}) of the availability of the inputs. 
+The integrity is combined integrity of \hs{I(l1)} and \hs{I(l2)}. In \FLAQR\ it is represented with the 
+\emph{partial-and} operation. Here, for simplicity we use (\hs{I(l1 }$\wedge$\hs{ l2)}).
+%but it will be very straightforward to introduce a new binary operator in the \Flame\ codebase. 
+
+%Polymorphic over labels l1 and l2, monad m, type a, and security policy pc.
+%Constraints include CanFail m, Eq a, and the security constraints pc ⊑ l1 and pc ⊑ l2.
+%Takes a principal pc, and two labeled computations a' and b' of types m (l1!a) and m (l2!a).
+%Returns a labeled computation of type pc !(Either Failed (C (l1 ⊔ l2) ∧ I (l1 ∧ l2) ∧ A (l1 ∨ l2) ! a)).
+
+\begin{figure}
+\begin{minted}[escapeinside=||]{haskell}
+sCompare :: forall l1 l2 m a pc. (CanFail m, Eq a, pc |$\sqsubseteq$| l1, pc |$\sqsubseteq$| l2) 
+  => (SPrin pc)
+  -> Labeled IO pc (m (l1!a)) 
+  -> Labeled IO pc (m (l2!a))
+  -> Labeled IO pc (pc!(Either Failed ((C (l1 |$\sqcup$| l2) |$\wedge$| 
+  I(l1 |$\wedge$| l2) |$\wedge$| A(l1 |$\vee$| l2))!a)))
+sCompare pc a' b' = do
+  a <- a'
+  b <- b'
+  restrict pc (\_ -> 
+      (liftIO $ forceEitherUntil timeOut a b) >>= \case
+        Left (Left Fail) -> return (Left Fail)
+        Left (Right (Seal a')) -> 
+           (liftIO $ forceUntil timeOut b) >>= \case 
+            Left Fail -> return $ Left Fail
+            Right (Seal b') -> return $ if a' == b' 
+                                        then Right (Seal a') else Left Fail
+
+        Right (Left Fail) -> return (Left Fail)
+        Right (Right (Seal b')) -> 
+           (liftIO $ forceUntil timeOut a) >>= \case 
+            Left Fail -> return $ Left Fail
+            Right (Seal a') -> return $ if a' == b' 
+                                        then Right (Seal b') else Left Fail
+    )
+\end{minted}
+\caption{Implementation of $\comonly$}
+\label{fig:flamechorcompare}
+\end{figure}
+
+\subsection{\FlameChor\ implementation of the examples}
+With the help of \hs{sSelect} and \hs{sCompare} function, we can implement the majority quorum and the 
+largest available balance examples. 
+The implementations are shown in Figures \ref{fig:flamechormajority} and 
+\ref{fig:flamechorlargestAvail} respectively.
+
+\paragraph{Majority quorum example.} 
+The \hs{pc} for this example is \hs{ABC}, defined as the disjunction of all the hosts 
+
+\begin{minted}{haskell}
+type ABC = (((A \/ B) \/ C) \/ Client )
+abc :: SPrin ABC
+abc = (((locA *\/ locB) *\/ locC) *\/ client)
+\end{minted}
+
+The \hs{safePutStrLn} function is a safe version of the \hs{putStrLn} function. See Figure
+\ref{fig:flamechorsafehelpers} for its definition. For every host a different \hs{getLine} 
+function is defined. We have only shown \hs{aGetLine} in Figure \ref{fig:flamechorsafehelpers}.
+
+\begin{figure}
+\begin{minted}[escapeinside=||]{haskell}
+sPutStrLn :: Show a => SPrin pc -> (l |$\sqsubseteq$| pc) => l!a -> Labeled IO pc (pc!())
+sPutStrLn pc la = restrict pc (\open -> print (open la))
+
+sGetLine :: SPrin pc -> Labeled IO pc (pc!Int)
+sGetLine pc = restrict pc (\_ -> readLn)
+
+strGetLine :: SPrin pc -> Labeled IO pc (pc!String)
+strGetLine pc = restrict pc (\_ -> readLn)
+
+safePutStrLn :: forall l a. (Show a, l |$\sqsubseteq$| ABC) => l!a 
+                      -> Labeled IO ABC (ABC!())
+safePutStrLn =  sPutStrLn  abc
+
+aGetLine :: Labeled IO FromA (FromA ! Int)
+aGetLine = sGetLine fromA
+
+\end{minted}
+\caption{safe IO operations in \hs{Labeled} monad}
+\label{fig:flamechorsafehelpers}
+\end{figure}
+
+
+\begin{figure}
+\begin{minted}[xleftmargin=0.6cm, linenos, escapeinside=||]{haskell}
+majorityQuorum :: Labeled (Choreo IO) ABC ((ABC ! ())  @ "client")
+majorityQuorum = do 
+ 
+  (abc, client, abc, fromClient) `sLocally` (\_ -> do
+             safePutStrLn $ label "client waiting for consensus::")
+
+  a <- (abc, locA, abc, fromA) `sLocally` (\_ -> do
+             safePutStrLn $ label "Enter value at A::"
+             relabel' abc aGetLine)
+
+  b <- (abc, locB, abc, fromB) `sLocally` (\_ -> do
+             safePutStrLn $ label "Enter value at B::"
+             relabel' abc bGetLine)
+
+  c <- (abc, locC, abc, fromC) `sLocally` (\_ -> do
+             safePutStrLn $ label "Enter value at C::"
+             relabel' abc cGetLine)
+
+  a' <- (sym locA, abc, fromA, a) |$\sim$|>: sym client
+  b' <- (sym locB, abc, fromB, b) |$\sim$|>: sym client
+  c' <- (sym locC, abc, fromC, c) |$\sim$|>: sym client
+
+  con <- (abc, client, abc, fromClient) `sLocally` \un -> do  
+    ab <- (sCompare abc (return (un a')) (return (un b'))) 
+    bc <- (sCompare abc (return (un b')) (return (un c')))
+    ca <- (sCompare abc (return (un c')) (return (un a')))
+    abbc <- use ab (\ab' -> (use bc (\bc' -> 
+       sSelect abc (return ab') (return bc'))))
+    use abbc (\abbc' -> use ca (\ca'->
+       sSelect abc (return abbc') (return ca')))   
+
+  (abc, client, abc, fromClient) `sLocally` \un -> do
+    use (un con) (\d' -> do 
+      case d' of 
+        Right e -> safePutStrLn $ label "Consensus reached"
+        Left _ -> safePutStrLn $ label "Failed"
+       )
+
+\end{minted}
+\caption{Implementation of majority quorum example in \FlameChor}
+\label{fig:flamechormajority}
+\end{figure}
+
+\paragraph{Largest available balance.}
+The largest available balance example from Chapter \ref{ch:flaqr} is shown in Figure \ref{fig:flamechorlargestAvail}. Similar to the previous implementation, here also we needed to define a pc \hs{BS} (see Figure \ref{fig:flamechoravailhelpers}). 
+\begin{figure}
+\begin{minted}{haskell}
+type Client = N "client"
+client :: SPrin Client
+client = SName (Proxy :: Proxy "client")
+
+type B1 = N "b1"
+b1 :: SPrin B1
+b1 = SName (Proxy :: Proxy "b1")
+
+type B2 = N "b2"
+b2 :: SPrin B2
+b2 = SName (Proxy :: Proxy "b2")
+
+type BS = ((Client \/ B1) \/ B2)
+bs :: SPrin BS
+bs = ((client *\/ b1) *\/ b2)
+\end{minted}
+\caption{Largest available balance: host and pc labels}
+\label{fig:flamechoravailhelpers}
+\end{figure}
+
+
+\begin{figure}
+  \begin{minted}[escapeinside=||,xleftmargin=0.6cm, linenos]{haskell}
+largest ::forall l1 l2 m a pc. (CanFail m, Eq a, pc |$\sqsubseteq$| l1, pc |$\sqsubseteq$| l2, Show a, Ord a) 
+  => (SPrin pc)
+  -> Labeled IO pc (m (l1!a)) 
+  -> Labeled IO pc (m (l2!a))
+  -> Labeled IO pc (pc!(Either Failed 
+                               ((C (l1 |$\sqcup$| l2) |$\wedge$| I(l1 |$\wedge$| l2) |$\wedge$| A(l1 |$\vee$| l2))!a)))
+largest pc a' b' = do
+  a <- a'
+  b <- b'
+  restrict pc (\_ -> 
+      (liftIO $ forceEitherUntil timeOut a b) >>= \case
+        Left (Left Fail) -> return (Left Fail)
+        Left (Right (Seal a')) -> 
+           (liftIO $ forceUntil timeOut b) >>= \case 
+            Left Fail -> return $ Left Fail
+            Right (Seal b') -> return $ if a' > b' 
+                                        then Right (Seal a') 
+                                        else Right (Seal b')
+
+        Right (Left Fail) -> return (Left Fail)
+        Right (Right (Seal b')) -> 
+           (liftIO $ forceUntil timeOut a) >>= \case 
+            Left Fail -> return $ Left Fail
+            Right (Seal a') -> return $ if a' > b' 
+                                        then Right (Seal a') 
+                                        else Right (Seal b')
+    )
+\end{minted}
+\caption{Helper function for largest available balance \ref{fig:flamechorlargestAvail}}
+\label{fig:helperLargestAvail}
+\end{figure}
+
+
+\begin{figure}
+\begin{minted}[escapeinside=||,xleftmargin=0.6cm, linenos]{haskell}
+largestAvailableBalance :: Labeled (Choreo IO) BS ((BS ! (Int)) @ "client")
+largestAvailableBalance = do
+  (bs, client, bs, fromClient) `sLocally` (\_ -> do
+             safePutStrLn @BS $ label "Client waiting to get the largest balance:")
+           
+  bal1 <- (bs, b1, bs, fromB1) `sLocally` (\_ -> do
+             safePutStrLn @BS $ label "Enter balance at b1:"
+             relabel' bs b1GetLine)
+
+  bal2 <- (bs, b2, bs, fromB2) `sLocally` (\_ -> do
+             safePutStrLn @BS $ label "Enter balance at b2:"
+             relabel' bs b2GetLine)
+
+  bal1' <- (sym b1, bs, fromB1, bal1) ~>: sym client
+  bal2' <- (sym b2, bs, fromB2, bal2) ~>: sym client
+     
+  available <- (bs, client, bs, fromClient) `sLocally` \un -> do 
+      bal <- (largest bs (return (un bal1')) (return (un bal2')))
+      sel <- (sSelect' bs (return (un bal1')) (return (un bal2'))) 
+      use bal (\bal' -> use sel (\sel'-> sSelect' bs (return bal') (return sel')))   
+
+  (bs, b2, bs, fromB2) `sLocally` (\un -> do
+             relabel' bs b2GetLine)
+  
+  (bs, b1, bs, fromB1) `sLocally` (\un -> do
+             relabel' bs b1GetLine)
+
+  (bs, client, bs, fromClient) `sLocally` \un -> do
+              safePutStrLn @BS $ label "largest available balance:"
+              safePutStrLn @BS $ (un available)
+              relabel' bs clientGetLine
+
+ \end{minted}
+ \caption{\FlameChor implementation of largest available balance example}
+ \label{fig:flamechorlargestAvail}
+ \end{figure}
+
+
+\section{Implementation of leader-based consensus in \FlameChor}
+Next, we try to implement something more challenging. We implement a leader-based consensus 
+protocol with five hosts in \FlameChor. This can be extended with a \emph{view-change} round to get a 
+\emph{pbft} like consensus protocol. But, for now we only have the consensus round. Hence, we call 
+this \emph{leader-based consensus}. The five hosts (or locations) in the protocol are shown in Figure
+\ref{fig:pbftHosts}.
+
+\begin{figure}
+\begin{minted}{haskell}
+type A = N "A"
+locA :: SPrin E
+locA = SName (Proxy :: Proxy "A")
+
+type B = N "B"
+locB :: SPrin B
+locB = SName (Proxy :: Proxy "B")
+
+type C = N "C"
+locC :: SPrin C
+locC = SName (Proxy :: Proxy "C")
+
+type Client = N "client"
+client :: SPrin Client
+client = SName (Proxy :: Proxy "client")
+
+type Leader = N "leader"
+leader :: SPrin Leader
+leader = SName (Proxy :: Proxy "leader")
+
+type ABC = ((((A \/ B) \/ C) \/ Client ) \/ Leader)
+
+abc :: SPrin ABC
+abc = ((((locA *\/ locB) *\/ locC) *\/ client) *\/ leader)
+
+\end{minted}
+\caption{The hosts(locations) in \emph{leader-based consensus}: \hs{A,B,C, client} and \hs{leader}}
+\label{fig:pbftHosts}
+\end{figure}
+
+\tblue{why do you need IFC in this program, and they give the right guarantees,}
+
+\begin{figure}
+\begin{minted}{haskell}
+consensus :: Labeled (Choreo IO) ABC () 
+consensus = do 
+  locAState <- (abc, locA, abc, fromA) `sLocally` \_ -> 
+                                               safeNewIORef ("INIT" :: State)
+  locBState <- (abc, locB, abc, fromB) `sLocally` \_ -> 
+                                               safeNewIORef ("INIT" :: State)
+  locCState <- (abc, locC, abc, fromC) `sLocally` \_ -> 
+                                               safeNewIORef ("INIT" :: State)
+  locLState <- (abc, leader, abc, fromLeader) `sLocally` \_ -> 
+                                                safeNewIORef ("INIT" :: State)
+ 
+  request <- (abc, client, abc, fromClient) `sLocally` \_ -> do
+      safePutStrLn @ABC $ label "Client$ Input:"
+      relabel' abc clientGetLine
+  
+  req <- (sym client, abc, fromClient, request) ~>: sym leader 
+
+  (ppa, ppb, ppc) <- preprepare (req, locLState)
+  prepareCommit (ppa, ppb, ppc, locLState, locAState, locBState, locCState)
+ 
+  return ()
+
+\end{minted}
+\caption{Leader-based consensus, main body}
+\label{ref:pbft1}
+\end{figure}
+
+
+
+\begin{figure}
+\begin{minted}{haskell}
+preprepare :: (Async (ABC ! (ABC ! Int)) @ "leader", (ABC ! IORef State) @ "leader")
+                  -> Labeled (Choreo IO) ABC ((Async (ABC ! (ABC ! Int)) @ "A", 
+                  Async(ABC ! (ABC ! Int)) @ "B", 
+                  Async (ABC ! (ABC ! Int)) @ "C"))
+preprepare (req, statel) =  do
+       req' <- (abc, leader, abc, fromLeader) `sLocally` \un -> do  
+             x <- return $ un req
+             let z' = join @_ @_ @ABC <$> wait x
+             x' <- (join @_ @_ @ABC <$> restrict abc (\_-> z'))
+             safePutStrLn @ABC $ label $ "preprepare leader:" ++ show x'
+             safeModifyIORef (un statel) nextState
+             return x'
+       prepa <-  (sym leader, abc, fromLeader, req') ~>: sym locA
+       prepb <-  (sym leader, abc, fromLeader, req') ~>: sym locB  
+       prepc <-  (sym leader, abc, fromLeader, req') ~>: sym locC
+       return $ (prepa, prepb, prepc)
+\end{minted}
+\caption{Leader-based consensus: Preprepare phase}
+\end{figure}
+
+\begin{figure}
+\begin{minted}{haskell}
+prepareCommit ::  ((Async (ABC ! (ABC ! Int)) @ "A", Async (ABC ! (ABC ! Int)) @ "B",
+            Async (ABC ! (ABC ! Int)) @ "C", (ABC ! IORef State) @ "leader",
+              (ABC ! IORef State) @ "A", (ABC ! IORef State) @ "B",
+              (ABC ! IORef State) @ "C")) -> 
+              Labeled (Choreo IO) ABC ()
+prepareCommit (ppa, ppb, ppc, statel, statea, stateb, statec) =  do
+--------------------------------------PREPARE-----------------------------------
+        reqa <- (abc, locA, abc, fromA) `sLocally` \un -> do  
+                  x <- return $ un ppa
+                  let z' = join @_ @_ @ABC <$> wait x
+                  x' <- (join @_ @_ @ABC <$> restrict abc (\_-> z'))
+                  safePutStrLn @ABC $ label $ "prepare A:" ++ show x'
+                  safeModifyIORef (un statea) nextState
+                  return x'
+        al <- (sym locA, abc, fromA, reqa) ~>: sym leader
+        ab <- (sym locA, abc, fromA, reqa) ~>: sym locB
+        ac <- (sym locA, abc, fromA, reqa) ~>: sym locC
+
+        reqb <- (abc, locB, abc, fromB) `sLocally` \un -> do  
+                  x <- return $ un ppb
+                  let z' = join @_ @_ @ABC <$> wait x
+                  x' <- (join @_ @_ @ABC <$> restrict abc (\_-> z'))
+                  safePutStrLn @ABC $ label $ "prepare B:" ++ show x'
+                  safeModifyIORef (un stateb) nextState
+                  return x'
+        bl <- (sym locB, abc, fromB, reqb) ~>: sym leader
+        ba <- (sym locB, abc, fromB, reqb) ~>: sym locA
+        bc <- (sym locB, abc, fromB, reqb) ~>: sym locC
+      
+        reqc <- (abc, locC, abc, fromC) `sLocally` \un -> do  
+                  x <- return $ un ppc
+                  let z' = join @_ @_ @ABC <$> wait x
+                  x' <- (join @_ @_ @ABC <$> restrict abc (\_-> z'))
+                  safePutStrLn @ABC $ label $ "prepare C:" ++ show x'
+                  safeModifyIORef (un statec) nextState
+                  return x'
+        cl <- (sym locC, abc, fromC, reqc) ~>: sym leader
+        ca <- (sym locC, abc, fromC, reqc) ~>: sym locA
+        cb <- (sym locC, abc, fromC, reqc) ~>: sym locB
+        
+----------------------------------END oF PREPARE------------------------------------
+\end{minted}
+\caption{Leader-based consensus: the prepare and commit phase}
+\end{figure}
+
+\begin{figure}
+\begin{minted}{haskell}
+---------------------------------COMMIT------------------------------------
+
+        repl <-  (abc, leader, abc, fromLeader) `sLocally` \un -> do 
+            ab <- (sCompare' abc (return (un al)) (return (un bl))) 
+            bc <- (sCompare' abc (return (un bl)) (return (un cl)))
+            ca <- (sCompare' abc (return (un cl)) (return (un al)))
+            abbc <- use ab (\ab' -> (use bc (\bc' -> 
+                         sSelect' abc (return ab') (return bc'))))
+            use @_ @ABC @ABC abbc (\abbc' -> use ca (\ca'-> 
+                         sSelect' abc (return abbc') (return ca')))   
+            y <- safeReadIORef $ un statel
+            if y == Seal "PREPREPARE" then 
+              do
+                safeModifyIORef (un statel) nextState 
+                safePutStrLn $ label "commit leader:"  -- ++ un statel
+                return abbc 
+              else 
+              do 
+                init <- safeNewIORef ("INIT" :: State)
+                safeModifyIORef init nextState 
+                return $ label $ Left Fail
+
+        repa <-  (abc, locA, abc, fromA) `sLocally` \un -> do 
+            ab <- (sCompare' abc (return (un ppa)) (return (un ba))) 
+            bc <- (sCompare' abc (return (un ba)) (return (un ca)))
+            ca <- (sCompare' abc (return (un ca)) (return (un ppa)))
+            abbc <- use ab (\ab' -> (use bc (\bc' -> 
+                           sSelect' abc (return ab') (return bc'))))
+            use @_ @ABC @ABC abbc (\abbc' -> use ca (\ca'-> 
+                           sSelect' abc (return abbc') (return ca')))   
+            y <- safeReadIORef $ un statea
+            if y == Seal "PREPREPARE" then 
+              do
+                safeModifyIORef (un statea) nextState 
+                safePutStrLn $ label "commit A:"  -- ++ un statel
+                return abbc 
+              else 
+              do 
+                init <- safeNewIORef ("INIT" :: State)
+                safeModifyIORef init nextState 
+                return $ label $ Left Fail
+\end{minted}
+\caption{Leader-based consensus: the prepare and commit phase (continued)}
+\end{figure}
+
+\begin{figure}
+\begin{minted}{haskell}
+        repb <-  (abc, locB, abc, fromB) `sLocally` \un -> do 
+            ab' <- (sCompare' abc (return (un ppb)) (return (un ab))) 
+            bc <- (sCompare' abc (return (un ab)) (return (un cb)))
+            ca <- (sCompare' abc (return (un cb)) (return (un ppb)))
+            abbc <- use ab' (\ab' -> (use bc (\bc' -> 
+                   sSelect' abc (return ab') (return bc'))))
+            use @_ @ABC @ABC abbc (\abbc' -> use ca (\ca'-> 
+                   sSelect' abc (return abbc') (return ca')))   
+            y <- safeReadIORef $ un stateb
+            if y == Seal "PREPREPARE" then 
+              do
+                safeModifyIORef (un stateb) nextState 
+                safePutStrLn $ label "commit B:"  -- ++ un statel
+                return abbc 
+              else 
+              do 
+                init <- safeNewIORef ("INIT" :: State)
+                safeModifyIORef init nextState 
+                return $ label $ Left Fail
+
+        repc <-  (abc, locC, abc, fromC) `sLocally` \un -> do 
+            ab' <- (sCompare' abc (return (un ppc)) (return (un ac))) 
+            bc' <- (sCompare' abc (return (un ac)) (return (un bc)))
+            ca <- (sCompare' abc (return (un bc)) (return (un ppc)))
+            abbc <- use ab' (\ab' -> (use bc' (\bc' -> 
+                                     sSelect' abc (return ab') (return bc'))))
+            use abbc (\abbc' -> use ca (\ca'-> 
+                                     sSelect' abc (return abbc') (return ca')))   
+            y <- safeReadIORef $ un statec
+            if y == Seal "PREPREPARE" then 
+              do
+                safeModifyIORef (un statec) nextState 
+                safePutStrLn $ label "commit C:"  -- ++ un statel
+                return abbc 
+              else 
+              do 
+                init <- safeNewIORef ("INIT" :: State)
+                safeModifyIORef init nextState 
+                return $ label $ Left Fail
+                
+--------------------------------------END OF COMMIT-----------------------------------
+\end{minted}
+\caption{Leader-based consensus: the prepare and commit phase(continued)}
+\end{figure}
+
+\begin{figure}
+\begin{minted}{haskell}
+--------------------------------------REPLY--------------------------------------------
+
+        repl' <- (abc, leader, abc, fromLeader) `sLocally` \un -> do 
+                  safeModifyIORef (un statel) nextState
+                  use (un repl) (\d-> do
+                    case d of  
+                      Right e -> use (e) (\t -> use t (\t' -> 
+                           do restrict abc (\_ -> return $ times3 t')))
+                      Left _ -> return $ label (-1)--failVal
+                       )
+
+        repa' <- (abc, locA, abc, fromA) `sLocally` \un -> do 
+                  safeModifyIORef (un statea) nextState
+                  use (un repa) (\d-> do
+                    case d of  
+                      Right e -> use (e) (\t -> use t (\t' -> 
+                            do restrict abc (\_ -> return $ times3 t')))
+                      Left _ -> return $ label (-1)--failVal
+                       )
+
+        repb' <- (abc, locB, abc, fromB) `sLocally` \un -> do 
+                  safeModifyIORef (un stateb) nextState
+                  use (un repb) (\d-> do
+                    case d of  
+                      Right e -> use (e) (\t -> use t (\t' -> 
+                             do restrict abc (\_ -> return $ times3 t')))
+                      Left _ -> return $ label (-1)--failVal
+                       )
+
+        repc' <- (abc, locC, abc, fromC) `sLocally` \un -> do 
+                  safeModifyIORef (un statec) nextState
+                  use (un repc) (\d-> do
+                    case d of  
+                      Right e -> use (e) (\t -> use t (\t' -> 
+                              do restrict abc (\_ -> return $ times3 t')))
+                      Left _ -> return $ label (-1)--failVal
+                       )
+\end{minted}
+\caption{Leader-based consensus: the prepare and commit phase(continued)}
+\end{figure}
+
+\begin{figure}
+\begin{minted}{haskell}
+        rl <-  (sym leader, abc, fromLeader, repl') ~>: sym client
+        ra <-  (sym locA, abc, fromA, repa') ~>: sym client
+        rb <-  (sym locB, abc, fromB, repb') ~>: sym client
+        rc <-  (sym locC, abc, fromC, repc') ~>: sym client
+
+        replies <- (abc, client, abc, fromClient) `sLocally` \un -> do 
+            one <- (sCompare' abc (return (un rl)) (return (un ra))) 
+            two <- (sCompare' abc (return (un ra)) (return (un rb)))
+            three <- (sCompare' abc (return (un rc)) (return (un rl)))
+            four <- (sCompare' abc (return (un ra)) (return (un rc)))
+            five <- (sCompare' abc (return (un rb)) (return (un rc)))
+            six <- (sCompare' abc (return (un rl)) (return (un rb)))
+            one' <- use one (\ab' -> (use two (\bc' -> 
+                                    sSelect' abc (return ab') (return bc'))))
+            two' <- use one' (\ab' -> (use three (\bc' -> 
+                                    sSelect' abc (return ab') (return bc'))))
+            three' <- use two' (\ab' -> (use four (\bc' -> 
+                                    sSelect' abc (return ab') (return bc'))))
+            four' <- use three' (\ab' -> (use five (\bc' -> 
+                                    sSelect' abc (return ab') (return bc'))))
+            five' <- use four' (\ab' -> (use five (\bc' -> 
+                                    sSelect' abc (return ab') (return bc'))))
+            use (five') (\d-> do
+                          case d of  
+                              Right e -> safePutStrLn $ label "consensus"
+                              Left _ -> safePutStrLn $ label "failed"
+                        )         
+        return ()
+
+\end{minted}
+\caption{Leader-based consensus: the prepare and commit phase(continued)}
+\end{figure}
+
+%\section{Conclusion}

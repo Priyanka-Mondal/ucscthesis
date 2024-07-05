@@ -1,0 +1,1084 @@
+\if 0
+\begin{definition}[Plug] plugging of hole to evaluation context $E$\\
+\ensuremath{
+1.[~][e] = e \\
+2.(E e')[e] = (E [e]) e' \\
+3.(w E')[e] = w (E'[e]) \\
+4.(E \tau)[e] = (E[e])\tau \\
+5.(\pair{E}{e})[e] = \pair{E[e]}{e} \\
+6.(\pair{w}{E})[e] = \pair{w}{E[e]} \\
+7.(\return{\ell }{E} )[e] = \return{\ell }{E[e]} \\
+8.(\proji{E})[e] = \proji{E[e]} \\
+9.(\inji{\sumtype{\tau_1}{\tau_2}}{E})[e] = \inji{\sumtype{\tau_1}{\tau_2}}{E[e]} \\
+10.(\bind{x}{E}{e'})[e] = \bind{x}{E[e]}{e'}\\ 
+11.(\casexp{E}{x}{e_1}{e_2}{\sumtype{\tau_1}{\tau_2}})[e] \\= \casexp{E[e]}{x}{e_1}{e_2}{\sumtype{\tau_1}{\tau_2}}\\
+14.(\ret{E}{p})[e] = \ret{E[e]}{p}\\
+15. (\select{E}{e'})[e] = \select{E[e]}{e'} \\
+16. (\select{w}{E})[e] = \select{w}{E[e]}  \\
+%17. (\compEnd{\tau}{E}{e'})[e] = \compEnd{\tau}{E[e]}{e'}\\
+%18. (\compEnd{\tau}{w}{E})[e] = \compEnd{\tau}{w}{E[e]} \\ 
+}
+\end{definition}
+\fi 
+%\begin{lemma}[RunT]
+%If $\runnable{\Pi}{\tau}{c}$ then $\forall{e}.$
+%\TValGpcw{e}{\tau}
+%\end{lemma}
+
+\begin{lemma}[UniqueType]
+If~{\TValGpcw{e}{\tau}}~ and~ {\TValGput{e}{\mathring{\tau}}}~then~
+$\tau = \tau'$
+\end{lemma}
+\textbf{Proof.}
+Proof by induction on typing derivation of $e$. \\
+\textbf{Case VAR.}
+Given, 
+\begin{align}
+{\TValGpcw{x}{\tau}}  \label{vu1} \\
+{\TValGput{x}{\mathring{\tau}}} \label{vu1.1} \\
+\intertext{inverting \ref{vu1} we get}
+\Gamma(x)=\tau  \label{vu2} \\ 
+\rafjudge{\Pi}{c}{pc} \label{vu3} \\
+\intertext{inverting \ref{vu1.1} we get}
+\Gamma(x)=\mathring{\tau}  \label{vu4} \\ 
+\rafjudge{Π}{c}{\mathring{pc}} \label{vu5} \\
+\intertext{$\Gamma$ in \ref{vu1} and \ref{vu1.1} are same, so from 
+\ref{vu2} and \ref{vu4} we get}
+\tau = \mathring{\tau}
+\end{align}
+\textbf{Case UNIT.}Trivial, as $\void$ can only have type 
+$\voidtype$. \\
+\textbf{Case FAIL.}Trivial, as $\fail{\tau}$ can only have type $\tau$. \\
+\textbf{Case DEL.} Trivial, as $\delexp{p}{q}$ can only have type $\aftype{p}{q}$. \\
+\textbf{Case LAM.} Given,
+\begin{align}
+{\TValGpcw{\lamc{x}{τ_1}{\pc'}{e}}{\func{τ_1}{\pc'}{τ_2}}} \label{lu1} \\
+{\TValGput{\lamc{x}{τ_1}
+{\pc'}{e}}{\func{τ_1}{\pc'}{\mathring{τ_2}}}} \label{lu2} \\
+\intertext{inverting \ref{lu1} we get,}
+\TVal{Γ,x\ty τ_1;\pc';u}{e}{τ_2} \label{lu3} \\
+\rafjudge{Π}{c}{pc} \label{lu4} \\
+u= UB(\func{τ_1}{\pc'}{τ_2}) \label{lu5} \\
+\rafjudge{Π}{c}{u} \label{lu6} \\
+\intertext{inverting \ref{lu2} we get,}
+\TVal{Γ,x\ty τ_1;\pc';u'}{e}{\mathring{τ_2}} \label{lu7} \\
+\rafjudge{Π}{c}{\mathring{pc}} \label{lu8} \\
+u'= UB(\func{τ_1}{\pc'}{\mathring{τ_2}}) \label{lu9} \\ 
+\rafjudge{Π}{c}{u'} \label{lu10} \\
+\intertext{One thing to notice here, is that $\tau_1$ and $pc'$ is implicitly
+defined in the expression $\lamc{x}{τ_1}{\pc'}{e}$, 
+so they are same for both \ref{lu1} and \ref{lu2}. 
+So it is sufficient to prove that $\tau_2 = \mathring{\tau_2}$. 
+From the definition of UB we know that $u$ 
+is the upperbound of all the $pc'$s defined in a type, and these $pc'$s 
+must be defined in expression $e$. So we can claim that}
+u=u' \label{lu11} \\
+\intertext{So, \ref{lu7} can be written as}
+\TVal{Γ,x\ty τ_1;\pc';u}{e}{\mathring{τ_2}} \label{lu12} \\
+\intertext{from IH \ref{lu12} and \ref{lu3} we get}
+\tau_2 = \mathring{\tau_2} \label{lu13}
+\end{align}
+\textbf{Case TLAM.} Similar to case LAM. \\
+\textbf{Case APP.} Given,
+\begin{align}
+{\TValGpcw{e_1~e_2}{τ}} \label{au1} \\
+{\TValGput{e_1~e_2}{\mathring{\tau}}} \label{au2} \\
+\intertext{inverting \ref{au1} we get}
+\TValGpcw{e_1}{\func{τ'}{\pc'}{τ}} \label{au3} \\
+\TValGpcw{e_2}{τ'} \label{au4} \\
+\stflowjudge*{\pc}{\pc'} \label{au5} \\
+\rafjudge{Π}{c}{pc} \label{au6} \\
+\intertext{inverting \ref{au2} we get}
+\TValGput{e_1}{\func{\mathring{τ'}}{\mathring{\pc}'}{\mathring{τ}}} \label{au7} \\
+\TValGput{e_2}{\mathring{τ}'} \label{au8} \\
+\stflowjudge*{\mathring{\pc}}{\mathring{\pc}'} \label{au9} \\
+\rafjudge{Π}{c}{\mathring{pc}} \label{au6} \\
+\intertext{from \ref{au7} we can infer that $e_1$ is a lambda term, and that
+implies that $\mathring{\pc}'$ and $\mathring{τ'}$ is a part of the expression
+$e_1$. Thus they can not be different from  $pc'$ and $\tau'$ 
+in \ref{au3}. Otherwise $e_1$ will
+not typecheck. Thus we can write the following}
+pc' = \mathring{pc}' \label{au10} \\
+\tau' = \mathring{\tau'} \label{au11} \\
+\intertext{ so \ref{au7} can be written as }
+\TValGput{e_1}{\func{τ'}{\pc'}{\mathring{τ}}} \label{au12} \\
+\intertext{from IH \ref{au3} and \ref{au12} we get}
+\tau = \mathring{\tau}
+\end{align}
+\textbf{Case TAPP.} Similar to APP. \\
+\textbf{Case PAIR.} Given,
+\begin{align}
+\TValGpcw{\pair{e_1}{e_2}}{\prodtype{τ_1}{τ_2}} \label{pu1} \\
+\TValGput{\pair{e_1}{e_2}}{\prodtype{\mathring{τ_1}}{\mathring{τ_2}}} \label{pu2} \\
+\intertext{inverting \ref{pu1} we get} 
+\TValGpcw{e_1}{τ_1} \label{pu3} \\
+\TValGpcw{e_2}{τ_2} \label{pu4} \\
+\rafjudge{\Pi}{c}{pc} \label{pu5} \\
+\intertext{inverting \ref{pu2} we get}
+\TValGput{e_1}{\mathring{τ_1}} \label{pu6} \\
+\TValGput{e_2}{\mathring{τ_2}} \label{pu7} \\  
+\rafjudge{\Pi}{c}{\mathring{pc}} \label{pu8} \\
+\intertext{from IH,\ref{pu3} and \ref{pu6} we get}
+\tau_1 = \mathring{\tau_1} \label{pu9} \\
+\intertext{from IH,\ref{pu4} and \ref{pu7} we get}
+\tau_2 = \mathring{\tau_2} \label{pu10} \\
+\intertext{from \ref{pu9} and \ref{pu10} we, without loss of generality, can say}
+\prodtype{τ_1}{τ_2} = \prodtype{\mathring{τ_1}}{\mathring{τ_2}} 
+\end{align}
+\textbf{Case UNPAIR.} Given,
+\begin{align}
+{\TValGpcw{\proji{e}}{τ_i}} \label{uu1} \\
+{\TValGput{\proji{e}}{\mathring{τ_i}}} \label{uu2} \\
+\intertext{inverting \ref{uu1} we get,}
+\TValGpcw{e}{\prodtype{τ_1}{τ_2}}  \label{uu3} \\
+\rafjudge{Π}{c}{pc} \label{uu4} \\
+\intertext{inverting \ref{uu2} we get,}
+\TValGput{e}{\prodtype{\mathring{τ_1}}{\mathring{τ_2}}} \label{uu5} \\
+\rafjudge{Π}{c}{\mathring{pc}} \label{uu6} \\
+\intertext{from IH, \ref{uu3} and \ref{uu5} we get,}
+\prodtype{τ_1}{τ_2} = \prodtype{\mathring{τ_1}}{\mathring{τ_2}} \label{uu7} \\
+\intertext{without loss of generality we can write,}
+\tau_1 = \mathring{\tau_1} \\
+\tau_2 = \mathring{\tau_2} \\
+\intertext{thus we can say}
+\tau_i = \mathring{\tau_i}
+\end{align}
+\textbf{Case INJ.} Trivial, as the type is annotated in the expression.
+\textbf{Case CASE.} Given,
+\begin{align}
+\TValGpcw{\casexp{e}{x}{e_1}{e_2}{\sumtype{τ_1}{τ_2}}}{τ} \label{cu1} \\
+\TValGput{\casexp{e}{x}{e_1}{e_2}{\sumtype{τ_1}{τ_2}}}{\mathring{τ}} \label{cu2} \\
+\intertext{inverting \ref{cu1} we get,}
+\TValGpcw{e}{\sumtype{τ_1}{τ_2}} \label{cu3} \\
+\protjudge*{\pc}{τ} \label{cu4} \\
+\rafjudge{Π}{c}{pc} \label{cu5} \\
+\TVal{\Pi;Γ,x\ty τ_1;\pc;\worker}{e_1}{τ} \label{cu6} \\
+\TVal{\Pi; Γ,x\ty τ_2;\pc;\worker}{e_2}{τ} \label{cu7} \\
+\intertext{inverting \ref{cu2} we get, }
+\TValGput{e}{\sumtype{\mathring{τ_1}}{\mathring{τ_2}}} \label{cu8} \\
+\protjudge*{\mathring{\pc}}{\mathring{τ}} \label{cu9} \\
+\rafjudge{Π}{c}{\mathring{pc}} \label{cu10} \\
+\TVal{\Pi;Γ,x\ty \mathring{τ_1};\mathring{\pc};\worker}{e_1}{\mathring{τ}} \label{cu11} \\
+\TVal{\Pi;Γ,x\ty \mathring{τ_2};\mathring{\pc};\worker}{e_2}{\mathring{τ}} \label{cu12} \\
+\intertext{from IH, \ref{cu3} and \ref{cu8}, we get}
+\sumtype{τ_1}{τ_2} = \sumtype{\mathring{τ_1}}{\mathring{τ_2}} \label{cu13} \\
+\intertext{without loss of generality we can write,}
+\tau_1 = \mathring{τ_1} \label{cu14} \\
+\tau_2 = \mathring{τ_2} \label{cu15} \\
+\intertext{thus using \ref{cu14} and \ref{cu15}, we can 
+write \ref{cu11} and \ref{cu12} as }
+\TVal{\Pi;Γ,x\ty {τ_1};\mathring{\pc};\worker}{e_1}{\mathring{τ}} \label{cu16} \\
+\TVal{\Pi;Γ,x\ty {τ_2};\mathring{\pc};\worker}{e_2}{\mathring{τ}} \label{cu17} \\
+\intertext{from IH, \ref{cu6}(or \ref{cu7}) and \ref{cu16} 
+(or \ref{cu17}) we get}
+\tau = \mathring{\tau}
+\end{align}
+\textbf{Case UNITM.} Given,
+\begin{align}
+%\TValGput{\return{ℓ}{e}}{\says{ℓ}{τ}} \label{unu1} \\
+%\TValGput{\return{ℓ}{e}}{\says{ℓ}{\mathring{τ}}} \label{unu2} \\
+\intertext{inverting \ref{unu1} we get}
+\TValGpcw{e}{τ} \label{unu3} \\
+\intertext{   ...   }
+\intertext{inverting \ref{unu2} we get}
+\TValGput{e}{\mathring{τ}} \label{unu4} \\
+\intertext{   ....    }
+\intertext{from IH, \ref{unu3} and \ref{unu4} we get,}
+\tau = \mathring{\tau} 
+\end{align}
+\textbf{Case UNITL.} Similar to case UNITM.\\
+\textbf{Case BINDM.} Given,
+\begin{align}
+\TValGpcw{\bind{x}{e'}{e}}{τ} \label{bu1} \\
+\TValGput{\bind{x}{e'}{e}}{\mathring{τ}} \label{bu2} \\
+\intertext{inverting \ref{bu1} we get,}
+\TValGpcw{e'}{\says{ℓ  }{τ'}} \label{bu3} \\
+\stflowjudge*{\ell \sqcup pc}{\tau} \\
+\TVal{Γ,x\ty τ';ℓ  ⊔ j \sqcup pc;\worker}{e}{τ} \label{3.3} \\
+\rafjudge{Π}{c}{pc}
+\intertext{inverting \ref{bu2} we get,}
+\TValGput{e'}{\says{\mathring{ℓ}}{\mathring{τ}'}} \label{bu4} \\
+\TVal{Γ,x\ty \mathring{τ}';\mathring{ℓ}⊔ \mathring \sqcup \mathring{pc};c}{e}{\mathring{τ}} \label{bu5} \\
+\intertext{...}
+\intertext{From \ref{bu4} we know that $e'$ is an eta term, and 
+associated $\mathring{\ell}$ are annotated in $e'$ itself, so 
+they are same as $\ell$ and $j$ in \ref{bu3}.
+Thus \ref{bu4} can be written as }
+\TValGput{e'}{\says{ℓ}{\mathring{τ'}}} \label{bu5} \\
+\intertext{From IH,\ref{bu3} and \ref{bu5} we get,}
+\tau'=\mathring{\tau}'
+\intertext{Thus \ref{bu5} can be written as,}
+\TVal{Γ,x\ty τ';ℓ⊔ j \sqcup \mathring{pc};c}{e}{\mathring{τ}} \label{6} \\
+\intertext{from IH,\ref{3.3}, \ref{6}, we get,}
+\tau = \mathring{\tau}
+\end{align}
+\textbf{Case ASSUME.} Given,
+\begin{align}
+\TValGpcw{\assume{e}{e'}}{τ} \label{asu1} \\
+\TValGput{\assume{e}{e'}}{\mathring{τ}} \label{asu2} \\
+\intertext{inverting \ref{asu1} we get,}
+\TValGpcw{e}{\aftype{p}{q}} \label{asu3} \\
+\TVal{Π,\langle \aftypep{p}{q}\rangle; Γ;\pc;c}{e'}{τ} \label{asu4} \\
+\intertext{...}
+\intertext{inverting \ref{asu2} we get,}
+\TValGput{e}{\aftype{\mathring{p}}{\mathring{q}}} \label{asu5} \\
+\TVal{Π,\langle \aftype{\mathring{p}}{\mathring{q}}\rangle; Γ;\mathring{\pc};c}{e'}{\mathring{τ}} \label{asu6} \\
+\intertext{...}
+\intertext{from IH, \ref{asu3} and \ref{asu5} we can write,}
+\aftype{p}{q} = \aftype{\mathring{p}}{\mathring{q}} \label{asu7} \\
+\intertext{So we can write \ref{asu6} as }
+\TVal{Π,\langle \aftypep{p}{q}\rangle; Γ;\mathring{\pc}}{e'}{\mathring{τ}} \label{asu8}\\
+\intertext{from IH, \ref{asu4} and \ref{asu8} we get,}
+\tau = \mathring{\tau}
+\end{align}
+\textbf{Case WHERE.} Similar to case ASSUME. \\
+\textbf{Case RUN.} Trivial,as type $\tau$ is annotated in $run$ epression. \\
+\textbf{Case RET.} Straightforward using IH. \\
+\textbf{Case COMPEND.}\\
+\textbf{Case SELECT.}\\
+\PM{in macros.tex file change TValGput with pc as 
+$\mathring{pc}$ might not be required}
+
+\begin{lemma}[WaitUniqueT]
+If~\TValGpcw{E[\expect{\hat{\tau}}]}{\tau}~and~
+\TValGput{E[\expect{\hat{\tau}}]}{\tau'}~then~
+$\tau=\tau'$.
+\end{lemma}
+\textbf{Proof.} We prove it by induction over structure of $E$.\\
+\textbf{Case E=[ ].} Given,
+\begin{align}
+\TValGpcw{[~][\expect{\hat{\tau}}]}{\tau} \label{wuh1} \\
+\intertext{i.e.}
+\TValGpcw{\expect{\hat{\tau}}}{\tau} \label{wuh2} \\
+\intertext{and}
+\TValGput{[~][\expect{\hat{\tau}}]}{\tau'} \label{wuh3} \\
+\intertext{i.e.}
+\TValGput{\expect{\hat{\tau}}}{\tau'} \label{wuh4} \\
+\intertext{but from WAIT typing rule we know}
+\TValP{\Gamma;\hat{\pc};c}{\expect{\hat{\tau}}}{\hat{\tau}} \label{wuh5} \\
+\intertext{Thus \ref{wuh2} and \ref{wuh4} typechecks only when}
+\tau = \tau' = \hat{\tau}
+\end{align}
+\textbf{Case E = E e .} Given,
+\begin{align}
+\TValGpcw{(E e)[\expect{\hat{\tau}}]}{\tau} \label{wuh1} \\
+\intertext{i.e.}
+\TValGpcw{E[\expect{\hat{\tau}}]e'}{\tau} \label{wuh2} \\
+\intertext{and}
+\TValGput{(E e)[\expect{\hat{\tau}}]}{\tau'} \label{wuh3} \\
+\intertext{i.e.}
+\TValGput{E[\expect{\hat{\tau}}]e}{\tau'} \label{wuh4} \\
+\intertext{inverting \ref{wuh2} we get}
+\TValGpcw{E[\expect{\hat{\tau}}]}{\func{\tau_1}{pc'}{\tau}} \label{wuh5} \\
+\TValGpcw{e}{\tau_1} \label{wuh6} \\
+\intertext{...}
+\intertext{inverting \ref{wuh4} we get}
+\TValGput{E[\expect{\hat{\tau}}]}{\func{\mathring{\tau_1}}{\mathring{pc'}}{\tau'}} \label{wuh7} \\
+\TValGput{e}{\mathring{\tau_1}} \label{wuh8} \\
+\intertext{$\tau_1$ and $\pc'$ are part of syntax so, }
+\tau_1 = \mathring{\tau_1} \\
+\pc' = \mathring{\pc'} \\
+\intertext{so \ref{wuh7} can be written as,}
+\TValGput{E[\expect{\hat{\tau}}]}{\func{\tau_1}{pc'}{\tau'}} \label{wuh9} \\
+\intertext{From IH, \ref{wuh5}, and \ref{wuh9} we get,}
+{\func{\tau_1}{pc'}{\tau}}= {\func{\tau_1}{pc'}{\tau'}}
+\intertext{Thus we get,}
+\tau = \tau'
+\end{align}
+\textbf{Case E= $\mathbf{\pair{E}{e}}$}
+\PM{Other cases later.}
+
+
+\begin{lemma}[stackUniqueT]
+If~\TValGpcS{s[\hat{\tau}]}{\tau}~and \TValGpcS{s[\hat{\tau}]}{\tau'}~ then~
+$\tau=\tau'$. 
+\end{lemma}
+\textbf{Proof.} The proof is by induction over typing derivation of $s$.\\
+\textbf{Case $\mathbf{s=\emptystack[\tau]}$.}  Given,
+\begin{align}
+\TValGpcS{\emptystack[\hat{\tau}]}{\tau} \label{stuq1} \\
+\TValGpcS{\emptystack[\hat{\tau}]}{\tau'} \label{stuq2}\\
+\intertext{but from EMPTY typing rule we know,}
+\TValGpcS{\emptystack[\hat{\tau}]}{\hat{\tau}} \\
+\intertext{so \ref{stuq1} and \ref{stuq2} typechecks only when}
+\tau=\tau'=\hat{\tau}
+\end{align}
+\textbf{Case $\mathbf{s = \distS{E[\expect{\hat{\tau}}]}{c}{s[\hat{\tau}]}}$.} 
+Given,
+\begin{align}
+\TValGpcS{\distS{E[\expect{\hat{\tau}}]}{c}{s[\hat{\tau}]}}{\tau} \label{stuq3} \\
+\TValGpcS{\distS{E[\expect{\hat{\tau}}]}{c}{s[\hat{\tau}]}}{\tau'} \label{stuq4} \\
+\intertext{inverting \ref{stuq3} we get,}
+\TValGpcw{E[\expect{\hat{\tau}}]}{\tau''} \label{stuq5} \\
+\TValGpcS{s[\tau'']}{\tau} \label{stuq6} \\
+\stflowjudge*{\pc}{\pc'} \\
+\rafjudge{Π}{c}{pc} \\
+\intertext{inverting \ref{stuq4} we get}
+\TValGpcw{E[\expect{\hat{\tau}}]}{{\tau_1}''} \label{stuq7} \\
+\TValGpcS{s[{\tau_1}'']}{\tau'} \label{stuq8} \\
+\intertext{from \ref{stuq5} and \ref{stuq7} and lemma WaitUniqueT,}
+\tau'' = {\tau_1}'' \\
+\intertext{Thus \ref{stuq8} can be written as}
+\TValGpcS{s[\tau'']}{\tau'} \label{stuq9} \\
+\intertext{from IH, \ref{stuq6} and \ref{stuq9} we get}
+\tau = \tau'
+\end{align}
+\PM{NOTE:- in WaitUnique and stackUniqueT lemma pc is same for both.}
+
+\begin{lemma}[distUniqueT]
+If~\TValGpcS{\distcon{e}{c}{s}}{\tau}~and~ \TValGpcS{\distcon{e}{c}{s}}{\tau'}
+~then~ $\tau =\tau'$.
+\end{lemma}
+\textbf{Proof.}
+Straightforward proof using lemmas UniqueType and
+WaitUniqueT.
+
+\begin{lemma}[$\Gamma$-Weakening]
+If \TValGpcw{e}{\tau} and for 
+all $\tau'$ and $x \notin dom(\Gamma)$,
+\TValP{\Gamma,x\ty\tau';pc;c}{e}{\tau}
+\end{lemma}
+\textbf{Proof.} 
+By Induction on structure of $e$.
+
+
+\begin{lemma}[CTX]
+\PM{subject reduction uses CTX lemma, and CTX lemma needs uniquetypes ?}
+If \TValGpcw{E[e]}{\tau} and 
+$x\notin dom(\Gamma)$ then
+$\exists \tau'$, such that 
+\TValP{\Gamma,x\ty\tau',\pc;c}{E[x]}{\tau} and \TValGpcw{e}{\tau'}.
+\end{lemma}
+\textbf{Proof.}
+By induction on structure of $E$.\\
+Given,
+\begin{equation}\label{300}
+\TValGpcw{E[e]}{\tau}
+\end{equation}
+and we need to prove 
+\begin{align}
+\exists{\tau'}.\TValGpcw{e}{\tau'} \label{299} \\
+\intertext{and}
+\TValP{\Gamma,x\ty\tau',\pc;c}{E[x]}{\tau} \label{298}
+\end{align}
+\textbf{Case E=[ ].}  
+Applying definition Plug in \ref{300} 
+(i.e.$[~][e] = e$) we get 
+\begin{align}
+\TValGpcw{e}{\tau} \label{300.5} \\
+\intertext{and $\exists{\tau}$ in \ref{299} we get}
+\TValGpcw{e}{\tau} \label{301}\\ 
+\intertext{from VAR rule for variable $x$}
+\TValP{\Gamma,x\ty\tau,\pc;c}{x}{\tau} \label{302} \\
+\intertext{from \ref{302} and definition Plug}
+\TValP{\Gamma,x\ty\tau,\pc;c}{[~][x]}{\tau} \label{303} \\
+\end{align}
+{\ref{301} and \ref{303} together proves \ref{299} and \ref{298}}. \\
+\textbf{Case E = E e'} 
+Applying definition Plug in \ref{300} ($(E e')[e] = E[e] e'$)
+\begin{align}
+\TValGpcw{E[e]e'}{\tau} \label{304} \\
+\intertext{inverting \ref{304}}
+\TValGpcw{E[e]}{\func{\tau_1}{pc'}{\tau}} \label{305} \\
+\intertext{and}
+\TValGpcw{e'}{\tau_1} \label{306} \\
+\intertext{inverting \ref{306} using $\Gamma$-Weakening }
+\TValP{\Gamma,x\ty\tau',\pc;c}{e'}{\tau_1} \label{307} \\
+\intertext{I.H. on \ref{305} we get (destruct IH with $\tau'$)}
+\TValGpcw{e}{\tau'} \label{308} \\
+\intertext{and}
+\TValP{\Gamma,x\ty\tau',\pc;c}{E[x]}{\func{\tau_1}{pc'}{\tau}} \label{309} \\
+\intertext{from \ref{309}, \ref{307} and APP we get}
+\TValP{\Gamma,x\ty\tau',\pc;c}{E[x]e'}{\tau} \label{310}
+\end{align}
+{\ref{308} and \ref{310} together proves \ref{299} and \ref{298}}\\ 
+\textbf{Case E=$\pair{E}{e'}$}.
+Applying definition Plug in \ref{300} ($(\pair{E}{e'})[e] = \pair{E[e]}{e'}$)
+and $\tau = \prodtype{\tau_3}{\tau_4}$
+\begin{align}
+\TValGpcw{\pair{E[e]}{e'}}{\tau} \label{311} \\
+\intertext{inverting \ref{311} }
+\TValGpcw{E[e]}{\tau_3} \label{312} \\
+\intertext{and}
+\TValGpcw{e'}{\tau_4} \label{313} \\
+\intertext{inverting \ref{312} \ref{313} using $\Gamma$-Weakening }
+\TValP{\Gamma,x\ty\tau',\pc;c}{E[e]}{\tau_3} \label{314} \\
+\intertext{and}
+\TValP{\Gamma,x\ty\tau',\pc;c}{e'}{\tau_4} \label{315}
+\intertext{I.H. on \ref{312} we get(destruct IH with $\tau'$)}
+\TValGpcw{e}{\tau'} \label{316} \\
+\intertext{and}
+\TValP{\Gamma,x\ty\tau',\pc;c}{E[x]}{\tau_3} \label{317} \\
+\intertext{from \ref{317}, \ref{315} and PAIR rule we get}
+\TValP{\Gamma,x\ty\tau',\pc;c}{\pair{E[x]}{e'}}{\tau} \label{318}
+\end{align}
+{\ref{316} and \ref{318} together proves \ref{299} and \ref{298}}\\
+\textbf{Case E=$\proji{E}$}
+applying definition Plug in \ref{300} ($(\proji{E})[e] = \proji{E[e]}$)
+and $\exists.\tau'$
+\begin{align}                                                     
+\TValGpcw{\proji{E[e]}}{\tau_i} \label{320} \\
+\intertext{inverting \ref{320} and $\tau = \tau_i, i \in \{3,4\}$}
+\TValGpcw{E[e]}{\prodtype{\tau_3}{\tau_4}} \label{321} \\
+\intertext{applying $\Gamma$-Weakening in \ref{321}}
+\TValP{\Gamma,x\ty\tau',\pc;c}{E[e]}{\prodtype{\tau_3}{\tau_4}} \label{322} \\
+\intertext{I.H. in \ref{322} we get}
+\TValGpcw{e}{\tau'} \label{323} \\
+\intertext{and}
+\TValP{\Gamma,x\ty\tau',\pc;c}{E[x]}{\prodtype{\tau_3}{\tau_4}} \label{324} \\
+\intertext{from \ref{324}, and UNPAIR rule we get}
+\TValP{\Gamma,x\ty\tau',\pc;c}{\proji{E[x]}}{\tau} \label{325}
+\end{align}
+{\ref{323} and \ref{325} together proves \ref{299} and \ref{298}}\\
+\textbf{Case E= $\assume{E}{e'}$} 
+\PM{(in all of the cases above
+ inversion will also have a c actsfor pc premise that has to be added later.)}
+
+
+\begin{lemma}[WAIT]
+If \TValGpcw{E[e]}{\tau} and \TValGpcw{e}{\tau'} then 
+\TValGpcw{E[\expect{\tau'}]}{\tau}.
+\end{lemma}
+\textbf{proof.} Proof by induction over structure of E. \\
+Given,
+\begin{align}
+\TValGpcw{E[e]}{\tau} \label{expect1} \\
+\TValGpcw{e}{\tau'}  \label{expect2} \\
+\intertext{need to prove} 
+\TValGpcw{E[\expect{\tau'}]}{\tau} \label{expect3}\\
+\end{align}
+\textbf{Case E =[ ]}.
+From \ref{expect1} we get
+\begin{align}
+\TValGpcw{[~][e]}{\tau} \\
+\intertext{i.e.}
+\TValGpcw{e}{\tau} \label{expect4} \\
+%\intertext{from \ref{expect2}, \ref{expect4} and UniqueType lemma we get}
+\intertext{but from \ref{expect2}}
+\TValGpcw{e}{\tau'} \label{expect4.5}
+\intertext{thus}
+\tau = \tau'  \label{expect5} \\
+\intertext{from WAIT typing rule we get}
+\TValGpcw{\expect{\tau'}}{\tau'}  \label{expect6}  \\
+\intertext{but $\tau=\tau'$, so \ref{expect6} can be written as}
+\TValGpcw{\expect{\tau'}}{\tau} \label{expect7} \\
+\intertext{\ref{expect7} can be written as }
+\TValGpcw{[~]\expect{\tau'}}{\tau} 
+\end{align}
+\textbf{Case E = E e'}.
+from \ref{expect1} we get
+\begin{align}
+\TValGpcw{(E~e')[e]}{\tau} \\
+\intertext{i.e.}
+\TValGpcw{E[e]e'}{\tau} \label{expect8} \\
+\intertext{inverting \ref{expect8} we get}
+\TValGpcw{E~[e]}{\func{\tau_1}{pc'}{\tau}} \label{expect9} \\
+\TValGpcw{e'}{\tau_1} \label{expect10} \\
+\rafjudge{\Pi}{c}{pc} \label{expect10.5} \\
+\rflowjudge{\Pi}{pc}{pc'} \label{expect10.6} \\
+\intertext{from \ref{expect2}, \ref{expect9} and IH we get}
+\TValGpcw{E~[\expect{\tau'}]}{\func{\tau_1}{pc'}{\tau}} \label{expect11} \\
+\intertext{from \ref{expect10},\ref{expect11},\ref{wait10.5},\ref{wait10.6} and APP typing rule we get}
+\TValGpcw{E[\expect{\tau'}]e'}{\tau} \label{expect12} \\
+\intertext{\ref{expect12} can be written as}
+\TValGpcw{(E~e')[\expect{\tau'}]}{\tau} 
+\end{align}
+\PM{Other cases for E later.}
+
+
+\begin{lemma}[RWAIT]
+\TValGpcw{v}{\tau'} and
+\TValGpcw{E[\expect{\tau'}]}{\tau} then
+\TValGpcw{E[v]}{\tau}.
+\end{lemma}
+\PM{both expect and rexpect can be generalized with e of type tau' instead of wait term
+and to be used in subject reduction for case E-Step.}
+\PM{Bracketed subject reduction failed bcz of pc' in select.}
+\textbf{proof.} Proof by induction over structure of E. \\
+Given,
+\begin{align}
+\TValGpcw{v}{\tau'}  \label{rexpect1} \\
+\TValGpcw{E[\expect{\tau'}]}{\tau} \label{rexpect2} \\
+\intertext{need to prove}
+\TValGpcw{E[v]}{\tau} \label{rexpect3}\\
+\end{align}
+\textbf{Case E =[ ]}.
+from \ref{rexpect2} we get
+\begin{align}
+\TValGpcw{[~][\expect{\tau'}]}{\tau} \\
+\intertext{i.e.}
+\TValGpcw{\expect{\tau'}}{\tau} \label{rexpect4} \\
+\intertext{from WAIT rule we get }
+\TValGpcw{\expect{\tau'}}{\tau'}  \label{rexpect5} \\
+\intertext{but from \ref{rexpect4}, $\TValGpcw{\expect{\tau'}}{\tau}$, thus}
+\tau=\tau' \label{rexpect6} \\
+\intertext{Thus we can write \ref{rexpect1} as }
+\TValGpcw{v}{\tau}  \label{rexpect7} \\
+\intertext{from definition Plug, \ref{rexpect7} can be written as}
+\TValGpcw{[~]v}{\tau} 
+\end{align}
+\textbf{Case E =E e'}.
+from \ref{rexpect2} we get
+\begin{align}
+\TValGpcw{(E~e')[\expect{\tau'}]}{\tau} \\
+\intertext{i.e.}
+\TValGpcw{E[\expect{\tau'}]e'}{\tau} \label{rexpect8} \\
+\intertext{inverting \ref{rexpect8} we get}
+\TValGpcw{E~[\expect{\tau'}]}{\func{\tau_1}{pc'}{\tau}} \label{rexpect9} \\
+\TValGpcw{e'}{\tau_1} \label{rexpect10} \\
+\rafjudge{\Pi}{c}{pc} \label{rexpect10.5} \\
+\rflowjudge{\Pi}{pc}{pc'} \label{rexpect10.6} \\
+\intertext{from \ref{rexpect1}, \ref{rexpect9} and IH we get}
+\TValGpcw{E~[v]}{\func{\tau_1}{pc'}{\tau}} \label{rexpect11} \\
+\intertext{from \ref{rexpect10}, \ref{rexpect11}, \ref{rwait10.5}, \ref{rwait10.6} and APP typing rule we get}
+\TValGpcw{E[v]e'}{\tau} \label{rexpect12} \\
+\intertext{\ref{rexpect12} can be written as}
+\TValGpcw{(E~e')[v]}{\tau}
+\end{align}
+\PM{Other cases for E later.}
+\PM{runnable gives me info about pcs but not  
+if e will be typechecked as well, so used UB}
+
+
+
+\begin{lemma}[Values are typable at any host and any \pc]
+Let $\TValGpcw{v}{\tau}$. If  
+$\rafjudge{\Pi}{c'}{pc'}$ and $\rafjudge{\Pi}{c'}{UB(\tau)}$ 
+then $\TValGpcdashpc{v}{\tau}$.
+\end{lemma}
+\textbf{Proof.} Given that,
+\begin{align}
+\rafjudge{\Pi}{c'}{pc'}   \label{VTH} \\
+\rafjudge{\Pi}{c'}{UB(\tau)}  \label{VTH.5} 
+\end{align}
+Using induction over values.\\ \\
+%\textbf{case FAIL.} Using [FAIL] and (\ref{VTH}) we have 
+%{\TValGpcdashpc{\fail{\says{\ell}{\tau}}}{\says{\ell}{\tau}}}\\ \\
+\textbf{Case UNITM.} Using [UNIT] and (\ref{VTH}) we have  
+{\TValGpcdashpc{\void}{\voidtype}}\\ \\
+\textbf{Case DEL.} Using [DEL] and (\ref{VTH}) we have 
+{\TValGpcdashpc{\delexp{p}{q}}{\aftype{p}{q}}}\\ \\
+\textbf{Case PAIR.} Given 
+\begin{equation}\label{pairVTH}
+{\TValGpcw{\pair{v_1}{v_2}}{\prodtype{τ_1}{τ_2}}}
+\end{equation}
+Inverting (\ref{pairVTH}) we get 
+\begin{equation}\label{pairVTH1}
+\TValGpcw{v_1}{τ_1}
+\end{equation} 
+and
+\begin{equation}\label{pairVTH2}
+\TValGpcw{v_2}{τ_2}
+\end{equation}
+By applying induction hypothesis on (\ref{pairVTH1}) and (\ref{pairVTH2}), we get
+\begin{equation}\label{pairVTH3}
+\TValGpcdashpc{v_1}{τ_1}
+\end{equation}
+and
+\begin{equation}\label{pairVTH4}
+\TValGpcdashpc{v_2}{τ_2}
+\end{equation}
+From rule [PAIR], (\ref{pairVTH3}), (\ref{pairVTH4}), and (\ref{VTH}) we get
+{\TValGpcdashpc{\pair{v_1}{v_2}}{\prodtype{τ_1}{τ_2}}}\\ \\
+\textbf{Case INJ.} Similar to \textbf{case PAIR}.\\ \\
+\textbf{Case UNITL.} Given 
+\begin{equation}\label{sealVTH}
+{\TValGpcw{\returnv{ℓ }{v}}{\says{ℓ }{τ}}}
+\end{equation}
+Inverting (\ref{sealVTH}) we get
+\begin{equation}\label{sealVTH1}
+ \TValGpcw{v}{\tau} 
+\end{equation}
+By applying induction hypothesis on (\ref{sealVTH1}) we get
+\begin{equation}\label{sealVTH2} 
+\TValGpcdashpc{v}{τ}
+\end{equation}
+Thus from rule [SEAL], (\ref{VTH}) and (\ref{sealVTH2}) we get 
+{\TValGpcdashpc{\returnv{ℓ  }{v}}{\says{ℓ  }{τ}}}\\ \\
+\textbf{Case WHERE.} Given
+\begin{equation}\label{whereVTH}
+{\TValGpcw{(\where{v_1}{v_2})}{τ}}{}
+\end{equation}
+Inverting (\ref{whereVTH}) we get
+\begin{equation}\label{whereVTH1}
+ \TValGpcw{v_2}{\aftype{p}{q}}
+\end{equation}
+\begin{equation}\label{whereVTH2}
+\rafjudge{Π}{\pcmost}{\voice{q}}
+\end{equation}
+\begin{equation}\label{whereVTH3}
+\rafjudge{Π}{\voice{\confid{p}}}{\voice{\confid{q}}}
+\end{equation}
+\begin{equation}\label{whereVTH4}
+\TVal{Π,\langle \aftypep{p}{q}\rangle;Γ;\pc}{v_1}{τ}
+\end{equation}
+By applying induction hypothesis on (\ref{whereVTH1}) and
+and (\ref{whereVTH4}) and $\Pi$-extension rule on 
+(\ref{whereVTH4}) we get
+\begin{equation}\label{whereVTH5}
+ \TValGpcdashpc{v_2}{\aftype{p}{q}}
+\end{equation}
+\begin{equation}\label{whereVTH6}
+\TVal{Π,\langle \aftypep{p}{q}\rangle;Γ;\pc';c'}{v_1}{τ}
+\end{equation}
+Thus from rule [WHERE], (\ref{VTH}), (\ref{whereVTH2}),  (\ref{whereVTH3}),
+ (\ref{whereVTH5}) and (\ref{whereVTH6}) we get
+{\TValGpcdashpc{(\where{v_1}{v_2})}{τ}}{} \\ \\
+\textbf{Case LAM.} We have 
+\begin{equation}\label{lamVTH}
+{\TValGpcw{\lamc{x}{τ_1}{\pc''}{e}}{\func{τ_1}{\pc''}{τ_2}}}
+\end{equation}
+Inverting (\ref{lamVTH}) we get
+\begin{align}
+\TVal{\Pi;Γ,x\ty τ_1;\pc'';u}{e}{τ_2}  \label{lamVTH1} \\
+u = UB(\func{τ_1}{\pc''}{τ_2}) \label{lamVTH1.1} \\
+\rafjudge{\Pi}{c}{pc}  \\ 
+\rafjudge{\Pi}{c}{u}  \\
+\intertext{given in lemma statement} 
+\rafjudge{\Pi}{c'}{pc'}  \label{lamvth1.2} \\                                  
+\rafjudge{\Pi}{c'}{u}  \label{lamvth1.3} \\ 
+\intertext{from \ref{lamvth1.2}, \ref{lamvth1.3}, 
+\ref{lamVTH1} and LAM rule we get}
+{\TValGpcdashpc{\lamc{x}{τ_1}{\pc''}{e}}{\func{τ_1}{\pc''}{τ_2}}} \\ \\
+\end{align}
+\textbf{Case TLAM.} Similar to \textbf{case LAM}.\\ \\
+%\textbf{Case FAIL.} We have 
+%\begin{equation}\label{failVTH}
+%\TValGpcw{\fail{\tau}}{\tau}
+%\end{equation} 
+%From (\ref{VTH}) and [FAIL] rule we have \TValGpcdashpc{\fail{\tau}}{\tau}  
+\textbf{Case BRACKET.}
+Given,
+\begin{align}
+{\TValGpcw{\bracket{w_1}{w_2}}{\tau}}  \label{br1} \\
+\intertext{inverting \ref{br1} we get}
+\protjudge{\delegcontext}{H^\pi}{\tau} \label{br2} \\
+\TValGpcw{w_1}{\tau} \label{br3} \\      
+\TValGpcw{w_2}{\tau} \label{br4} \\
+\intertext{IH on \ref{br3} and \ref{br4}}
+\TValGpcdashpc{w_1}{\tau} \label{br5} \\
+\TValGpcdashpc{w_2}{\tau} \label{br6} \\
+\intertext{from \ref{br5},\ref{br6} and \ref{br2} we get}
+{\TValGpcdashpc{\bracket{w_1}{w_2}}{\tau}}
+\end{align}
+
+\begin{lemma}[$\pc$ reduction]
+ Let \TValGpcw{e}{\tau}.
+  For all $\pc, \pc'$, such that
+  \rflowjudge{\delegcontext}{\pc'}{\pc} and 
+  \rafjudge{Π}{c}{pc'} (and 
+\rflowjudge{\delegcontext}{\j(\tau)}{pc'}) then
+  \TValP{\varcontext;pc';c}{e}{\tau} holds.
+\end{lemma}
+\textbf{Proof.}
+Using induction. 
+\PM{Works for run /ret after adding pc' in run. But
+breaks for compEnd and select after incorporating j, as 
+j might not flow to reduced pc. So to fix it 
+$(\rflowjudge{\delegcontext}{\j(\tau)}{pc'})$ is added
+in the lemma statement.
+works for bracket/bracket-values}
+
+%\begin{lemma}[CTXpc]
+%If~ \TValP{\varcontext;pc';c}{e}{\tau} , $\forall{v}.${\TValGpcw{v}{\tau'}} and
+%{\TValGpcw{E[v]}{\tau}}, and \rflowjudge{\delegcontext}{\pc}{\pc'} 
+%then {\TValGpcw{E[e]}{\tau}}
+%\end{lemma}
+%\textbf{Proof.}
+%First apply pc reduction in \TValP{\varcontext;pc';c}{e}{\tau}
+%with $pc$, then
+%apply Lemma CTX.
+%
+
+\begin{lemma}[$\Pi$ extension]
+If {\TValGpc{e}{\tau}} then 
+\TVal{\delegcontext\delegconcat \delexp{p}{q};\varcontext;\pc}{e}{\tau} 
+for any $p, q \in \L$.
+\end{lemma}
+\begin{lemma}[Robust assumption]
+ If
+        $\rafjudge{\Pi}{\pc}{\voice{b}}$, then
+        $\rafjudge{\delegcontext\delegconcat \delexp{a}{b}}{\pc}{\voice{b}}$ for any $a, b \in \L$.
+\end{lemma}
+\begin{lemma}[Robust Protection]
+If
+        $\protjudge{\delegcontext}{\pc}{\tau}$,
+        then
+        $\protjudge{\delegcontext\delegconcat \delexp{a}{b}}{\pc}{\tau}$ for any $a, b \in \L$.
+\end{lemma}
+\begin{lemma}[Variable substitution]
+If \TValP{\Gamma,x:\tau';\pc;c}{e}{\tau} and \TValGpcw{w}{τ'}, then \TValGpcw{\subst{e}{x}{w}}{\tau}.
+\end{lemma}
+%\begin{proof}
+trivial
+%\end{proof}
+\textbf{Proof.}
+Proof is by induction on the typing derivation of $e$.
+\\
+\textbf{Case LAM.}
+Given,
+\begin{align}
+\TValGpcw{w}{τ'} \label{99} \\
+{\TValP{\Gamma,x'\ty \tau';\pc;c}{\lamc{x}{τ_1}{\pc'}{e}}{\func{τ_1}{\pc'}{τ_2}}} \label{100} \\
+{\TValP{Γ,x'\ty \tau',x\ty τ_1;\pc';c'}{e}{τ_2}} \label{101} \intertext{inverting \ref{100}}\\
+\rafjudge{\Pi}{c'}{\pc'} \label{102} \intertext{clearance of \ref{101}} \\
+{\TValGpcdashpc{w}{τ'}} \label{103} \intertext{lemma values host pc and \ref{102}} \\
+{\TValP{Γ,x\ty τ_1;\pc';c'}{\subst{e}{x'}{w}}{τ_2}} \label{104} \intertext{IH, \ref{101}, \ref{103}}
+\TValGpcw{\lamc{x}{τ_1}{\pc'}{\subst{e}{x'}{w}}}{\tau_2} \intertext{from LAM, and \ref{104}}
+\end{align}
+\textbf{Case RUN.} Same as before.
+\begin{lemma}[Type substitution]
+ %Let $\tau'$ be well-formed in $\varcontext, X, \varcontext'$.                     If $\TValP{\varcontext, X, \varcontext';\pc}{e}{\tau}$ then $\TValP{\varcontext, \varcontext'[X \mapsto \tau'];\pc}{e[X \mapsto \tau']}{\tau [X \mapsto \tau']}$.
+\end{lemma}
+\begin{lemma}[Soundness]\label{lemma:sound}
+        If  $e \stepsone e'$ then
+        $\outproj{e}{k} \stepsto \outproj{e'}{k}$ for $k ∈ \{1,2\}$.
+ \end{lemma}
+\textbf{Proof}
+By induction on the evaluation of $e$.  All bracketed
+rules in Figure~\ref{fig:brackets} except 
+\ruleref{B-Step} only expand brackets, so
+$\outproj{e}{k} = \outproj{e'}{k}$ for $k \in \{1,2\}$. 
+For \ruleref{B-Step}, $\outproj{e}{i} \stepsone \outproj{e'}{i}$  
+and $\outproj{e}{j} = \outproj{e'}{j}$ .
+
+\begin{lemma}[Subject Reduction(within a host)]
+Let  \TValGpcw{e}{τ} \rafjudge{\Pi}{c}{UB(\tau)}.  If $e \stepsone e'$
+%\rafjudge{\delegcontext}{c}{\pc}  
+then \TValGpcw{e'}{τ}.
+\end{lemma}
+\textbf{Proof.} \newline
+\textbf{Case E-BINDM.} Given $e={\bind{x}{\returnv{ℓ}{w}}{e_1}}$ and 
+$e'= \subst{e_1}{x}{w}$ and also
+\begin{equation}\label{bind1}
+{\TValGpcw{\bind{x}{\returnv{ℓ}{w}}{e_1}}{τ}}
+\end{equation}
+From the premises of (\ref{bind1}) we have
+\begin{align}
+  \TValGpcw{\returnv{ℓ}{w}}{\says{\ell}{\tau'}} \label{eq:sbindm0} \\
+  \TValGpcw{w}{\tau'} \label{eq:sbindm1} \\
+  \TVal{\Pi;\Gamma,x:\tau';\pc \sqcup \ell \sqcup j;c}
+    {e_1}{\tau} \label{eq:sbindm2} \\
+  \protjudge{\delegcontext}{\pc \sqcup \ell}{\tau} \label{eq:sbindm4} \\
+  \rafjudge{\delegcontext}{c}{\pc}
+\end{align}
+(Since $\rafjudge{\delegcontext}{c}{\pc}$) applying $\pc$ reduction lemma in 
+(\ref{eq:sbindm2})(23) we get $\TValP{\Gamma, x:\tau'; \pc}{e_1}{\tau} \label{eq:sbindm2}$.
+Invoking variable substitution lemma, we thus have 
+${\TValGpcw{\subst{e_1}{x}{w}}{\tau}}$.
+\PM{j flowsto J(tau) is not used and as of now
+nothing breaks without it.}
+\\ \\
+\textbf{Case E-RETSTEP}
+\begin{equation}\label{retcon}
+{\ret{e_1}{c'}} \stepsone {\ret{e_1'}{c'}}
+\end{equation}
+Given, $e=\ret{e_1}{c'}$ and $e'=\ret{e_1'}{c'}$ and also
+\begin{equation}\label{ret1}
+{\TValGpcw{\ret{e_1}{c'}}{\tau}}
+\end{equation} 
+From the premises of (\ref{ret1}) we get
+\begin{align}
+{\TValGpcw{e_1}{\tau}}  \label{ret1pr1} \\
+\rafjudge{\delegcontext}{c}{\pc}  \label{ret1pr2}
+\end{align}
+and applying induction hypothesis on the premise of (\ref{retcon})
+we get 
+\begin{equation}\label{ret1IH}
+{\TValGpcw{e_1'}{\tau}}
+\end{equation}
+From (\ref{ret1IH}) and (\ref{ret1pr2}) we have
+${\TValGpcw{\ret{e_1'}{c'}}{\tau}}$ \\ \\
+\textbf{E-COMPEND} Given,
+$e=(\compEnd{\tau}{\returnv{\ell_1}{w}}{\returnv{\ell_2}{w}})$ and  
+$e'=\returnv{\ell_1 \wedge \ell_2}{w}{j_1 \sqcup j_2}$
+and also, 
+\begin{equation}\label{ce1}
+\TValGpcw{\compEnd{\tau}{\returnv{\ell_1}{w}}{\returnv{\ell_2}{w}}}
+{\says{\ell_1 \wedge \ell_2}{\tau}{j_1 \sqcup j_2}} 
+\end{equation}
+Inverting (\ref{ce1})
+\begin{align}
+\TValGpcw{\returnv{\ell_1}{w}}{\says{\ell_1}{τ}} \label{ce2}\\
+\TValGpcw{\returnv{\ell_2}{w}}{\says{\ell_2}{τ}} \label{ce3}\\
+\confid{c} \rhd \says{\ell_1}{\tau} \label{ce4}\\
+\confid{c} \rhd \says{\ell_2}{\tau}  \label{ce5}\\
+\rafjudge{\Pi}{c}{pc} \label{ce6}\\
+%\stflowjudge*{pc} \label{ce7}\\
+%\stflowjudge*{pc}  \label{ce7}\\
+\end{align}
+Inverting (\ref{ce2}) or (\ref{ce3}) further, we get
+\begin{equation}\label{ce8}
+\TValGpcw{w}{\tau}
+\end{equation}
+From rule [UNITL], (\ref{ce8}) and (\ref{ce6}) we can say
+$\TValGpcw{\returnv{\ell_1 \wedge \ell_2}{w}{j_1 \sqcup j_2}}
+{\says{\ell_1 \wedge \ell_2}{\tau}{j_1 \sqcup j_2}}$ \\ \\
+\textbf{Case E-COMPAREFAIL.} Trivial, as $\fail{\tau}$ typechecks
+with any protected type, and based on our type-system $\tau$ is always 
+a protected type.\\ \\
+\textbf{Case E-SELECT.}
+Given,
+$e = \select{\returnv{\ell_1}{w_1}}{\returnv{\ell_2}{w_2}}{\ell}$ 
+and 
+$e'= \returnv{\ell}{w_1}$ 
+where $\ell = \ell_1 \sqcup \ell_2$ and $j=j_1 \sqcup j_2$.
+The following is also given. 
+\begin{equation}\label{sel1}
+{\TValGpcw{\select{\returnv{\ell_1}{w_1}}{\returnv{\ell_2}{w_2}}{\ell}}{\says{\ell}{τ}}}
+\end{equation}
+Inverting (\ref{sel1}) we get the following,
+\begin{align}
+\TValGpcw{\returnv{\ell_1}{w_1}}{\says{\ell_1}{τ}} \label{se2}\\
+\TValGpcw{\returnv{\ell_2}{w_2}}{\says{\ell_2}{τ}} \label{se3}\\
+\rafjudge{Π}{c}{pc} \label{se4}\\
+%\stflowjudge*{\pc} \label{se5} \\
+%\stflowjudge*{\pc} \label{se6}
+\end{align}
+Further inverting (\ref{se2}) we get,
+\begin{equation}\label{se7}
+\TValGpcw{w_1}{\tau}  
+\end{equation} 
+Thus from rule [UNITL], (\ref{se7}) and (\ref{se4}) we can argue,
+$\TValGpcw{\returnv{\ell}{w_1}}{\says{\ell_1}{τ}}$ \\ \\
+\textbf{Case E-SELECTOR.} Similar to above. The only diffrence is we need to
+invert both (\ref{se2}) and (\ref{se3}) 
+and argue both $\TValGpcw{\returnv{\ell}{w_1}}{\tau}$
+and $\TValGpcw{\returnv{\ell}{w_2}}{\tau}$ holds.\\ \\                    
+\textbf{Case E-SELECTFAIL.} Trivial, as $\fail{\tau}$ typechecks for any
+protected type, and based on our type-system $\tau$ is always
+a protected type.\\ \\. \\ \\
+\textbf{CasecW-COMPEND1} \PM{not sure if this required or the Pi extension works}
+Given 
+${\config*{\compEnd{\tau}{(\where{w}{v})}{e}}} \stepsone
+{\config*{\where{(\compEnd{\tau}{w}{e})}{v}}}$ where
+$e=\compEnd{\tau}{(\where{w}{v})}{e}$ and 
+$e'=\where{(\compEnd{\tau}{w}{e})}{v}$ and
+\begin{equation}\label{cew}
+{\TValGpcw{\compEnd{\tau}{\where{w}{v}}{e}}{\says{(\ell_1 \wedge \ell_2 )}
+{\tau}{j_1 \sqcup j_2}}}
+\end{equation}
+From the premises of (\ref{cew}) we get the following
+\begin{align}
+\TValGpcw{\where{w}{v}}{\says{\ell_1}{τ}} \label{cew1}\\
+\TValGpcw{e}{\says{\ell_2}{τ}} \label{cew2}\\
+\confid{c} \rhd \says{\ell_1}{\tau} \label{cew3}\\
+\confid{c} \rhd \says{\ell_2}{\tau} \label{cew4}\\
+\rafjudge{\Pi}{c}{pc}  \label{cew5} \\
+\end{align}
+Further inverting (\ref{cew1}) we get
+\begin{align}
+\TValGpcw{v}{\aftype{p}{q}}\label{cew8} \\
+\rafjudge{Π}{\pcmost}{\voice{q}} \label{cew9} \\
+\rafjudge{Π}{\voice{\confid{p}}}{\voice{\confid{q}}} \label{cew10}\\
+\TVal{Π,\langle \aftypep{p}{q}\rangle;Γ;\pc}{w}
+{\says{\ell_1}{τ}} \label{cew11}
+\end{align}
+We need to prove that 
+\begin{equation}\label{cew12}
+\TValGpcw{\where{(\compEnd{\tau}{w}{e})}{v}}{\says{(\ell_1 \wedge \ell_2 )}
+{\tau}{j_1 \sqcup j_2}}
+\end{equation}
+From  (\ref{cew3}),(\ref{cew4}),(\ref{cew5}), (\ref{cew6}), (\ref{cew7}),
+(\ref{cew11}), and extending delegation context in (\ref{cew2}) we can prove 
+\begin{equation}\label{cew13}
+\TVal{Π,\langle \aftypep{p}{q}\rangle;Γ;\pc}
+{\compEnd{\tau}{w}{e}}{\says{(\ell_1 \wedge \ell_2 )}
+{\tau}{j_1 \sqcup j_2}}
+\end{equation}
+From (\ref{cew8}),(\ref{cew9}),(\ref{cew10}),(\ref{cew13}),  
+and [WHERE] rule we can argue (\ref{cew12}) is true. \\ \\
+\textbf{Case W-COMPEND2.} Similar to the above case.\\
+\textbf{Case W-SELECT1.} Similar to  \textbf{case W-COMPEND1}.\\
+\textbf{Case W-SELECT2.} Similar to \textbf{case W-COMPEND1}.\\ \\
+\textbf{Case B-SELECT.} Given,
+\begin{align}
+{\select{\bracket{w_1}{w_2}}{\bracket{w_1'}{w_2'}}{\tau}} 
+& \stepsone 
+& {\bracket{\select{w_1}{w_1'}{\tau}}{\select{w_2}{w_2'}{\tau}}} \label{bse1} 
+\end{align}
+\begin{align}
+\TValGpcw{{\select{\bracket{w_1}{w_2}}{\bracket{w_1'}{w_2'}}{\tau}}}{\tau} \label{bse2}\\
+\intertext{ We need to prove}
+\TValGpcw{\bracket{\select{w_1}{w_1'}{\tau}}{\select{w_2}{w_2'}{\tau}}}{\tau}
+\intertext{inverting \ref{bse2} we get(here $\ell = {\ell_1 \join \ell_2}
+j={j_1 \join j_2}$)}
+\TValGpcw{\bracket{w_1}{w_2}}{\says{\ell_1}{τ}} \label{bse3} \\
+\TValGpcw{\bracket{w_1'}{w_2'}}{\says{\ell_2}{τ}} \label{bse4} \\
+\rafjudge{Π}{c}{pc} \label{bse5} \\
+\intertext{inverting \ref{bse3} and \ref{bse4}}
+\TValGpcw{w_1}{\says{\ell_1}{τ}} \label{bse8} \\
+\TValGpcw{w_2}{\says{\ell_1}{τ}} \label{bse9} \\
+\TValGpcw{w_1'}{\says{\ell_2}{τ}} \label{bse10} \\
+\TValGpcw{w_2'}{\says{\ell_2}{τ}} \label{bse11} \\
+\stflowjudge*{\H^\pi}{\ell_1} \label{bse11.1} \\
+\stflowjudge*{\H^\pi}{\ell_2} \label{bse11.2} \\
+\intertext{from \ref{bse11.1} and \ref{bse11.2} we get}
+\stflowjudge*{\H^\pi}{\ell_1 \join \ell_2} \label{bse11.3} \\
+\intertext{applying values pc in \ref{bse8}, \ref{bse9}, \ref{bse10}
+\ref{bse11} with pc' as
+$pc \join \ell_1 \join \ell_2 $ we get}
+\TValGpcc{w_1}{\says{\ell_1}{τ}} \label{bse12} \\ 
+\TValGpcc{w_2}{\says{\ell_1}{τ}} \label{bse13} \\ 
+\TValGpcc{w_1'}{\says{\ell_2}{τ}} \label{bse14} \\ 
+\TValGpcc{w_2'}{\says{\ell_2}{τ}} \label{bse15} \\
+\intertext{from \ref{bse12},\ref{bse14},\ref{bse6}, \ref{bse7}, \ref{bse5} 
+and SELECT rule we get}
+\TValGpcc{\select{w_1}{w_1'}{\tau}}{\tau} \label{bse12} \\
+\intertext{from \ref{bse13},\ref{bse15},\ref{bse6}, \ref{bse7}, \ref{bse5} and SELECT 
+rule we get}
+\TValGpcc{\select{w_2}{w_2'}{\tau}}{\tau} \label{bse13} 
+%\intertext{from}
+\end{align}
+\begin{lemma}[Subject reduction(inter-host)]
+If {\TValGpcS{\distcon{e}{c}{s}}{\tau}} and 
+$\distcon{e}{c}{s} \Longrightarrow \distcon{e'}{c'}{s'}$ holds, then
+{\TValGpcS{\distcon{e'}{c'}{s'}}{\tau}}.
+%if $\rafjudge{\Pi}{c'}{pc}$. 
+\end{lemma}
+\textbf{Proof.}Induction over typing derivation of $e$.\\
+\textbf{Case E-RUN}.
+Given,
+\begin{align}
+{\distcon{E[\run{\hat{\tau}}{e}{c'}]}{c}{s}} \Longrightarrow {\distcon{\ret{e}{c}}{c'}{\stackapp{E[\expect{\hat{\tau}}]}{c}{s}}} \\
+\TValGpcS{\distcon{E[\run{\hat{\tau}}{e}{c'}]}{c}{s}}{\tau} \label{sr1} \\
+%\rafjudge{{\Pi}^{c'}}{c'}{pc}  \label{sr1.1} \\
+\intertext{need to prove}
+\TValGpcS{\distcon{\ret{e}{c}}{c'}{\stackapp{E[\expect{\hat{\tau}}]}{c}{s}}}{\tau} \label{sr2}
+\intertext{Inverting \ref{sr1} we get}
+\TValGpart{E[\run{\hat{\tau}}{e}{c'}]}{\tau'}{c'}\label{sr3} \\
+\TValGpcS{s[\tau']}{\tau} \label{sr4} \\
+\rafjudge{\Pi}{c}{pc} \label{sr5} \\
+\stflowjudge*{pc}{pc'} \label{sr6} \\
+\intertext{applying lemma CTX to \ref{sr3} we get} 
+\TVal{{{\Pi}^{c}};\Gamma;pc';c}{\run{\hat{\tau}}{e}{c'}}{\hat{\tau}}\label{sr7} \\
+%\TValP{\Gamma,x\ty \hat{\tau};pc';c}{E[x]}{\tau'[x\notin dom(\Gamma)]} \label{sr8} \\
+\intertext{inverting \ref{sr7} we get}
+\TVal{{{\Pi}^{c'}};\Gamma,\hat{\pc};c'}{e}{\hat{\tau}} \label{sr9} \\
+\rafjudge{{\Pi}^{c}}{c}{pc'} \label{sr9.5} \\
+\stflowjudge*{pc'}{\hat{pc}} \label{sr10} \\
+\intertext{applying pc-reduction on \ref{sr9} with $\pc$ we get }
+\TVal{{\Pi}^{c'};\Gamma,pc;c'}{e}{\hat{\tau}} \label{sr9.6} \\
+\intertext{applying clearance in \ref{sr9.6}}
+\rafjudge{{\Pi}^{c'}}{c'}{pc}  \label{sr9.7 we get} \\
+\intertext{applying clearance lemma in \ref{sr9}}
+\rafjudge{{\Pi}^{c'}}{c'}{\hat{pc}} \label{sr11} \\ 
+\intertext{from \ref{sr6} and \ref{sr10} we get}
+\stflowjudge*{pc}{\hat{pc}} \label{sr12} \\
+\intertext{from \ref{sr11} and \ref{sr9} and \ref{sr11} and RET we get}
+\TVal{{\Pi}^{c'};\Gamma,\hat{\pc};c'}{\ret{e}{c}}{\hat{\tau}} \label{sr13} \\
+\intertext{from \ref{sr3} and \ref{sr7} and WAIT lemma we get}
+\TValGpcc{E[\expect{\hat{\tau}}]}{\tau'}\label{sr13.5} \\
+\intertext{from \ref{sr4}, \ref{sr5}, \ref{sr6},\ref{sr13.5} and TAIL rule we get}
+\TValGpcS{\stackapp{E[\expect{\hat{\tau}}]}{c}{s[\hat{\tau}]}}{\tau} \label{sr14} \\
+\intertext{from \ref{sr12},\ref{sr13},\ref{sr14} \ref{sr9.7} and HEAD rule we get}
+\TValGpcS{\distcon{\ret{e}{c}}{c'}{\stackapp{E[\expect{\hat{\tau}}]}{c}{s}}}{\tau} \label{sr2}
+\end{align}
+\textbf{Case E-RETV}. Given, \\
+\begin{align}
+{\distcon{\ret{w}{c}}{c'}{\stackapp{E[\expect{\tau'}]}{c}{s}}} \Longrightarrow {\distcon{E[w]}{c}{s}} \\
+\TValGpcS{\distcon{\ret{w}{c}}{c'}{\stackapp{E[\expect{\tau'}]}{c}{s}}}{\tau} \label{retv1} \\
+\rafjudge{\Pi}{c}{pc}  \label{retv1.1} \\
+\intertext{need to prove}
+\TValGpcS{\distcon{E[w]}{c}{s}}{\tau} \label{retv2} \\
+\intertext{inverting \ref{retv1} we get}
+\TValP{\Gamma;pc';c'}{\ret{w}{c}}{\tau'} \label{retv3} \\
+\TValGpcS{\stackapp{E[\expect{\tau'}]}{c}{s}[\tau']}{\tau} \label{retv4} \\
+\stflowjudge*{pc}{pc'} \label{retv5} \\
+\rafjudge{\Pi}{c'}{pc} \label{retv6} \\
+\intertext{inverting \ref{retv3} we get} 
+\TValP{\Gamma;pc';c'}{w}{\tau'} \label{retv7} \\ 
+\rafjudge{\Pi}{c}{UB(\tau')} \label{retv7.5} \\
+\rafjudge{\Pi}{c'}{pc'} \label{retv8} \\
+\intertext{inverting \ref{retv4}}
+\TValP{\Gamma;\hat{pc};c}{E[\expect{\tau'}]}{\hat{\tau}} \label{retv9} \\
+\stflowjudge*{pc}{\hat{pc}} \label{retv10} \\ 
+\rafjudge{\Pi}{c}{pc} \label{retv11} \\
+\TValGpcS{s[\hat{\tau}]}{\tau} \label{retv12} \\
+\intertext{applying clearance lemma on \ref{retv9}}
+\rafjudge{\Pi}{c}{\hat{pc}} \label{retv13} \\
+\intertext{from \ref{retv13}, \ref{retv7}, \ref{retv7.5} and ValuesHost lemma}
+\TValP{\Gamma;\hat{pc};c}{w}{\tau'} \label{retv14} \\
+\intertext{pc reduction in \ref{retv14}}
+\TValP{\Gamma;{pc};c}{w}{\tau'} \label{retv14.1} \\
+\intertext{clearance lemma on \ref{retv14.1} }
+\rafjudge{{\Pi}^{c}}{c}{pc} \label{retv14.2} \\
+\intertext{from \ref{retv14}, \ref{retv9} and WAITR lemma }
+\TValP{\Gamma;\hat{pc};c}{E[w]}{\hat{\tau}} \label{retv15} \\  
+\intertext{from \ref{retv15}, \ref{retv10}, \ref{retv12}, \ref{retv14.2} 
+and HEAD rule we get}
+\TValGpcS{\distcon{E[w]}{c}{s}}{\tau} 
+\end{align}
+\textbf{Case E-DSTEP.}\PM{generalize WAIT RWAIT lemma first.}
+\PM{check if UB() condition is required in run}
+\textbf{Case B-DSTEP.}
+\textbf{Case B-RET.} Given,
+\begin{align}
+{\TValGpcw{\ret{\bracket{e_1}{e_2}}{c'}}{\says{c{^a}}{\tau}{\jmath({\tau})}}} \label{bret0} \\
+\ret{\bracket{e_1}{e_2}}{c'} \stepsone \bracket{\ret{e_1}{c'}}{\ret{e_2}{c'}} 
+\label{bret1} \\
+\intertext{inverting \ref{bret0} we get,} 
+\TValGpcw{\bracket{e_1}{e_2}}{\tau} \label{bret2} \\
+\rafjudge{\Pi}{c'}{UB(\tau)} \label{bret2.2} \\
+\rafjudge{\Pi}{c}{pc} \label{bret2.3} \\
+\intertext{inverting \ref{bret2} we get,}
+\TValGpcc{e_1}{\tau} \label{bret3} \\
+\TValGpcc{e_2}{\tau} \label{bret4} \\
+\stflowjudge*{H^{\pi}}{\tau} \label{bret5} \\
+\rafjudge{\Pi}{c}{pc} \label{bret6} \\
+\stflowjudge*{H^{pi} \join pc}{pc'} \label{bret7} \\
+e_1 = v_1  \iff e_2 \ne v_2 \label{bret8} \\
+\intertext{applying clearance lemma in \ref{bret3} we get,}
+\rafjudge{\Pi}{c}{pc'} \label{bret9} \\
+\intertext{from \ref{bret3}, \ref{bret9}, \ref{bret2.2} and RET rule we get}
+\TValGpcc{\ret{e_1}{c'}}{\says{c^a}{\tau}{\jmath{(\tau)}}} \label{bret10} \\
+\intertext{Similarly, from \ref{bret4}, \ref{bret9}, \ref{bret2.2} and RET rule we get,}
+\ret{e_2}{c'}{\says{c^a}{\tau}{\jmath{(\tau)}}} \label{bret11} \\
+\intertext{from \ref{bret8} we can say the following(\PM{or argue that 
+any ret expression is not a value}),}
+\ret{e_1}{c'} = v_1  \iff \ret{e_2}{c'} \ne v_2 \label{bret12}  \\
+\intertext{from \ref{bret10},\ref{bret11},
+\ref{bret12},\ref{bret2.3},\ref{bret5},\ref{bret7} and BRACKET rule we get,}
+\TValGpcw{\bracket{\ret{e_1}{c'}}{\ret{e_2}{c'}}}{\says{c^a}{\tau}{\jmath{(\tau)}}}
+\end{align}
+%\textbf{Case B-RETV.}
+
+
+
+
+
+
+\textbf{Example where propagation fails in RUN/RET.}\\
+$\config*{\run{\tau}{(\assume{e_1}{e_2})}{c'}} \stepsone 
+\configh*{\ret{(\assume{e_1}{e_2})}{c}} \stepsone^{*}
+\configh*{\ret{(\assume{v}{e_2})}{c}} \stepsone
+\configh*{\ret{(\where{e_2}{v})}{c}} \stepsone^{*}
+\configh*{\ret{(\where{w}{v})}{c}}
+$ \newline
+Now we can step to \\
+$\configh*{\where{(\ret{w}{c})}{v}}$ OR \\
+$\config*{\where{w}{v}}$.\\ \\
+First one propagates $\where{}{}$ term
+and gets stuck as we dont have an evaluation rule for that
+and the second one uses [E-RETV] rule 
+and does not propagate the $\where{}{}$ term.
+
+\section{Examples.}
+In example 1, c runs the code that has authority as same as $a \vee b$
+but needs a value that has integrity and confidentiality of $a \wedge b$.
+
+\begin{figure*}
+\begin{flushleft}
+  \rulefiguresize
+\begin{mathpar}
+\func{\tau}{a \vee b}{\says{(a \wedge b)}{\tau}} \\
+\lamc{x}{\tau}{a \vee b}\\
+{\compEnd{\says{(a \wedge b)}{\tau}}{(\run{\says{a}{\tau}}{(\bind{y}{x}
+{\returnv{a}{x}})}{a})}{(\run{\says{b}{\tau}}{(\bind{y}{x}
+{\returnv{b}{x}})}{b})}}
+\hfill
+\end{mathpar}
+\end{flushleft}
+\caption{example 1}
+\label{fig:example 1}
+\end{figure*}

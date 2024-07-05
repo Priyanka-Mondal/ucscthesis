@@ -2,6 +2,23 @@
 %% See accompanying LICENSE file for licensing, history, and copyright
 %% information.
 
+@inproceedings{kiselyov-more-ext-effs, 
+author = {Kiselyov, Oleg and Ishii, Hiromi}, 
+title = {Freer Monads, More Extensible Effects}, 
+year = {2015}, 
+isbn = {9781450338080}, 
+publisher = {Association for Computing Machinery}, 
+address = {New York, NY, USA}, 
+url = {https://doi.org/10.1145/2804302.2804319}, 
+doi = {10.1145/2804302.2804319}, 
+booktitle = {Proceedings of the 2015 ACM SIGPLAN Symposium on Haskell}, 
+pages = {94–105}, 
+numpages = {12}, 
+keywords = {free monad, open union, type and effect system, Kan extension, effect handler, effect interaction, coroutine}, location = {Vancouver, BC, Canada}, 
+series = {Haskell '15} 
+}
+
+
 @BOOK{knuth:tex,
 	AUTHOR = "Donald E. Knuth",
 	TITLE = "The {\TeX} Book",
@@ -151,12 +168,28 @@
 }
 
 @misc{jflac,
-      title={A Calculus for Flow-Limited Authorization: Technical Report}, 
       author={Owen Arden and Anitha Gollamudi and Ethan Cecchetti and Stephen Chong and Andrew C. Myers},
+      title={A Calculus for Flow-Limited Authorization: Technical Report}, 
       year={2021},
       eprint={2104.10379},
       archivePrefix={arXiv},
       primaryClass={cs.CR}
+}
+
+@inproceedings{nmifc,
+  author = {Cecchetti, Ethan and Myers, Andrew C. and Arden, Owen},
+  title = {Nonmalleable Information Flow Control},
+  booktitle = {24\textsuperscript{th} ACM Conf.~on Computer and Communications Security (CCS)},
+  year = {2017},
+  month = oct,
+  pages = {1875--1891},
+  location = {Dallas, TX},
+  series = {CCS'17},
+  doi = {10.1145/3133956.3134054},
+  file = {nmifc_ccs17.pdf},
+  blurb = {A new 4-safety hyperproperty for secure declassification and endorsement and a 
+               type system for enforcing it.},
+  awards = {Best paper ﬁnalist (11 ﬁnalists out of 151 accepted papers).}
 }
 
 @TechReport{paxos-techreport,
@@ -292,7 +325,7 @@
     url = "http://www.cs.cornell.edu/andru/papers/flam"
 }
 
-@article{jfabric,
+@inproceedings{jfabric,
     title = "{Fabric}: {B}uilding Open Distributed Systems Securely by Construction",
     author = "Jed Liu and Owen Arden and Michael D. George and Andrew C. Myers",
     journal = "J. Computer Security",
@@ -512,22 +545,6 @@ numpages = {12},
 }
 
 
-@article{BFF21,
-  title={SSE and SSD: Page-efficient
-searchable symmetric encryption},
-  author={Bossuat, A. and Bost, R. and Fouque, P.A. and 
-  Minaud, B. and Reichle, M.},
-  booktitle={CRYPTO 2021},
-  pages={102-195},
-  year={2021},
-  volume ={-},
-  organization={ Advances in Cryptology –
-CRYPTO 2021, Part III, Lecture Notes in Computer Science, vol. 12827, pp. 157–184. Springer,}
-}
-
-
-
-
 
 @article{SWiSSSE,
   title={SWiSSSE: System-Wide Security for Searchable
@@ -571,15 +588,6 @@ The Power of File-Injection Attacks on Searchable Encryption},
     pages ={}
 }
 
-@InProceedings{Seal,
-    author  = {Ioannis Demertzis and Dimitrios Papadopoulos and Charalampos Papamanthou and Saurabh Shintre},
-    title   = {SEAL: Attack Mitigation for Encrypted Databases via Adjustable Leakage},
-    booktitle={-},
-    year    = {2020},
-    journal = {Usenix 2020},
-    volume ={-},
-    pages ={2433-2450}
-}
 
 @InProceedings{compress,
     author  = {Ioannis Demertzis and Rajdeep Talapatra and Charalampos Papamanthou},
@@ -667,15 +675,6 @@ searchable encryption from constrained cryptographic primitives},
     pages ={1143–1154}
 }
 
-@InProceedings{ShiNDSS14,
-    author  = {Emil Stefanov and Charalampos Papamanthou and Elaine Shi},
-    title   = {Practical Dynamic Searchable Encryption with Small Leakage},
-    booktitle={-},
-    year    = {2014},
-    journal = {NDSS},
-    volume ={2014},
-    pages = {23-26}
-}
 
 @InProceedings{ShiCCS13,
     author  = {E. Stefanov and M. Van Dijk and E. Shi and C. Fletcher and L. Ren and X. Yu and S. Devadas},
@@ -697,15 +696,7 @@ searchable encryption from constrained cryptographic primitives},
     pages ={-}
 }
 
-@InProceedings{Volat,
-    author  = {Laura Blackstone and Seny Kamara and Tarik Moataz},
-    title   = {Revisiting Leakage Abuse Attacks},
-    booktitle={-},
-    year    = {2020},
-    journal = {NDSS},
-    volume ={-},
-    pages ={-}
-}
+
 @InProceedings{locSSE,
     author  = {D. Cash and S. Tessaro.},
     title   = {The Locality of Searchable
@@ -1030,14 +1021,7 @@ via Two-Dimensional Balanced Allocations},
   year={2010},
   publisher={IEEE}
 }
-@inproceedings{dautrich2013compromising,
-  title={{Compromising Privacy in Precise Query Protocols}},
-  author={Dautrich Jr, Jonathan L and Ravishankar, Chinya V},
-  booktitle={Proceedings of the 16th International Conference on Extending Database Technology},
-  pages={155--166},
-  year={2013},
-  organization={ACM}
-}
+
 @incollection{pinkas2010oblivious,
   title={{Oblivious RAM Revisited}},
   author={Pinkas, Benny and Reinman, Tzachy},
@@ -1599,12 +1583,7 @@ title = {snap.stanford.edu/data/loc-gowalla.htm}
   journal={ePrint IACR},
   year={2015}
 }
-@inproceedings{wang2014oblivious,
-  title={Oblivious data structures},
-  author={Wang, Xiao Shaun and Nayak, Kartik and Liu, Chang and Chan, TH and Shi, Elaine and Stefanov, Emil and Huang, Yan},
-  booktitle={CCS},
-  year={2014},
-}
+
 @inproceedings{priebeenclavedb,
   title={EnclaveDB: A Secure Database using SGX},
   author={Priebe, Christian and Vaswani, Kapil and Costa, Manuel},
@@ -1648,18 +1627,7 @@ title = {snap.stanford.edu/data/loc-gowalla.htm}
   journal={PVLDB},
   year={2018}
 }
-@inproceedings{islam2012access,
-  title={Access Pattern disclosure on Searchable Encryption: Ramification, Attack and Mitigation.},
-  author={Islam, Mohammad Saiful and Kuzu, Mehmet and Kantarcioglu, Murat},
-  booktitle={NDSS},
-  year={2012}
-}
-@inproceedings{cash2015leakage,
-  title={Leakage-abuse attacks against searchable encryption},
-  author={Cash, David and Grubbs, Paul and Perry, Jason and Ristenpart, Thomas},
-  booktitle={CCS},
-  year={2015}
-}
+
 @inproceedings{grubbs2018pump,
   title={Pump up the Volume: Practical Database Reconstruction from Volume Leakage on Range series},
   author={Grubbs, Paul and Lacharité, Marie-Sarah and Minaud, Brice and Paterson, Kenny},
@@ -1853,13 +1821,7 @@ year      = {2018}
 
 
 
-@inproceedings{dsse3,
-	author    = {Seny Kamara and
-	Charalampos Papamanthou},
-	title     = {Parallel and Dynamic Searchable Symmetric Encryption},
-	booktitle = {{FC} 2013},
-	year      = {2013}
-}
+
 @inproceedings{hahn2014searchable,
 	title={Searchable encryption with secure and efficient updates},
 	author={Hahn, Florian and Kerschbaum, Florian},
@@ -1962,23 +1924,7 @@ year      = {2018}
 
 
 
-@inproceedings{zhang16all,
-  title={All Your Queries Are Belong to Us: The Power of File-Injection Attacks on Searchable Encryption},
-  author={Zhang, Yupeng and Katz, Jonathan and Papamanthou, Charalampos},
-  booktitle={USENIX Security 2016},
-  pages={707--720},
-  year={2016},
-}
 
-
-@incollection{cash2013highly,
-  title={Highly-scalable searchable symmetric encryption with support for boolean queries},
-  author={Cash, David and Jarecki, Stanislaw and Jutla, Charanjit and Krawczyk, Hugo and Ro{\c{s}}u, Marcel-C{\u{a}}t{\u{a}}lin and Steiner, Michael},
-  booktitle={CRYPTO 2013},
-  pages={353--373},
-  year={2013},
-  publisher={Springer, Berlin, Heidelberg}
-}
 
 
 @inproceedings{garg2016tworam,
@@ -1987,14 +1933,6 @@ year      = {2018}
   booktitle={CRYPTO 2016},
   pages={563--592},
   year={2016},
-}
-@inproceedings{kamara2017boolean,
-  title={Boolean Searchable Symmetric Encryption with Worst-Case Sub-Linear Complexity},
-  author={Kamara, Seny and Moataz, Tarik},
-  booktitle={Annual International Conference on the Theory and Applications of Cryptographic Techniques},
-  pages={94--124},
-  year={2017},
-  organization={Springer}
 }
 
 @article{chazelle1986fractional,
@@ -2014,29 +1952,6 @@ year      = {2018}
   pages={576--587},
   year={2011},
   organization={Springer}
-}
-@inproceedings{islam2012access,
-  title={Access Pattern disclosure on Searchable Encryption: Ramification, Attack and Mitigation.},
-  author={Islam, Mohammad Saiful and Kuzu, Mehmet and Kantarcioglu, Murat},
-  booktitle={Ndss},
-  volume={20},
-  pages={12},
-  year={2012}
-}
-@inproceedings{cash2015leakage,
-  title={Leakage-abuse attacks against searchable encryption},
-  author={Cash, David and Grubbs, Paul and Perry, Jason and Ristenpart, Thomas},
-  booktitle={Proceedings of the 22nd ACM SIGSAC Conference on Computer and Communications Security},
-  pages={668--679},
-  year={2015}
-}
-
-@inproceedings{stefanov2013path,
-  title={Path ORAM: an extremely simple oblivious RAM protocol},
-  author={Stefanov, Emil and Van Dijk, Marten and Shi, Elaine and Fletcher, Christopher and Ren, Ling and Yu, Xiangyao and Devadas, Srinivas},
-  booktitle={ACM CCS 2013},
-  pages={299--310},
-  year={2013},
 }
 
 @article{etemad2018,
@@ -2123,17 +2038,6 @@ year      = {2018}
   doi       = {10.1145/233551.233553},
   timestamp = {Wed, 15 Nov 2017 19:50:09 +0100},
   biburl    = {https://dblp.org/rec/bib/journals/jacm/GoldreichO96},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
-}
-@inproceedings{dsse1,
-  author    = {Yan Cheng Chang and
-               Michael Mitzenmacher},
-  title     = {Privacy Preserving Keyword Searches on Remote Encrypted Data},
-  booktitle = {{ACNS} 2005},
-  pages     = {442--455},
-  year      = {2005},
-  timestamp = {Tue, 30 May 2017 16:36:53 +0200},
-  biburl    = {https://dblp.org/rec/bib/conf/acns/ChangM05},
   bibsource = {dblp computer science bibliography, https://dblp.org}
 }
 
@@ -2250,17 +2154,6 @@ year      = {2018}
 	bibsource = {dblp computer science bibliography, https://dblp.org}
 }
 
-@inproceedings{Demertzis17,
-	author    = {Ioannis Demertzis and
-	Charalampos Papamanthou},
-	title     = {Fast Searchable Encryption With Tunable Locality},
-	booktitle = {{SIGMOD}  2017, Chicago},
-	pages     = {1053--1067},
-	year      = {2017},
-	timestamp = {Wed, 10 May 2017 22:12:12 +0200},
-	biburl    = {https://dblp.org/rec/bib/conf/sigmod/DemertzisP17},
-	bibsource = {dblp computer science bibliography, https://dblp.org}
-}
 
 @article{Naveed15,
 	author    = {Muhammad Naveed},
@@ -2473,3 +2366,1704 @@ year      = {2018}
       note = {\url{https://eprint.iacr.org/2015/668}},
       url = {https://eprint.iacr.org/2015/668}
 }
+
+
+%Priyanka -- My citations starts here
+
+
+@InProceedings{MM17,
+    author  = {CMiers, I. and Mohassel, P.},
+    title   = {IO-DSSE: scaling dynamic searchable encryption to millions of indexes by improving locality},
+    booktitle={NDSS, 2017},
+}
+
+
+@inproceedings{BFF21,
+  title={SSE and SSD: Page-efficient
+searchable symmetric encryption},
+  author={Bossuat, A. and Bost, R. and Fouque, P.A. and 
+  Minaud, B. and Reichle, M.},
+  booktitle={CRYPTO 2021},
+}
+
+
+
+@article{SWiSSSE,
+  title={SWiSSSE: System-Wide Security for Searchable
+Symmetric Encryption},
+  author={Zichen Gui and Kenneth G. Paterson and Sikhar Patranabis},
+  booktitle={eprint 2021},
+}
+
+@InProceedings{Mitra,
+    author  = {Charalampos Papamanthou and Javad Ghareh Chamani and Dimitrios Papadopoulos  and Rasool Jalili},
+    title   = {New Constructions for Forward and Backward Private Symmetric Searchable Encryption},
+    booktitle={CCS, 2018},
+}
+
+
+@inproceedings{cash2021improved,
+author={David Cash and Ruth Ng and Adam Rivkin},
+  title={Improved Structured Encryption for {SQL} Databases via Hybrid Indexing},
+  booktitle={International Conference on Applied Cryptography and Network Security 2021},
+}
+
+@InProceedings{yqbu,
+    author  = {Yupeng Zhang and Jonathan Katz and Charalampos Papamanthou},
+    title   = {All Your Queries Are Belong to Us:
+The Power of File-Injection Attacks on Searchable Encryption},
+    booktitle={Usenix 2016},
+}
+
+@InProceedings{Seal,
+    author  = {Ioannis Demertzis and Dimitrios Papadopoulos and Charalampos Papamanthou and Saurabh Shintre},
+    title   = {SEAL: Attack Mitigation for Encrypted Databases via Adjustable Leakage},
+    booktitle={Usenix, 2020},
+}
+
+
+@InProceedings{pancake,
+    author  = {Paul Grubbs et. al.},
+    title   = {Pancake: Frequency Smoothing for Encrypted Data Stores},
+    booktitle={2019},
+}
+
+@InProceedings{fixsize,
+    author  = {Min Xu et. al.},
+    title   = {Pancake: Frequency Smoothing for Encrypted Data Stores},
+    booktitle={-},
+    year    = {-},
+    journal = {-},
+    volume ={-},
+    pages ={}
+}
+
+
+
+
+
+@InProceedings{RBCC16,
+    author  = {Raphael Bost},
+    title   = {Forward secure searchable encryption},
+    booktitle={CCS, 2016},
+}
+
+@InProceedings{ShiNDSS14,
+    author  = {Emil Stefanov and Charalampos Papamanthou and Elaine Shi},
+    title   = {Practical Dynamic Searchable Encryption with Small Leakage},
+    booktitle={NDSS, 2014},
+}
+
+@InProceedings{ShiCCS13,
+    author  = {E. Stefanov and M. Van Dijk and E. Shi and C. Fletcher and L. Ren and X. Yu and S. Devadas},
+    title   = {Path Oram: An Extremely Simple Oblivious Ram Protocol},
+    booktitle={CCS, 2013},
+}
+
+@InProceedings{ODel,
+    author  = {D. S. Roche and A. J. Aviv and S. G. Choi},
+    title   = {A practical oblivious map data structure with secure deletion and history independence},
+    booktitle={IEEE SP 2016},
+}
+
+@InProceedings{Volat,
+    author  = {Laura Blackstone and Seny Kamara and Tarik Moataz},
+    title   = {Revisiting Leakage Abuse Attacks},
+    booktitle={NDSS, 2022},
+}
+
+@InProceedings{locSSE,
+    author  = {D. Cash and S. Tessaro.},
+    title   = {The Locality of Searchable
+Symmetric Encryption},
+    booktitle={Eurocrypt, 2014},
+}
+@InProceedings{locSSE,
+    author  = {D. Cash and J. Jaeger and S. Jarecki and C. Jutla and H. Krawczyk and
+M. Rosu and M. Steiner.},
+    title   = {Dynamic Searchable
+Encryption in Very-Large Databases: Data Structures
+and Implementation},
+    booktitle={NDSS, 2014},
+}
+
+
+@InProceedings{improved2choice,
+    author  = {Gilad Asharov and Gil Segevz and Ido Shahafz},
+    title   = {Tight Tradeoffs in Searchable Symmetric Encryption},
+    booktitle={Crypto, 2018},
+}
+
+@InProceedings{ct14,
+    author  = {D. Cash and S. Tessaro},
+    title   = {The locality of searchable symmetric encryption},
+    booktitle={Eurocrypt, 2014},
+}
+
+
+@book{FOC,
+ author = {Goldreich, Oded},
+ title = {{Foundations of Cryptography: Volume 1}},
+ booktitle = {Cambridge University Press, 2006}
+} 
+@book{katz2014introduction,
+  title={Introduction to modern cryptography},
+  author={Katz, Jonathan and Lindell, Yehuda},
+  year={2014},
+  publisher={CRC press}
+}
+
+@article{bloom,
+ author = {Burton H. Bloom},
+ title = {{Space/Time Trade-offs in Hash Coding with Allowable Errors}},
+ booktitle = {Commun. of the ACM, 1970},
+} 
+
+@article{vertica,
+ author = {Lamb, Andrew and Fuller, Matt and Varadarajan, Ramakrishna and Tran, Nga and Vandiver, Ben and Doshi, Lyric and Bear, Chuck},
+ title = {{The Vertica Analytic Database: C-store 7 Years Later}},
+ booktitle = {PVLDB,2012},
+} 
+
+@inproceedings{wang2015circuit,
+  title={Circuit oram: On tightness of the goldreich-ostrovsky lower bound},
+  author={Wang, Xiao and Chan, Hubert and Shi, Elaine},
+  booktitle={CCS,2015},
+  
+}
+@inproceedings{DBLP:conf/vldb/GilbertKMS02,
+  author    = {Anna C. Gilbert and
+               Yannis Kotidis and
+               S. Muthukrishnan and
+               Martin Strauss},
+  title     = {{How to Summarize the Universe: Dynamic Maintenance of Quantiles}},
+  booktitle = {VLDB, 2002},
+}
+
+@article{rogaway2007siv,
+  title={{The SIV Mode of Operation for Deterministic Authenticated-Encryption (key wrap) and Misuse-Resistant Nonce-Based Authenticated-Encryption}},
+  author={Rogaway, Phillip and Shrimpton, Thomas},
+  journal={Unpublished, 2007},
+}
+@inproceedings{agrawal2004order,
+  title={{Order Preserving Encryption for Numeric Data}},
+  author={Agrawal, Rakesh and Kiernan, Jerry and Srikant, Ramakrishnan and Xu, Yirong},
+  booktitle={Sigmod, 2004},
+}
+@inproceedings{ozsoyoglu2003anti,
+  author = {Gultekin {\"O}zsoyoglu and David A. Singer and  Sun S. Chung},
+  title     = {{Anti-Tamper Databases: Querying Encrypted Databases}},
+  booktitle = {DBSec, 2003},
+ }
+ 
+@inproceedings{boldyreva2009order,
+  title={{Order-Preserving Symmetric Encryption}},
+  author={Boldyreva, Alexandra and Chenette, Nathan and Lee, Younho and O Neill, Adam},
+  booktitle={Eurocrypt, 2009},
+}
+
+@inproceedings{boldyreva2011order,
+  title={{Order-Preserving Encryption Revisited: Improved Security Analysis and Alternative Solutions}},
+  author={Boldyreva, Alexandra and Chenette, Nathan and O'Neill, Adam},
+  booktitle={CRYPTO, 2011},
+}
+@inproceedings{agrawal2009database,
+  title={{Database Management as a Service: Challenges and Opportunities}},
+  author={Agrawal, Divyakant and El Abbadi, Amr and Emekci, Fatih and Metwally, Ahmed},
+  booktitle={ICDE, 2009}
+}
+@article{seungmin2009chaotic,
+  title={{Chaotic Order Preserving Encryption for Efficient and Secure Queries on Databases}},
+  author={Seungmin, LEE and Donghyeok, LEE and Taekyong, NAM and Sehun, KIM},
+  booktitle={IEICE transactions on information and systems,2009},
+}
+@article{kadhem2010mv,
+  title={{MV-OPES: Multivalued-Order Preserving Encryption Scheme: A Novel Scheme for Encrypting Integer Value to Many Different Values}},
+  author={Kadhem, Hasan and Amagasa, Toshiyuki and Kitagawa, Hiroyuki},
+  journal={IEICE TRANSACTIONS on Information and Systems,2010},
+}
+
+@inproceedings{kadhem2010secure,
+  title={{A Secure and Efficient Order Preserving Encryption Scheme for Relational Databases.}},
+  author={Kadhem, Hasan and Amagasa, Toshiyuki and Kitagawa, Hiroyuki},
+  booktitle={KMIS, 2010},
+}
+
+@misc{ang2012system,
+  title={{System and Method of Sort-Order Preserving Tokenization}},
+  author={Ang, George Weilun and Woelfel, John Harold and Woloszyn, Terrence Peter},
+  year={US Patent 20,120,278,897, 2012},
+}
+
+@article{liu2013nonlinear,
+  title={{Nonlinear Order Preserving Index for Encrypted Database Query in Service Cloud Environments}},
+  author={Liu, Dongxi and Wang, Shenlu},
+  booktitle={Concurrency and Computation,2013},
+}
+@article{popa2013ideal,
+  title={{An Ideal-Security Protocol for Order-Preserving Encoding.}},
+  author={Popa, Raluca A and Li, Frank H and Zeldovich, Nickolai},
+  journal={SP},
+  year={2013}
+}
+@article{paillier2002composite,
+  title={Composite-Residuosity based cryptography-an overview},
+  author={Paillier, Pascal},
+  journal={Cryptobytes, 2022},
+}
+
+@inproceedings{ge2007answering,
+  title={{Answering Aggregation Queries in a Secure System Mode}l},
+  author={Ge, Tingjian and Zdonik, Stan},
+  booktitle={VLDB, 2007},
+}
+
+@article{tu2013processing,
+  title={Processing analytical queries over encrypted data},
+  author={Tu, Stephen and Kaashoek, M Frans and Madden, Samuel and Zeldovich, Nickolai},
+  journal={PVLDB, 2013},
+}
+
+@article{menezes1997handbook,
+  title={Handbook of Applied Cryptography},
+  author={Menezes, Alfred J and Van Oorschot, Paul C and Vanstone, Scott A},
+  journal={Discrete Mathematics and its Applications. Boca Raton, Fl: CRC Press},
+  volume={6},
+  year={1997}
+}
+@phdthesis{gentry2009fully,
+  title={{A Fully Homomorphic Encryption Scheme}},
+  author={Gentry, Craig},
+  year={2009},
+  school={Stanford University}
+}
+@article{gentry2010computing,
+  title={{Computing Arbitrary Functions of Encrypted Data}},
+  author={Gentry, Craig},
+  journal={Commun. of the ACM},
+  year={2010}
+}
+@inproceedings{arasu2013querying,
+  title={Querying encrypted data},
+  author={Arasu, Arvind and Eguro, Ken and Kaushik, Raghav and Ramamurthy, Ravi},
+  booktitle={Data Engineering (ICDE), 2013 IEEE 29th International Conference on},
+  pages={1262--1263},
+  year={2013},
+  organization={IEEE}
+}
+@inproceedings{xiao2012security,
+  title={Security analysis for order preserving encryption schemes},
+  author={Xiao, Liangliang and Yen, I-Ling},
+  booktitle={Information Sciences and Systems (CISS), 2012 46th Annual Conference on},
+  pages={1--6},
+  year={2012},
+  organization={IEEE}
+}
+@phdthesis{rusu2009sketches,
+  title={Sketches for aggregate estimations over data streams},
+  author={Rusu, Florin I},
+  year={2009},
+  school={University of Florida}
+}
+@article{halevi2003tweakable,
+  title={A Tweakable Enciphering Mode},
+  author={Halevi, Shai and Rogaway, Phillip},
+  year={2003}
+}
+@incollection{halevi2004parallelizable,
+  title={A parallelizable enciphering mode},
+  author={Halevi, Shai and Rogaway, Phillip},
+  booktitle={Topics in Cryptology--CT-RSA 2004},
+  pages={292--304},
+  year={2004},
+  publisher={Springer}
+}
+@article{martin2010xts,
+  title={XTS: A mode of AES for encrypting hard disks},
+  author={Martin, Luther},
+  journal={Security \& Privacy, IEEE},
+  volume={8},
+  number={3},
+  pages={68--69},
+  year={2010},
+  publisher={IEEE}
+}
+@inproceedings{dautrich2013compromising,
+  title={{Compromising Privacy in Precise Query Protocols}},
+  author={Dautrich Jr, Jonathan L and Ravishankar, Chinya V},
+  booktitle={Proceedings of the 16th International Conference on Extending Database Technology},
+  pages={155--166},
+  year={2013},
+  organization={ACM}
+}
+@incollection{pinkas2010oblivious,
+  title={{Oblivious RAM Revisited}},
+  author={Pinkas, Benny and Reinman, Tzachy},
+  booktitle={CRYPTO},
+  year={2010}
+}
+@inproceedings{hore2004privacy,
+  title={{A Privacy-Preserving Index for Range Queries}},
+  author={Hore, Bijit and Mehrotra, Sharad and Tsudik, Gene},
+  booktitle={VLDB},
+  year={2004}
+}
+@incollection{wang2011comprehensive,
+  title={{A Comprehensive Framework for Secure Query Processing on Relational Data in the Cloud}},
+  author={Wang, Shiyuan and Agrawal, Divyakant and El Abbadi, Amr},
+  booktitle={Secure Data Management},
+  pages={52--69},
+  year={2011},
+  publisher={Springer}
+}
+@incollection{agrawal2011secure,
+  title={Secure Data Management service on cloud computing infrastructures},
+  author={Agrawal, Divyakant and El Abbadi, Amr and Emekci, Fatih and Metwally, Ahmed and Wang, Shiyuan},
+  booktitle={New Frontiers in Information and Software as Services},
+  pages={57--80},
+  year={2011},
+  publisher={Springer}
+}
+@inproceedings{hacigumucs2002executing,
+  title={{Executing SQL over Encrypted Data in the Database-Service-Provider Model}},
+  author={Hacig{\"u}m{\"u}{\c{s}}, Hakan and Iyer, Bala and Li, Chen and Mehrotra, Sharad},
+  booktitle={SIGMOD},
+  year={2002}
+}
+@inproceedings{emekci2006privacy,
+  title={Privacy preserving query processing using third parties},
+  author={Emekci, Fatih and Agrawal, Divyakant and Abbadi, Amr El and Gulbeden, Aziz},
+  booktitle={Data Engineering, 2006. ICDE'06. Proceedings of the 22nd International Conference   on},
+  pages={27--27},
+  year={2006},
+  organization={IEEE}
+}
+@inproceedings{bajaj2011trusteddb,
+  title={TrustedDB: a trusted hardware based database with privacy and data confidentiality},
+  author={Bajaj, Sumeet and Sion, Radu},
+  booktitle={Proceedings of the 2011 ACM SIGMOD International Conference on Management of data},
+  pages={205--216},
+  year={2011},
+  organization={ACM}
+}
+@inproceedings{arasu2013orthogonal,
+  title={Orthogonal Security with Cipherbase.},
+  author={Arasu, Arvind and Blanas, Spyros and Eguro, Ken and Kaushik, Raghav and Kossmann, Donald and Ramamurthy, Ravishankar and Venkatesan, Ramarathnam},
+  booktitle={CIDR},
+  year={2013}
+}
+@inproceedings{popa2011cryptdb,
+  title={{CryptDB: Protecting Confidentiality with Encrypted Query Processing}},
+  author={Popa, Raluca Ada and Redfield, Catherine and Zeldovich, Nickolai and Balakrishnan, Hari},
+  booktitle={SOSP},
+  year={2011}
+}
+@article{goldreich1998foundation,
+  title={Foundation of Cryptography Fragments of a Book. February 1995},
+  author={Goldreich, Oded},
+  year={1998}
+}
+@inproceedings{icde2013tutorial,
+  title={Secure and privacy preserving database services in the cloud},
+  author={Agrawal, Divyakant and Abbadi, AE and Wang, Shiyuan},
+  booktitle={Data Engineering (ICDE), 2013 IEEE 29th International Conference     	on},
+  pages={1268--1271},
+  year={2013},
+  organization={IEEE}
+}
+@article{xiao2012extending,
+  title={Extending Order Preserving Encryption for Multi-User Systems.},
+  author={Xiao, Liangliang and Yen, I-Ling and Huynh, Dung T},
+  booktitle={IACR ePrint, 2012},
+}
+@article{xiao2012note,
+  title={A Note for the Ideal Order-Preserving Encryption Object and Generalized Order-Preserving Encryption.},
+  author={Xiao, Liangliang and Yen, I-Ling and Huynh, DT},
+  journal={IACR Cryptology ePrint Archive},
+  volume={2012},
+  pages={350},
+  year={2012}
+}
+@incollection{yum2012order,
+  title={Order-Preserving encryption for non-uniformly distributed plaintexts},
+  author={Yum, Dae Hyun and Kim, Duk Soo and Kim, Jin Seok and Lee, Pil Joong and Hong, Sung Je},
+  booktitle={Information Security Applications},
+  pages={84--97},
+  year={2012},
+  publisher={Springer}
+}
+@inproceedings{liu2012programmable,
+  title={Programmable order-preserving secure index for encrypted database query},
+  author={Liu, Dongxi and Wang, Shenlu},
+  booktitle={Cloud Computing (CLOUD), 2012 IEEE 5th International Conference on},
+  pages={502--509},
+  year={2012},
+  organization={IEEE}
+}
+@inproceedings{wang2013secure,
+  title={Secure and efficient range queries on outsourced databases using Rp-trees},
+  author={Wang, Peng and Ravishankar, Chinya V},
+  booktitle={Data Engineering (ICDE), 2013 IEEE 29th International Conference on},
+  pages={314--325},
+  year={2013},
+  organization={IEEE}
+}
+@inproceedings{wong2009secure,
+  title={Secure kNN computation on encrypted databases},
+  author={Wong, Wai Kit and Cheung, David Wai-lok and Kao, Ben and Mamoulis, Nikos},
+  booktitle={Proceedings of the 2009 ACM SIGMOD International Conference on Management of data},
+  pages={139--152},
+  year={2009},
+  organization={ACM}
+}
+@incollection{boneh2007conjunctive,
+  title={{Conjunctive, Subset, and Range Queries on Encrypted Data}},
+  author={Boneh, Dan and Waters, Brent},
+  booktitle={Theory of cryptography},
+  pages={535--554},
+  year={2007},
+  publisher={Springer}
+}
+@inproceedings{shi2007multi,
+  title={{Multi-Dimensional Range Query over Encrypted Data}},
+  author={Shi, Elaine and Bethencourt, John and Chan, T-HH and Song, Dawn and Perrig, Adrian},
+  booktitle={Security and Privacy, 2007. SP'07. IEEE Symposium on},
+  pages={350--364},
+  year={2007},
+  organization={IEEE}
+}
+@inproceedings{lu2012privacy,
+  title={Privacy-preserving logarithmic-time search on encrypted data in cloud},
+  author={Lu, Yanbin},
+  booktitle={Proc. of NDSS},
+  year={2012}
+}
+@article{chor1998private,
+  title={Private information retrieval},
+  author={Chor, Benny and Kushilevitz, Eyal and Goldreich, Oded and Sudan, Madhu},
+  journal={Journal of the ACM (JACM)},
+  volume={45},
+  number={6},
+  pages={965--981},
+  year={1998},
+  publisher={ACM}
+}
+@inproceedings{ostrovsky1990efficient,
+  title={{Efficient Computation on Oblivious RAMs}},
+  author={Ostrovsky, Rafail},
+  booktitle={STOC},
+  year={1990}
+}
+@inproceedings{kushilevitz1997replication,
+  title={Replication is not needed: Single database, computationally-private information retrieval},
+  author={Kushilevitz, Eyal and Ostrovsky, Rafail},
+  booktitle={Foundations of Computer Science, 1997. Proceedings., 38th Annual Symposium on},
+  pages={364--373},
+  year={1997},
+  organization={IEEE}
+}
+@incollection{olumofin2012revisiting,
+  title={Revisiting the computational practicality of private information retrieval},
+  author={Olumofin, Femi and Goldberg, Ian},
+  booktitle={Financial Cryptography and Data Security},
+  pages={158--172},
+  year={2012},
+  publisher={Springer}
+}
+@inproceedings{sion2007computational,
+  title={On the computational practicality of private information retrieval},
+  author={Sion, Radu and Carbunar, Bogdan},
+  booktitle={Proceedings of the Network and Distributed Systems Security Symposium},
+  pages={2006--06},
+  year={2007}
+}
+@inproceedings{williams2008usable,
+  title={Usable private information retrieval},
+  author={Williams, Peter and Sion, Radu},
+  booktitle={Network and Distributed System Security Symposium},
+  year={2008}
+}
+@inproceedings{de2011efficient,
+  title={Efficient and private access to outsourced data},
+  author={De Capitani di Vimercati, Sabrina and Foresti, Sara and Paraboschi, Stefano and Pelosi, Gerardo and Samarati, Pierangela},
+  booktitle={Distributed Computing Systems (ICDCS), 2011 31st International Conference on},
+  pages={710--719},
+  year={2011},
+  organization={IEEE}
+}
+@incollection{wang2010generalizing,
+  title={Generalizing pir for practical private retrieval of public data},
+  author={Wang, Shiyuan and Agrawal, Divyakant and El Abbadi, Amr},
+  booktitle={Data and Applications Security and Privacy XXIV},
+  pages={1--16},
+  year={2010},
+  publisher={Springer}
+}
+
+@incollection{van2010computationally,
+  title={{Computationally Efficient Searchable Symmetric Encryption}},
+  author={Van Liesdonk, Peter and Sedghi, Saeed and Doumen, Jeroen and Hartel, Pieter and Jonker, Willem},
+  booktitle={SDM},
+  year={2010}
+}
+
+
+
+@inproceedings{kamara2012dynamic,
+  title={{Dynamic Searchable Symmetric Encryption}},
+  author={Kamara, Seny and Papamanthou, Charalampos and Roeder, Tom},
+  booktitle={CCS, 2012},
+}
+@inproceedings{chang2005privacy,
+  title={{Privacy Preserving Keyword Searches on Remote Encrypted Data}},
+  author={Chang, Yan-Cheng and Mitzenmacher, Michael},
+  booktitle={ACNS},
+  year={2005}
+}
+
+
+@article{curtmola2011searchable,
+  title={{Searchable Symmetric Encryption: Improved Definitions and Efficient Constructions}},
+  author={Curtmola, Reza and Garay, Juan and Kamara, Seny and Ostrovsky, Rafail},
+  journal={Journal of Computer Security, 2011}
+ }
+@inproceedings{kiayias2013delegatable,
+  title={{Delegatable Pseudorandom Functions and Applications}},
+  author={Kiayias, Aggelos and Papadopoulos, Stavros and Triandopoulos, Nikos and Zacharias, Thomas},
+  booktitle={CCS},
+  year={2013}
+}
+@article{goldreich1986construct,
+  title={{How to Construct Random Functions}},
+  author={Goldreich, Oded and Goldwasser, Shafi and Micali, Silvio},
+  journal={J. ACM},
+  volume={33},
+  number={4},
+  pages={792--807},
+  year={1986},
+  publisher={ACM}
+}
+@article{li2014fast,
+  title={{Fast Range Query Processing with Strong Privacy Protection for Cloud Computing}},
+  author={Li, Rui and Liu, Alex X and Wang, Ann L and Bruhadeshwar, Bezawada},
+  journal={PVLDB},
+  year={2014}
+}
+
+
+@article{goh2003secure,
+  title={{Secure Indexes.}},
+  author={Goh, Eu-Jin and others},
+  journal={IACR Cryptology ePrint Archive},
+  year={2003}
+}
+@inproceedings{kerschbaum2014optimal,
+  title={{Optimal Average-Complexity Ideal-Security Order-Preserving Encryption}},
+  author={Kerschbaum, Florian and Schroepfer, Axel},
+  booktitle={CCS},
+  year={2014}
+}
+@inproceedings{cho2011friendship,
+  title={{Friendship and Mobility: User Movement in Location-Based Social Networks}},
+  author={Cho, Eunjoon and Myers, Seth A and Leskovec, Jure},
+  booktitle={Proceedings of the 17th ACM SIGKDD international conference on Knowledge discovery and data mining},
+  pages={1082--1090},
+  year={2011},
+  organization={ACM}
+}
+@article{bentley1979decomposable,
+  title={{Decomposable Searching Problems.}},
+  author={Bentley, Jon Louis and Saxe, James B},
+  year={1979}
+}
+
+@article{hore2012secure,
+  title={{Secure Multidimensional Range Queries over Outsourced Data}},
+  author={Hore, Bijit and Mehrotra, Sharad and Canim, Mustafa and Kantarcioglu, Murat},
+  journal={VLDB J.},
+  volume={21},
+  number={3},
+  pages={333--358},
+  year={2012}
+}
+@article{goldreich1996software,
+  title={{Software Protection and Simulation on Oblivious RAMs}},
+  author={Goldreich, Oded and Ostrovsky, Rafail},
+  journal={J. ACM, 1996}
+}
+@inproceedings{stefanov2013oblivistore,
+  title={{Oblivistore: High Performance Oblivious Cloud Storage}},
+  author={Stefanov, Emil and Shi, Elaine},
+  booktitle={SP},
+  year={2013}
+}
+@article{stefanov2011towards,
+  title={{Towards Practical Oblivious RAM}},
+  author={Stefanov, Emil and Shi, Elaine and Song, Dawn},
+  journal={NDSS},
+  year={2012}
+}
+
+@inproceedings{mavroforakis2015modular,
+  title={{Modular Order-Preserving Encryption, Revisited}},
+  author={Mavroforakis, Charalampos and Chenette, Nathan and O'Neill, Adam and Kollios, George and Canetti, Ran},
+  booktitle={SIGMOD},
+  year={2015}
+}
+
+
+@article{bouncycastle,
+  title={Bouncy Castle. http://www.bouncycastle.org.}
+}
+
+@inproceedings{li2015impact,
+  title={Impact of Data Locality on Garbage Collection in SSDs: A General Analytical Study},
+  author={Li, Yongkun and Lee, Patrick PC and Lui, John and Xu, Yinlong},
+  booktitle={ACM/SPEC 2015}
+}
+@inproceedings{agrawal2008design,
+  title={Design Tradeoffs for SSD Performance.},
+  author={Agrawal, Nitin and Prabhakaran, Vijayan and Wobber, Ted and Davis, John D and Manasse, Mark S and Panigrahy, Rina},
+  booktitle={USENIX Annual Technical Conference 2008}
+}
+@inproceedings{zhangall,
+  title={{All Your Queries Are Belong to Us: The Power of File-Injection Attacks on Searchable Encryption}},
+  author={Zhang, Yupeng and Katz, Jonathan and Papamanthou, Charalampos},
+  booktitle={USENIX  2016}
+}
+@misc{ahapache,
+  title={{Apache HBase Reference Guide}},
+  author={AH Team and Others}
+}
+@inproceedings{naveed2015inference,
+  title={{Inference Attacks on Property-Preserving Encrypted Databases}},
+  author={Naveed, Muhammad and Kamara, Seny and Wright, Charles V},
+  booktitle={CCS},
+  year={2015}
+  }
+@inproceedings{miers2016io,
+  title={{IO-DSSE: Scaling Dynamic Searchable Encryption to Millions of Indexes By Improving Locality}},
+  author={Miers, Ian and Mohassel, Payman},
+  booktitle={NDSS, 2017},
+}
+
+@article{wang_lin_papakonstantinou_swanson_2017, title={An Experimental Study of Bitmap Compression vs. Inverted List Compression}, DOI={10.1145/3035918.3064007}, journal={Proceedings of the 2017 ACM International Conference on Management of Data - SIGMOD '17}, author={Wang, Jianguo and Lin, Chunbin and Papakonstantinou, Yannis and Swanson, Steven}, year={2017}}
+
+@article{zukowski_heman_nes_boncz_2006, title={Super-Scalar RAM-CPU Cache Compression}, DOI={10.1109/icde.2006.150}, journal={22nd International Conference on Data Engineering (ICDE'06)}, author={Zukowski, M. and Heman, S. and Nes, N. and Boncz, P.}, year={2006}}
+
+@article{cutting_pedersen_1990, title={Optimization for dynamic inverted index maintenance}, DOI={10.1145/96749.98245}, journal={Proceedings of the 13th annual international ACM SIGIR conference on Research and development in information retrieval - SIGIR '90}, author={Cutting, D. and Pedersen, J.}, year={1990}}
+
+@article{anh_moffat_2010, title={Index compression using 64-bit words}, DOI={10.1002/spe.948}, journal={Software: Practice and Experience}, author={Anh, Vo Ngoc and Moffat, Alistair}, year={2010}}
+
+@article{lemire_boytsov_2013, title={Decoding billions of integers per second through vectorization}, volume={45}, DOI={10.1002/spe.2203}, number={1}, journal={Software: Practice and Experience}, author={Lemire, D. and Boytsov, L.}, year={2013}, pages={1–29}}
+
+@techreport{wu2001notes,
+	title={Notes on design and implementation of compressed bit vectors},
+	author={Wu, Kesheng and Otoo, Ekow J and Shoshani, Arie and Nordberg, Henrik},
+	year={2001},
+	institution={Technical Report LBNL/PUB-3161, Lawrence Berkeley National Laboratory, Berkeley, CA}
+}
+
+@article{lemire2010sorting,
+	title={Sorting improves word-aligned bitmap indexes},
+	author={Lemire, Daniel and Kaser, Owen and Aouiche, Kamel},
+	journal={Data \& Knowledge Engineering},
+	volume={69},
+	number={1},
+	pages={3--28},
+	year={2010},
+	publisher={Elsevier}
+}
+
+@article{chambi2015better,
+	title={Better bitmap performance with Roaring bitmaps},
+	author={Chambi, Samy and Lemire, Daniel and Kaser, Owen and Godin, Robert},
+	journal={Software: practice and experience},
+	year={2015},
+	publisher={Wiley Online Library}
+}
+
+@article{enron,
+	title = {Enron email dataset. https://www.cs.cmu.edu/enron/}}
+%}
+
+@inproceedings{wang2017experimental,
+	title={An Experimental Study of Bitmap Compression vs. Inverted List Compression},
+	author={Wang, Jianguo and Lin, Chunbin and Papakonstantinou, Yannis and Swanson, Steven},
+	booktitle={SIGMOD},
+	year={2017}
+}
+
+@article{porter_1980, title={An algorithm for suffix stripping}, volume={14}, DOI={10.1108/eb046814}, number={3}, journal={Program}, author={Porter, M.f.}, year={1980}, pages={130–137}}
+
+@misc{javaewah, title={javaewah}, url={https://github.com/lemire/javaewah}, journal={GitHub}, author={Lemire}, year={2016}, month={Dec}}
+
+@misc{fastpforjava, title={JavaFastPFOR}, url={https://github.com/lemire/JavaFastPFOR}, journal={GitHub}, author={Lemire}, year={2017}, month={Apr}}
+
+@misc{roaringjava, title={RoaringBitmap}, url={https://github.com/RoaringBitmap/RoaringBitmap}, journal={GitHub}, author={Lemire}, year={2017}, month={May}
+}
+@article{kelly2014,
+	title={Secure Compression: Theory and Practice},
+	author={Kelley, James  and Tamassia, Roberto},
+	journal={IACR Cryptology ePrint Archive},
+	volume={2014},
+	eprint={2014/113},
+	year={2014}
+}
+@inproceedings{kamara2017boolean,
+  title={Boolean Searchable Symmetric Encryption with Worst-Case Sub-Linear Complexity},
+  author={Kamara, Seny and Moataz, Tarik},
+  booktitle={EUROCRYPT, 2017},
+}
+@inproceedings{macnicol2004sybase,
+  title={Sybase IQ multiplex-designed for analytics},
+  author={MacNicol, Roger and French, Blaine},
+  booktitle={VLDB},
+  year={2004}
+}
+@inproceedings{stockinger2002bitmap,
+  title={Bitmap indices for speeding up high-dimensional data analysis},
+  author={Stockinger, Kurt},
+  booktitle={DEXA},
+  year={2002}
+}
+@inproceedings{stonebraker2005c,
+  title={C-store: a column-oriented DBMS},
+  author={Stonebraker, Mike and Abadi, Daniel J and Batkin, Adam and Chen, Xuedong and Cherniack, Mitch and Ferreira, Miguel and Lau, Edmond and Lin, Amerson and Madden, Sam and O'Neil, Elizabeth and others},
+  booktitle={VLDB},
+  year={2005}
+}
+@article{demertzissearchable,
+  title={Searchable Encryption with Optimal Locality: Achieving Sublogarithmic Read Efficiency},
+  author={Demertzis, Ioannis and Papadopoulos, Dimitrios and Papamanthou, Charalampos},
+  journal={CRYPTO},
+  year={2018}
+}
+@other{USPS,
+title = {USPS, http://www.app.com/}
+}
+@other{gowalla,
+title = {snap.stanford.edu/data/loc-gowalla.htm}
+}
+@inproceedings{goodrich2011privacy,
+  title={Privacy-preserving access of outsourced data via oblivious RAM simulation},
+  author={Goodrich, Michael T and Mitzenmacher, Michael},
+  booktitle={ICALP},
+  year={2011}
+  }
+  @inproceedings{kushilevitz2012security,
+  title={On the (in) security of hash-based oblivious RAM and a new balancing scheme},
+  author={Kushilevitz, Eyal and Lu, Steve and Ostrovsky, Rafail},
+  booktitle={SIAM},
+  year={2012}
+}
+@inproceedings{shi2011oblivious,
+  title={Oblivious RAM with O ((logN) 3) worst-case cost},
+  author={Shi, Elaine and Chan, T-H Hubert and Stefanov, Emil and Li, Mingfei},
+  booktitle={ASIACRYPT, 2011},
+}
+@inproceedings{wang2014scoram,
+  title={SCORAM: oblivious RAM for secure computation},
+  author={Wang, Xiao Shaun and Huang, Yan and Chan, TH Hubert and Shelat, Abhi and Shi, Elaine},
+  booktitle={Proceedings of the 2014 ACM SIGSAC Conference on Computer and Communications Security},
+  pages={191--202},
+  year={2014},
+  organization={ACM}
+}
+@article{asharov2017oblivious,
+  title={Oblivious computation with data locality},
+  author={Asharov, Gilad and Chan, TH Hubert and Nayak, Kartik and Pass, Rafael and Ren, Ling and Shi, Elaine},
+  journal={ePrint IACR},
+  year={2017}
+}
+@article{chang2016oblivious,
+  title={Oblivious ram: a dissection and experimental evaluation},
+  author={Chang, Zhao and Xie, Dong and Li, Feifei},
+  journal={PVLDB},
+  volume={9},
+  number={12},
+  pages={1113--1124},
+  year={2016},
+  publisher={VLDB Endowment}
+}
+@article{naveed2015fallacy,
+  title={The Fallacy of Composition of Oblivious RAM and Searchable Encryption.},
+  author={Naveed, Muhammad},
+  journal={ePrint IACR},
+  year={2015}
+}
+@inproceedings{wang2014oblivious,
+  title={Oblivious data structures},
+  author={Wang, Xiao Shaun and Nayak, Kartik and Liu, Chang and Chan, TH and Shi, Elaine and Stefanov, Emil and Huang, Yan},
+  booktitle={CCS, 2014},
+}
+@inproceedings{priebeenclavedb,
+  title={EnclaveDB: A Secure Database using SGX},
+  author={Priebe, Christian and Vaswani, Kapil and Costa, Manuel},
+  organization={SP},
+  year={2018}
+}
+@inproceedings{zheng2017opaque,
+  title={Opaque: An Oblivious and Encrypted Distributed Analytics Platform.},
+  author={Zheng, Wenting and Dave, Ankur and Beekman, Jethro G and Popa, Raluca Ada and Gonzalez, Joseph E and Stoica, Ion},
+  booktitle={NSDI},
+  year={2017}
+}
+
+@inproceedings{demertzis2016practical,
+  title={Practical private range search revisited},
+  author={Demertzis, Ioannis and Papadopoulos, Stavros and Papapetrou, Odysseas and Deligiannakis, Antonios and Garofalakis, Minos},
+  booktitle={SIGMOD},
+  year={2016}
+}
+
+@article{chamani2023graphos,
+  title={GraphOS: Towards Oblivious Graph Processing},
+  author={Chamani, Javad Ghareh and Demertzis, Ioannis and Papadopoulos, Dimitrios and Papamanthou, Charalampos and Jalili, Rasool},
+  journal={PVLDB},
+  year={2023}
+}
+
+@inproceedings{asharovtight,
+  title={Tight Tradeoff s in Searchable Symmetric Encryption},
+  author={Asharov, Gilad and Segev, Gil and Shahaf, Ido},
+  organization={CRYPTO},
+  year={2018}
+}
+@inproceedings{cutting1989optimization,
+  title={Optimization for dynamic inverted index maintenance},
+  author={Cutting, Doug and Pedersen, Jan},
+  booktitle={SIGIR},
+  year={1989}
+}
+@article{demertzis2018efficient,
+  title={Efficient searchable encryption through compression},
+  author={Demertzis, Ioannis and Talapatra, Rajdeep and Papamanthou, Charalampos},
+  journal={PVLDB},
+  year={2018}
+}
+@inproceedings{islam2012access,
+  title={Access Pattern disclosure on Searchable Encryption: Ramification, Attack and Mitigation.},
+  author={Islam, Mohammad Saiful and Kuzu, Mehmet and Kantarcioglu, Murat},
+  booktitle={NDSS},
+  year={2012}
+}
+@inproceedings{cash2015leakage,
+  title={Leakage-abuse attacks against searchable encryption},
+  author={Cash, David and Grubbs, Paul and Perry, Jason and Ristenpart, Thomas},
+  booktitle={CCS},
+  year={2015}
+}
+@inproceedings{grubbs2018pump,
+  title={Pump up the Volume: Practical Database Reconstruction from Volume Leakage on Range series},
+  author={Grubbs, Paul and Lacharité, Marie-Sarah and Minaud, Brice and Paterson, Kenny},
+  booktitle={CCS},
+  year={2018}
+}
+
+@inproceedings{kornaropoulos2020state,
+  title={The state of the uniform: Attacks on encrypted databases beyond the uniform query distribution},
+  author={Kornaropoulos, Evgenios M and Papamanthou, Charalampos and Tamassia, Roberto},
+  booktitle={SP},
+  year={2020}
+}
+@inproceedings{kornaropoulos2021response,
+  title={Response-hiding encrypted ranges: Revisiting security via parametrized leakage-abuse attacks},
+  author={Kornaropoulos, Evgenios M and Papamanthou, Charalampos and Tamassia, Roberto},
+  booktitle={SP},
+  year={2021}
+}
+@inproceedings{kornaropoulos2022leakage,
+  title={Leakage inversion: Towards quantifying privacy in searchable encryption},
+  author={Kornaropoulos, Evgenios M and Moyer, Nathaniel and Papamanthou, Charalampos and Psomas, Alexandros},
+  booktitle={CCS},
+  year={2022}
+}
+
+
+@inproceedings{kellaris2016generic,
+  title={Generic attacks on secure outsourced databases},
+  author={Kellaris, Georgios and Kollios, George and Nissim, Kobbi and O'Neill, Adam},
+  booktitle={CCS},
+  year={2016}
+}
+@inproceedings{lacharite2017improved,
+  title={Improved reconstruction attacks on encrypted data using range query leakage},
+  author={Lacharit{\'e}, Marie-Sarah and Minaud, Brice and Paterson, Kenneth G},
+  booktitle={SP},
+  year={2018}
+}
+
+@inproceedings{sun2018practical,
+  title={Practical Backward-Secure Searchable Encryption from Symmetric Puncturable Encryption},
+  author={Sun, Shi-Feng and Yuan, Xingliang and Liu, Joseph K and Steinfeld, Ron and Sakzad, Amin and Vo, Viet and Nepal, Surya},
+  booktitle={CCS, 2018},
+}
+@article{overmars,
+	author    = {Mark H. Overmars and
+	Jan van Leeuwen},
+	title     = {Worst-Case Optimal Insertion and Deletion Methods for Decomposable
+	Searching Problems},
+	journal   = {Inf. Process. Lett.},
+	year      = {1981}
+}
+@inproceedings{omap2,
+	author    = {Daniel S. Roche and
+	Adam J. Aviv and
+	Seung Geol Choi},
+	title     = {A Practical Oblivious Map Data Structure with Secure Deletion and
+	History Independence},
+	booktitle = {IEEE SP},
+	year      = {2016}
+}
+
+@inproceedings{tworam,
+	author    = {Sanjam Garg and
+	Payman Mohassel and
+	Charalampos Papamanthou},
+	title     = {{TWORAM:} Efficient Oblivious {RAM} in Two Rounds with Applications
+	to Searchable Encryption},
+	booktitle = {CRYPTO, 2016}
+}
+
+@book{overamarsbook,
+	author    = {Mark H. Overmars},
+	title     = {The Design of Dynamic Data Structures},
+	series    = {Lecture Notes in Computer Science},
+	publisher = {Springer},
+	year      = {1983}
+}
+@inproceedings{sgx,
+	author    = {Ghous Amjad and
+	Seny Kamara and
+	Tarik Moataz},
+	title     = {Forward and Backward Private Searchable Encryption with {SGX}},
+	booktitle = {EuroSec},
+	year      = {2019}
+}
+@misc{cryptopp,
+    author = {Crypto++ Library 7.0},
+    title = {},
+    year = {2018},
+    howpublished = {\url{https://www.cryptopp.com/}}
+}
+
+
+@misc{ssecode,
+    author = {Javad {Gha\textcolor{white}{a\hspace{-0.15cm}}reh Chamani}},
+    title = {Implementation of {Mitra, Orion, Horus, Fides, and Diana\_Del}},
+    year = {2018},
+    howpublished = {\url{https://github.com/jgharehchamani/SSE}}
+}
+
+@misc{ourcode,
+    author = {Javad {Ghareh Chamani}},
+    title = {Implementation of {QOS}, {SDA}, and {SDD}},
+    year = {2019},
+    howpublished = {https://github.com/jgharehchamani/Small-Client-SSE}
+}
+
+
+@inproceedings{musse1,
+	author    = {C{\'{e}}dric Van Rompay and
+	Refik Molva and
+	Melek {\"{O}}nen},
+	title     = {Multi-user Searchable Encryption in the Cloud},
+	booktitle = {ISC,2015},
+}
+
+@inproceedings{musse3,
+author    = {Ariel Hamlin and
+Abhi Shelat and
+Mor Weiss and
+Daniel Wichs},
+title     = {Multi-Key Searchable Encryption, Revisited},
+booktitle = {PKC},
+year      = {2018}
+}
+
+@inproceedings{musse2,
+	author    = {Cedric Van Rompay and
+	Refik Molva and
+	Melek Onen},
+	title     = {Secure and Scalable Multi-User Searchable Encryption},
+	booktitle = {SCC Workshop, 2018},
+}
+
+
+@inproceedings{Meng15,
+	author    = {Xianrui Meng and
+	Seny Kamara and
+	Kobbi Nissim and
+	George Kollios},
+	title     = {{GRECS:} Graph Encryption for Approximate Shortest Distance Queries},
+	booktitle = {CCS, 2015},
+}
+
+
+
+
+
+@inproceedings{graph2,
+	author    = {Russell W. F. Lai and
+	Sherman S. M. Chow},
+	title     = {Forward-Secure Searchable Encryption on Labeled Bipartite Graphs},
+	booktitle = {ACNS},
+	year      = {2017}
+}
+
+
+
+
+@inproceedings{ours,
+author    = {Ioannis Demertzis and
+Dimitrios Papadopoulos and
+Charalampos Papamanthou},
+title     = {Searchable Encryption with Optimal Locality: Achieving Sublogarithmic
+Read Efficiency},
+booktitle = {CRYPTO},
+year      = {2018}
+}
+
+
+
+
+
+@inproceedings{dsse3,
+	author    = {Seny Kamara and
+	Charalampos Papamanthou},
+	title     = {Parallel and Dynamic Searchable Symmetric Encryption},
+	booktitle = {FC, 2013},
+}
+
+@inproceedings{hahn2014searchable,
+	title={Searchable encryption with secure and efficient updates},
+	author={Hahn, Florian and Kerschbaum, Florian},
+	booktitle={CCS, 2014},
+}
+@inproceedings{naveed2014dynamic,
+	title={Dynamic searchable encryption via blind storage},
+	author={Naveed, Muhammad and Prabhakaran, Manoj and Gunter, Carl A},
+	booktitle={SP, 2014},
+}
+
+@inproceedings{ggm,
+	author    = {Oded Goldreich and
+	Shafi Goldwasser and
+	Silvio Micali},
+	title     = {On the Cryptographic Applications of Random Functions},
+	booktitle = {CRYPTO, 1984}
+}
+
+@inproceedings{dprf2,
+	author    = {Dan Boneh and
+	Brent Waters},
+	title     = {Constrained Pseudorandom Functions and Their Applications},
+	booktitle = {ASIACRYPT},
+	year      = {2013}
+}
+
+@inproceedings{dprf3,
+	author    = {Elette Boyle and
+	Shafi Goldwasser and
+	Ioana Ivan},
+	title     = {Functional Signatures and Pseudorandom Functions},
+	booktitle = {PKC},
+	year      = {2014}
+}
+
+@article{optorama,
+	author    = {Gilad Asharov and
+	Ilan Komargodski and
+	Wei{-}Kai Lin and
+	Kartik Nayak and
+	Elaine Shi},
+	title     = {OptORAMa: Optimal Oblivious {RAM}},
+	journal   = {{IACR}},
+	year      = {2018}
+}
+@inproceedings{panorama,
+	author    = {Sarvar Patel and
+	Giuseppe Persiano and
+	Mariana Raykova and
+	Kevin Yeo},
+	title     = {PanORAMa: Oblivious {RAM} with Logarithmic Overhead},
+	booktitle = {FOCS 2018},
+	year      = {2018}
+}
+
+@article{tpch,
+  title={TPC-H benchmark. http://www.tpc.org/tpch}
+}
+@article{chaudhuri1997overview,
+  title={An overview of data warehousing and OLAP technology},
+  author={Chaudhuri, Surajit and Dayal, Umeshwar},
+  journal={SIGMOD},
+  year={1997}
+}
+
+@inproceedings{DBLP:conf/asiajcis/MidorikawaTK18,
+  author    = {Tatsuya Midorikawa and
+               Akihiro Tachikawa and
+               Akira Kanaoka},
+  title     = {Helping Johnny to Search: Encrypted Search on Webmail System},
+  booktitle = {AsiaJCIS},
+  year      = {2018}
+  }
+  
+
+@inproceedings{fhe,
+  author    = {Craig Gentry},
+  title     = {Fully homomorphic encryption using ideal lattices},
+  booktitle = {{STOC} 2009},
+  pages     = {169--178},
+  year      = {2009},
+  timestamp = {Fri, 05 Jun 2009 09:34:35 +0200},
+  biburl    = {https://dblp.org/rec/bib/conf/stoc/Gentry09},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+
+
+@inproceedings{zhang16all,
+  title={All Your Queries Are Belong to Us: The Power of File-Injection Attacks on Searchable Encryption},
+  author={Zhang, Yupeng and Katz, Jonathan and Papamanthou, Charalampos},
+  booktitle={USENIX 2016},
+}
+
+
+
+@inproceedings{garg2016tworam,
+  title={TWORAM: efficient oblivious RAM in two rounds with applications to searchable encryption},
+  author={Garg, Sanjam and Mohassel, Payman and Papamanthou, Charalampos},
+  booktitle={CRYPTO 2016},
+}
+
+
+@article{chazelle1986fractional,
+  title={Fractional cascading: I. A data structuring technique},
+  author={Chazelle, Bernard and Guibas, Leonidas J},
+  booktitle={Algorithmica, 1986},
+ 
+}
+@inproceedings{goodrich2011privacy,
+  title={Privacy-preserving access of outsourced data via oblivious RAM simulation},
+  author={Goodrich, Michael T and Mitzenmacher, Michael},
+  booktitle={International Colloquium on Automata, Languages, and Programming},
+  pages={576--587},
+  year={2011},
+  organization={Springer}
+}
+
+
+
+@inproceedings{stefanov2013path,
+  title={Path ORAM: an extremely simple oblivious RAM protocol},
+  author={Stefanov, Emil and Van Dijk, Marten and Shi, Elaine and Fletcher, Christopher and Ren, Ling and Yu, Xiangyao and Devadas, Srinivas},
+  booktitle={CCS 2013},
+}
+
+
+@article{simplefsse1,
+  author    = {Zheli Liu and
+               Siyi Lv and
+               Yu Wei and
+               Jin Li and
+               Joseph K. Liu and
+               Yang Xiang},
+  title     = {{FFSSE:} Flexible Forward Secure Searchable Encryption with Efficient
+               Performance},
+  journal   = {IACR ePrint, 2017},
+}
+
+@article{song2018forward,
+  title={Forward Private Searchable Symmetric Encryption with Optimized I/O Efficiency},
+  author={Song, Xiangfu and Dong, Changyu and Yuan, Dandan and Xu, Qiuliang and Zhao, Minghao},
+  journal={IEEE Transactions on Dependable and Secure Computing},
+  year={2018},
+  publisher={IEEE}
+}
+
+
+@inproceedings{pouliot16,
+  author    = {David Pouliot and
+               Charles V. Wright},
+  title     = {The Shadow Nemesis: Inference Attacks on Efficiently Deployable, Efficiently
+               Searchable Encryption},
+  booktitle = {Proceedings of the 2016 {ACM} {SIGSAC} Conference on Computer and
+               Communications Security, Vienna, Austria, October 24-28, 2016},
+  pages     = {1341--1352},
+  year      = {2016},
+ 
+  url       = {http://doi.acm.org/10.1145/2976749.2978401},
+  doi       = {10.1145/2976749.2978401},
+  timestamp = {Mon, 24 Oct 2016 18:57:12 +0200},
+  biburl    = {https://dblp.org/rec/bib/conf/ccs/PouliotW16},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+@article{oram,
+  author    = {Oded Goldreich and
+               Rafail Ostrovsky},
+  title     = {Software Protection and Simulation on Oblivious RAMs},
+  journal   = {J. {ACM}},
+  volume    = {43},
+  number    = {3},
+  pages     = {431--473},
+  year      = {1996},
+  url       = {http://doi.acm.org/10.1145/233551.233553},
+  doi       = {10.1145/233551.233553},
+  timestamp = {Wed, 15 Nov 2017 19:50:09 +0100},
+  biburl    = {https://dblp.org/rec/bib/journals/jacm/GoldreichO96},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+@inproceedings{dsse1,
+  author    = {Yan Cheng Chang and
+               Michael Mitzenmacher},
+  title     = {Privacy Preserving Keyword Searches on Remote Encrypted Data},
+  booktitle = {ACNS, 2005},
+}
+
+
+
+@inproceedings{pprf2,
+	author    = {Dan Boneh and
+	Brent Waters},
+	title     = {Constrained Pseudorandom Functions and Their Applications},
+	booktitle = {{ASIACRYPT} 2013},
+	pages     = {280--300},
+	year      = {2013},
+	timestamp = {Fri, 19 May 2017 01:26:33 +0200},
+	biburl    = {https://dblp.org/rec/bib/conf/asiacrypt/BonehW13},
+	bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@inproceedings{pprf3,
+	author    = {Elette Boyle and
+	Shafi Goldwasser and
+	Ioana Ivan},
+	title     = {Functional Signatures and Pseudorandom Functions},
+	booktitle = {{PKC} 2014},
+	pages     = {501--519},
+	year      = {2014},
+	timestamp = {Wed, 24 May 2017 08:27:51 +0200},
+	biburl    = {https://dblp.org/rec/bib/conf/pkc/BoyleGI14},
+	bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@inproceedings{penc,
+	author    = {Matthew D. Green and
+	Ian Miers},
+	title     = {Forward Secure Asynchronous Messaging from Puncturable Encryption},
+	booktitle = {{IEEE} {SP} 2015},
+	pages     = {305--320},
+	year      = {2015},
+	timestamp = {Fri, 26 May 2017 00:50:06 +0200},
+	biburl    = {https://dblp.org/rec/bib/conf/sp/GreenM15},
+	bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@inproceedings{pprf1,
+	author    = {Aggelos Kiayias and
+	Stavros Papadopoulos and
+	Nikos Triandopoulos and
+	Thomas Zacharias},
+	title     = {Delegatable pseudorandom functions and applications},
+	booktitle = {ACM CCS 2013},
+	pages     = {669--684},
+	year      = {2013},
+	timestamp = {Tue, 02 Jan 2018 13:50:30 +0100},
+	biburl    = {https://dblp.org/rec/bib/conf/ccs/KiayiasPTZ13},
+	bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@inproceedings{Kamara17,
+	author    = {Seny Kamara and
+	Tarik Moataz},
+	title     = {Boolean Searchable Symmetric Encryption with Worst-Case Sub-linear
+	Complexity},
+	booktitle = {EUROCRYPT, 2017},
+}
+
+
+
+@inproceedings{Demertzis17,
+	author    = {Ioannis Demertzis and
+	Charalampos Papamanthou},
+	title     = {Fast Searchable Encryption With Tunable Locality},
+	booktitle = {SIGMOD,  2017}
+}
+
+@article{Naveed15,
+	author    = {Muhammad Naveed},
+	title     = {The Fallacy of Composition of Oblivious {RAM} and Searchable Encryption},
+	journal   = {IACR-ePrint, 2015},
+	
+}
+
+
+
+@inproceedings{DBLP:conf/iwsec/KurosawaSOY16,
+	author    = {Kaoru Kurosawa and
+	Keisuke Sasaki and
+	Kiyohiko Ohta and
+	Kazuki Yoneyama},
+	title     = {UC-Secure Dynamic Searchable Symmetric Encryption Scheme},
+	booktitle = {Advances in Information and Computer Security - 11th International
+	Workshop on Security, {IWSEC} 2016, Tokyo, Japan, September 12-14,
+	2016, Proceedings},
+	pages     = {73--90},
+	year      = {2016},
+	url       = {https://doi.org/10.1007/978-3-319-44524-3_5},
+	doi       = {10.1007/978-3-319-44524-3_5},
+	timestamp = {Wed, 24 May 2017 08:27:23 +0200},
+	biburl    = {https://dblp.org/rec/bib/conf/iwsec/KurosawaSOY16},
+	bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{vsse,
+	author    = {Raphael Bost and
+	Pierre{-}Alain Fouque and
+	David Pointcheval},
+	title     = {Verifiable Dynamic Symmetric Searchable Encryption: Optimality and
+	Forward Security},
+	journal   = {{IACR} Cryptology ePrint Archive},
+	volume    = {2016},
+	pages     = {62},
+	year      = {2016},
+	url       = {http://eprint.iacr.org/2016/062},
+	timestamp = {Thu, 08 Jun 2017 14:26:39 +0200},
+	biburl    = {https://dblp.org/rec/bib/journals/iacr/BostFP16},
+	bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@inproceedings{treebased,
+	author    = {Elaine Shi and
+	T.{-}H. Hubert Chan and
+	Emil Stefanov and
+	Mingfei Li},
+	title     = {Oblivious {RAM} with O((logN)3) Worst-Case Cost},
+	booktitle = {{ASIACRYPT} 2011},
+	pages     = {197--214},
+	year      = {2011},
+	timestamp = {Wed, 10 Jan 2018 08:32:22 +0100},
+	biburl    = {https://dblp.org/rec/bib/conf/asiacrypt/ShiCSL11},
+	bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@inproceedings{circuit,
+	author    = {Xiao Wang and
+	T.{-}H. Hubert Chan and
+	Elaine Shi},
+	title     = {Circuit {ORAM:} On Tightness of the Goldreich-Ostrovsky Lower Bound},
+	booktitle = {ACM CCS 2015},
+	pages     = {850--861},
+	year      = {2015},
+	timestamp = {Wed, 11 Apr 2018 11:09:28 +0200},
+	biburl    = {https://dblp.org/rec/bib/conf/ccs/WangCS15},
+	bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@inproceedings{onion,
+	author    = {Srinivas Devadas and
+	Marten van Dijk and
+	Christopher W. Fletcher and
+	Ling Ren and
+	Elaine Shi and
+	Daniel Wichs},
+	title     = {Onion {ORAM:} {A} Constant Bandwidth Blowup Oblivious {RAM}},
+	booktitle = {{TCC} 2016-A},
+	pages     = {145--174},
+	year      = {2016},
+	timestamp = {Tue, 23 May 2017 01:06:07 +0200},
+	biburl    = {https://dblp.org/rec/bib/conf/tcc/DevadasDFRSW16},
+	bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+@inproceedings{gc,
+  author    = {Mihir Bellare and
+               Viet Tung Hoang and
+               Phillip Rogaway},
+  title     = {Foundations of garbled circuits},
+  booktitle = {{ACM CCS} 2012},
+  pages     = {784--796},
+  year      = {2012},
+  timestamp = {Tue, 16 Oct 2012 19:19:53 +0200},
+  biburl    = {https://dblp.org/rec/bib/conf/ccs/BellareHR12},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@misc{cryptopp,
+    author = {Crypto++ Library 7.0},
+    title = {},
+    year = {2018},
+    howpublished = {\url{https://www.cryptopp.com/}}
+}
+
+
+@misc{ssecode,
+    author = {Javad Ghareh Chamani},
+    title = {Implementation of Mitra, Orion, Horus, Fides, and DianaDel},
+    year = {2018},
+    howpublished = {\url{https://github.com/jgharehchamani/SSE}}
+}
+
+@misc{oldrepo,
+	author = {Raphel Bost},
+	title = {OpenSSE Schemes},
+	year = {2017},
+	howpublished = {\url{https://github.com/OpenSSE/opensse-schemes}}
+}
+
+
+@misc{rocksdb,
+    author = {},
+    title = {A persistent key-value store for fast storage environments},
+    year = {},
+    howpublished = {\url{https://rocksdb.org/}}
+}
+
+@misc{bitonicsort,
+    author = {},
+    title = {Bitonic Sorter},
+    year = {},
+    howpublished = {\url{https://en.wikipedia.org/wiki/Bitonic_sorter}}
+}
+
+
+@article{sgx1,
+	author    = {Sajin Sasy and
+	Sergey Gorbunov and
+	Christopher W. Fletcher},
+	title     = {ZeroTrace : Oblivious Memory Primitives from Intel {SGX}},
+	journal   = {{IACR} Cryptology ePrint Archive},
+	volume    = {2017},
+	pages     = {549},
+	year      = {2017},
+	url       = {http://eprint.iacr.org/2017/549},
+	timestamp = {Wed, 21 Jun 2017 18:21:46 +0200},
+	biburl    = {https://dblp.org/rec/bib/journals/iacr/SasyGF17},
+	bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{sgx2,
+	author    = {Thang Hoang and
+	Muslum Ozgur Ozmen and
+	Yeongjin Jang and
+	Attila A. Yavuz},
+	title     = {Hardware-Supported {ORAM} in Effect: Practical Oblivious Search and
+	Update on Very Large Dataset},
+	journal   = {{IACR} Cryptology ePrint Archive},
+	volume    = {2018},
+	pages     = {247},
+	year      = {2018},
+	url       = {http://eprint.iacr.org/2018/247},
+	timestamp = {Tue, 20 Mar 2018 14:34:21 +0100},
+	biburl    = {https://dblp.org/rec/bib/journals/iacr/HoangOJY18},
+	bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+
+@inproceedings{godrichOblComp,
+  author    = {Michael T Goodrich},
+  title     = {Data-oblivious external-memory algorithms
+for the compaction, selection, and sorting of outsourced data},
+  booktitle = {SPAA, 2011},
+}
+
+@inproceedings{aks,
+author={Mikl´os Ajtai and J´anos Koml´os and Endre Szemer´edi},
+title={An O(n log n) sorting network},
+booktitle={TOC, 1983}
+}
+
+@inproceedings{zigzag,
+author={Michael T Goodrich},
+title={Zig-zag sort: A simple deterministic data-oblivious sorting algorithm running in O(n log n time.},
+booktitle={TOC, 2014}
+}
+
+@inproceedings{bitonic,
+author={Kenneth E Batcher},
+title={Sorting networks and their applications.},
+booktitle={SJCC, 1968}
+}
+
+
+@inproceedings{compact1,
+author={M. T. Goodrich and M. Mitzenmacher.},
+title={MapReduce parallel cuckoo hashing and oblivious RAM
+simulations},
+booktitle={CoRR, 2010}
+}
+
+@inproceedings{compact2,
+author={John C. Mitchell and Joe Zimmerman},
+title={Data-Oblivious Data Structures},
+booktitle={STACS, 2014}
+}
+
+ 
+@inproceedings{Chamani0KD22,
+  author    = {Javad {Ghareh Chamani} and
+               Dimitrios Papadopoulos and
+               Mohammadamin Karbasforushan and
+               Ioannis Demertzis},
+  title     = {Dynamic Searchable Encryption with Optimal Search in the Presence
+               of Deletions},
+  booktitle = {31st {USENIX} Security Symposium, {USENIX} Security 2022},
+  pages     = {2425--2442},
+  year      = {2022},
+  url       = {https://www.usenix.org/conference/usenixsecurity22/presentation/chamani},
+  timestamp = {Tue, 18 Oct 2022 17:10:36 +0200},
+  biburl    = {https://dblp.org/rec/conf/uss/Chamani0KD22.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+
+
+
+@inproceedings{MidorikawaTK18,
+  author    = {Tatsuya Midorikawa and
+               Akihiro Tachikawa and
+               Akira Kanaoka},
+  title     = {Helping Johnny to Search: Encrypted Search on Webmail System},
+  booktitle = {13th Asia Joint Conference on Information Security, AsiaJCIS 2018,
+               Guilin, China, August 8-9, 2018},
+  pages     = {47--53},
+  publisher = {{IEEE} Computer Society},
+  year      = {2018},
+  url       = {https://doi.org/10.1109/AsiaJCIS.2018.00017},
+  doi       = {10.1109/AsiaJCIS.2018.00017},
+  timestamp = {Wed, 16 Oct 2019 14:14:53 +0200},
+  biburl    = {https://dblp.org/rec/conf/asiajcis/MidorikawaTK18.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@inproceedings{kamara2021decentralized,
+  author    = {Seny Kamara and
+               Tarik Moataz and
+               Andrew Park and
+               Lucy Qin},
+  title     = {A Decentralized and Encrypted National Gun Registry},
+  booktitle = {42nd {IEEE} Symposium on Security and Privacy, {SP} 2021, San Francisco,
+               CA, USA, 24-27 May 2021},
+  pages     = {1520--1537},
+  publisher = {{IEEE}},
+  year      = {2021},
+  url       = {https://doi.org/10.1109/SP40001.2021.00072},
+  doi       = {10.1109/SP40001.2021.00072},
+  timestamp = {Tue, 12 Oct 2021 18:03:29 +0200},
+  biburl    = {https://dblp.org/rec/conf/sp/KamaraMPQ21.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@misc{hermes,
+      author = {Brice Minaud and Michael Reichle},
+      title = {Hermes: I/O-Efficient Forward-Secure Searchable Symmetric Encryption},
+      howpublished = {Cryptology ePrint Archive, Paper 2023/166},
+      year = {2023},
+      note = {\url{https://eprint.iacr.org/2023/166}},
+      url = {https://eprint.iacr.org/2023/166}
+}
+
+
+@inproceedings{Lai1,
+author={Lai, Russell WF and Sherman SM Chow.},
+title={Forward-secure searchable encryption on labeled bipartite graphs.},
+booktitle={International Conference on Applied Cryptography and Network Security. Cham: Springer International Publishing, 2017}
+}
+
+@inproceedings{Song1,
+author={Song, Xiangfu, et al.},
+title={Forward private searchable symmetric encryption with optimized I/O efficiency.},
+booktitle={IEEE Transactions on Dependable and Secure Computing 17.5 (2018): 912-927}
+}
+
+@inproceedings{Wanshan1,
+author={Wanshan, Xu and  Zhang, Jianbiao and Yilin Yuan.},
+title={DESSE: A dynamic efficient forward searchable encryption scheme.},
+booktitle={IEEE Access 8 (2020): 144480-144488.}
+}
+
+ 
+@inproceedings{Wang1,
+author={Wang, Jiafan and Sherman SM Chow.},
+title={Forward and backward-secure range-searchable symmetric encryption.},
+booktitle={ Cryptology ePrint Archive (2019).}
+}
+
+@inproceedings{Sun1,
+author={Sun, Shi-Feng, et al.},
+title={Practical backward-secure searchable encryption from symmetric puncturable encryption.},
+booktitle={ Proceedings of the 2018 ACM SIGSAC Conference on Computer and Communications Security. 2018.}
+}
+
+@inproceedings{He1,
+author={He, Kun, et al.},
+title={Secure dynamic searchable symmetric encryption with constant client storage cost.},
+booktitle={ IEEE Transactions on Information Forensics and Security 16 (2020): 1538-1549.}
+}
+
+@inproceedings{Chen1,
+author={Chen, Tianyang, et al.},
+title={Bestie: Very practical searchable encryption with forward and backward security.},
+booktitle={Computer Security–ESORICS 2021: 26th European Symposium on Research in Computer Security, Darmstadt, Germany, October 4–8, 2021, Proceedings, Part II 26. Springer International Publishing, 2021.}
+}
+
+@inproceedings{Xu1,
+author={Xu, Peng, et al.},
+title={ROSE: Robust searchable encryption with forward and backward security.},
+booktitle={IEEE transactions on information forensics and security 17 (2022): 1115-1130.}
+}
+
+@inproceedings{Rizomiliotis,
+author={Rizomiliotis, Panagiotis and Stefanos Gritzalis.},
+title={Simple forward and backward private searchable symmetric encryption schemes with constant number of roundtrips.},
+booktitle={Proceedings of the 2019 ACM SIGSAC Conference on Cloud Computing Security Workshop. 2019.}
+}
+
+@inproceedings{GoldreichSqRoot,
+author={Oded Goldreich and Rafail Ostrovsky.},
+title={Software Protection and Simulation on Oblivious RAMs.},
+booktitle={Journal of the ACM, 43(3), 1996.}
+}
+
+@inproceedings{OstrovskyHeirarchy,
+author={Rafail Ostrovsky.},
+title={Efficient computation on oblivious RAMs.},
+booktitle={In STOC, pages 514–523, 1990.}
+}
+
+@inproceedings{ngai2024distributed,
+  title={Distributed \& Scalable Oblivious Sorting and Shuffling},
+  author={Ngai, Nicholas and Demertzis, Ioannis and Chamani, Javad Ghareh and Papadopoulos, Dimitrios},
+  booktitle={2024 IEEE Symposium on Security and Privacy (SP)},
+  year={2024}
+}
+@inproceedings{dauterman2021snoopy,
+  title={Snoopy: Surpassing the scalability bottleneck of oblivious storage},
+  author={Dauterman, Emma and Fang, Vivian and Demertzis, Ioannis and Crooks, Natacha and Popa, Raluca Ada},
+  booktitle={Proceedings of the ACM SIGOPS 28th Symposium on Operating Systems Principles},
+  year={2021}
+}
+@article{chamani2021multi,
+  title={Multi-user dynamic searchable symmetric encryption with corrupted participants},
+  author={Chamani, Javad Ghareh and Wang, Yun and Papadopoulos, Dimitrios and Zhang, Mingyang and Jalili, Rasool},
+  journal={IEEE Transactions on Dependable and Secure Computing},
+  year={2021}
+}
+@inproceedings{wang2021multi,
+  title={Multi-user collusion-resistant searchable encryption with optimal search time},
+  author={Wang, Yun and Papadopoulos, Dimitrios},
+  booktitle={Proceedings of the 2021 ACM Asia Conference on Computer and Communications Security},
+  year={2021}
+}
+@article{wang2023multi,
+  title={Multi-User Collusion-Resistant Searchable Encryption for Cloud Storage},
+  author={Wang, Yun and Papadopoulos, Dimitrios},
+  journal={IEEE Transactions on Cloud Computing},
+  year={2023},
+  publisher={IEEE}
+}
+
+
+  

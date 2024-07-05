@@ -1,7 +1,4 @@
 \section{Introduction}
-%Data outsourcing to remote servers for storage and efficient processing has become commonplace, both for individuals and enterprises alike. At the same time, contemporary privacy concerns and privacy policy regulations make it essential to protect one's data, even against the service provider that stores it. Data encryption can be used to achieve such protection but ``standard'' encryption techniques remove any ability to compute directly on the data without first decrypting it. Focusing on the fundamental computational task of searching on the encrypted data, one candidate solution is \emph{searchable encryption}~\cite{song2000practical} or more generally \emph{structured encryption}~\cite{chase10}, which builds encrypted indexes over the data in a way that allows the data owner to later enable the server to perform searches. Additionally, schemes that allow the owner to modify the encrypted dataset (inserting/removing/modifying records) are referred to as \emph{dynamic searchable encryption (DSE)}.
-
-%\todo{32.Provide a compelling real-world use-case example}
 Searchable encryption has been the topic of a huge line of research (e.g.,~\cite{song2000practical,dsse1,curtmola2006searchable,chase10,kurosawa2012uc, Chamani0KD22,dsse3,cash2013highly,cash2014dynamic,SDa, Lai1, Song1, wanshan1, Wang1, Sun1, He1, Chen1, Xu1, Rizomiliotis,GoldreichSqRoot,OstrovskyHeirarchy,demertzis2016practical,demertzis2018practical,chamani2021multi,wang2021multi,wang2023multi,kornaropoulos2022leakage}). %kamara2013parallel missing
 At the same time, it has been proposed for use in a number of different applications, e.g., for encrypted relational and graph databases~\cite{Seal,Kamara16,cash2021improved,chamani2023graphos}, annotated image search~\cite{pixek}, encrypted email~\cite{MidorikawaTK18}, or maintaining a secure {gun} registry service~\cite{kamara2021decentralized}. In fact, very recently, MongoDB announced support for a mode called \emph{queryable} encryption, using techniques inspired by this line of research. 
 The approach followed by most works is to strive for a high performance at the cost of well-defined \emph{leakages} observed by the server storing the encrypted dataset. I.e., although it is required that the server never accesses decrypted data, \emph{search} query on the data allows \neww{the server} to learn some information %\tgreen{metadata or no dash} 
@@ -11,8 +8,9 @@ that typically includes which entries are accessed for a query (\emph{access pat
 %\tilde{O}
 \begin{figure*}[!ht]
 %\begin{table}
-	\centering
-	\resizebox{2.1\columnwidth}{!}
+	%\centering
+ \hspace{-2.5cm}
+	\resizebox{1.35\columnwidth}{!}
 	{
 		\begin{tabular}{|c|c||c|c|c||c||c|c|}
 			\hline
@@ -20,22 +18,9 @@ that typically includes which entries are accessed for a query (\emph{access pat
 	& & \textbf{Locality} & \textbf{Read Efficiency} & \textbf{Page Efficiency} & \textbf{Cost} & & \\
 			\hline
 			\hline
-   
-    
-         
 	\hline	
 
- %    \rowcolor{Gray}
-	% \SDa[\PiBas]\cite{SDa} & $\bO(N)$&  $\bO(n_w+\log N)$ & $\bO(\log N)$  & {$\bO(p+\log N)$} & $\bO(\log N)(am.)$&{\Large{\textbf{\tgreen{\checkmark}}}}/ II & RAM
- %    \\ 
- %    \hline
-
- %    \rowcolor{Gray}
- %    \SDd[\PiBas] \cite{SDa}& $\bO(N)$ &$\bO(n_w+\log N)$ & $\bO(\log N)$ & $\bO(p+\log N)$&$\bO(\log^3 N)$ &{\Large{\textbf{\tgreen{\checkmark}}}}/ II & RAM \\
- %    \hline
-
-    
-    \rowcolor{Gray}
+   \rowcolor{Gray}
     \LayeredSSE\cite{LocalLayeredSSECrypto22}& $\bO(N)$ &$\bO(n_w/p + \log N)$ &$\bO(\log \log N) $ &$\bO(\log \log N)$ &$\bO(n_w)$ &  \tred{\Large{\textbf{\texttimes}}} / \tred{\Large{\textbf{\texttimes}}} & SSD
     \\
     \hline
@@ -60,21 +45,8 @@ that typically includes which entries are accessed for a query (\emph{access pat
 			\SDa[\Ns\cite{Demertzis17}] & $\bO(sN)$ & $\bO(N^{\frac{1}{s}}+ \log N)$ & $\bO(\log N)$  & $\bO(N^{\frac{1}{s}}/p+\log N)$ & $\bO(s\log N)(am.)$&{\Large{\textbf{\tdgreen{\checkmark}}}}/ II & HDD/SSD \\ 
    \hline
 
-   %\rowcolor{Gray}
-    % \SDa[\Tethys\cite{BFF21}] & $\bO(N)$  &  $\bO(n_w/p + \log N)$ & $\bO(p)$ & $\bO(\log N)$ &  $\bO(N \log N)(am.)$ & {\Large{\textbf{\tgreen{\checkmark}}}}/ II   & SSD\\ 
-    % \hline
-    % \SDa[\Tethys\cite{BFF21}] & $\bO((2+\epsilon)N)$  &  $\bO(n_w/p + \log N)$ & $\bO(p)$ & $\bO(\log N)$ &  $\bO(N^2)(am.)$ & {\Large{\textbf{\tgreen{\checkmark}}}}/ II   & SSD\\ 
-
-    %\rowcolor{Gray}
     \SDa[\Tethys/\Pluto\cite{BFF21}] & $\bO(N)$  & $\bO(n_w/p + \log N)$ & $\bO(p)$ &$\bO(\log N)$ & $\bO(N \log N)(am.)$ & {\Large{\textbf{\tdgreen{\checkmark}}}}/ II  & SSD\\ 
     \hline
-    
-    % \tblue{\SDa[\Pluto\cite{BFF21}]} & $\bO((2+\epsilon)N)$  &\tblue{$\bO(\log N)$} &\tblue{$\bO(p)$} &$\bO(\log N)$ & \tblue{$\bO(N^2)(am.)$} & {\Large{\textbf{\tgreen{\checkmark}}}}/ II  & SSD\\ 
-    
-    %\rowcolor{Gray}
-    %\tblue{\SDa[\Nilus$_t$\cite{BFF21}]} & $\bO((1+2/e)^{t-1}N)$  &\tblue{$\bO(\log N)$} &\tblue{$\bO(p)$} &$\bO(\log N)$ & \tblue{$\bO(N^2)(am.)$} & {\Large{\textbf{\tgreen{\checkmark}}}}/ II  & SSD\\
-   %\SDa[\textsf{Ns$^*$}] & $\bO(Ns)$ & {$\bO(N^{\frac{1}{s}}+ \log N)$} & $\bO(1)$  & $\bO(\log N)$ & $\bO(s\log N)(am.)$&{\Large{\textbf{\tgreen{\checkmark}}}}/ II  & HDD/SSD\\ 
-   	%		\hline	
     
      \LSDd[\OneChoice\cite{onechoice}] & $\bO(N)$ &$\bO(\log N)$ &$\tbO(\log N)$ &$\tbO(\log N)$ &{$\bO(\log^2 N)$} & {\Large{\textbf{\tdgreen{\checkmark}}}}/ II & HDD\\
     \hline
@@ -87,7 +59,7 @@ that typically includes which entries are accessed for a query (\emph{access pat
 		\end{tabular}
     	}
  %\captionsetup{font=small}
-	\caption{Comparison of different \emph{locality-aware} and \emph{page-efficient} DSE schemes. For any function $f(N)$ the nonation $\tbO(f(N))$ denote $O(f(N)(\log f(N))^x)$ for some constant $x$; $n_w$ denotes the number of updates for a keyword $w$, and $p$ denotes memory page size and \textit{am.} stands for amortized complexity. \textbf{FP} and \textbf{BP} stands for forward privacy and backward privacy respectively; all the schemes except the schemes from \cite{LocalLayeredSSECrypto22} satisfy \textbf{FP} and \textbf{BP-II}. The sources of the schemes that \SDa[$\cdot$]\ and \LSDd[$\cdot$]\ are instantiated with are cited inside the brackets. The schemes marked with \textcolor{red}{\textbf{*}} restrict keyword-lists' size to be at most $N^{1-{1}/{\log \log N}}$.}
+	\caption{Comparison of different \emph{locality-aware} and \emph{page-efficient} DSE schemes. For any function $f(N)$ the nonation $\tbO(f(N))$ denote $O(f(N)(\log f(N))^x)$ for some constant $x$; $nw$ denotes the number of updates for a keyword $w$, and $p$ denotes memory page size and \textit{am.} stands for amortized complexity. \textbf{FP} and \textbf{BP} stands for forward privacy and backward privacy respectively; all the schemes except the schemes from \cite{LocalLayeredSSECrypto22} satisfy \textbf{FP} and \textbf{BP-II}. The sources of the schemes that \SDa[$\cdot$]\ and \LSDd[$\cdot$]\ are instantiated with are cited inside the brackets. The schemes marked with \textcolor{red}{\textbf{*}} restrict keyword-lists' size to be at most $N^{1-{1}/{\log \log N}}$.}
 	\label{table:SDaLoc} 
 %\end{table}
 \end{figure*}

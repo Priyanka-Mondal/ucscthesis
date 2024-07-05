@@ -1,0 +1,507 @@
+\section{Flow limited authorization for quorum replication}
+\label{sec:fullrules}
+\label{appendix}
+\label{sec:ubrules}
+\if 0
+\begin{figure}[h]
+  \small
+  \[
+    \begin{array}{rcl}
+      \multicolumn{3}{l}{ \Pi \in {\{"c","i","a"\}}  \text{  (projections)}} \\
+      \multicolumn{3}{l}{ n \in \N \text{  (primitive principals)}} \\
+      \multicolumn{3}{l}{ x \in \mathcal{V} \text{  (variable names)}} \\
+      \\
+      p,\ell,\pc &::=&  n \sep \top \sep \bot \sep p^{\Pi} \sep p \wedge p\sep p \vee p \\[0.4em]
+                   &\sep & p \sqcup p \sep p \sqcap p \sep \selor{p}{p} \sep \comor{p}{p} \\[0.4em]
+      \tau &::=& \voidtype \sep X \sep \sumtype{\tau}{\tau} \sep \prodtype{\tau}{\tau} \\[0.4em]
+         & \sep & \func{\tau}{\pc}{\tau} \sep \tfunc{X}{\pc}{\tau} \sep \says{\ell}{\tau}  \\[0.4em]
+      v &::=& \void \sep \returnv{\ell}{v} \sep \injia{\sumtype{\tau}{\tau}}{v} \sep \paira{v}{v}{\tau} \\[0.4em]
+        & \sep & \lamc{x}{\tau}{\pc}{e} \sep \tlam{X}{\pc}{e}  \\[0.8em]
+      f &::=& v \sep  \faila{\tau} \\[0.8em]
+      e &::=& f \sep x \sep e~e \sep e~\tau \sep \return{\ell}{e} \sep 
+             \paira{e}{e}{\tau} \\[0.4em]
+        & \sep & \proji{e} \sep \injia{\sumtype{\tau}{\tau}}{e} \sep \bind{x}{e}{e}\\[0.4em]
+        & \sep & \casexpan{e}{x}{e}{e}{\tau} \\[0.4em]
+        & \sep & \runa{\tau}{e}{p}  \sep \ret{e}{p}\\[0.4em]
+        & \sep & \selecta{e}{e}{\tau} \sep \comparea{\tau}{e}{e} \sep \expecta{\tau}
+    \end{array}
+  \]
+  \caption{Type annotated FLAQR Syntax (Full version).}
+  \label{fig:Annotatedsyntax}
+\end{figure}
+\fi
+
+\vspace{-1em}
+\begin{figure}[h]
+{\small
+\begin{flalign*}
+   \UB{\func{\tau_1}{pc}{\tau_2}} &= \UB{\tau_1} \join pc \join \UB{\tau_2} \\
+   \UB{\tfunc{X}{pc}{\tau}} &= pc \join \UB{\tau} \\
+   \UB{\says{\ell}{\tau}} &= \UB{\tau} \\
+   \UB{\sumtype{\tau_1}{\tau_2}} &= \UB{\tau_1} \join \UB{\tau_2} \\
+   \UB{\prodtype{\tau_1}{\tau_2}} &= \UB{\tau_1} \join \UB{\tau_2} \\
+   \UB{\voidtype} &= \bot
+\end{flalign*}
+}
+\vspace{-1em}
+\caption{Clearance function}
+\label{fig:UBFunction}
+\end{figure}
+\vspace{-1em}
+\begin{figure}[h]
+ {\small
+  \begin{mathpar}
+\erule{E-AppFailL}{}{{\lamc{x}{\tau}{pc}{\faila{\func{\tau}{pc}{\tau'}}}}~e}{\faila{\tau'}}\\
+
+\erule{E-TAppFail}{}{\faila{\tfunc{X}{pc}{\tau}}~\tau'}{{\faila{\subst{\tau}{X}{\tau'}}}}
+
+
+\erule{E-CaseFail}{}{\casexpan{\faila{\tau'}}{x}{e_1}{e_2}{}
+{}}{\faila{\tau}}
+
+\erule{E-PairFailL}{}{\paira{\faila{\tau_1}}{f_2}{\prodtype{\tau_1}{\tau_2}}}{\faila{\prodtype{\tau_1}{\tau_2}}}
+
+\erule{E-PairFailR}{}{\paira{f_1}{\faila{\tau_2}}{\prodtype{\tau_1}{\tau_2}}}{\faila{\prodtype{\tau_1}{\tau_2}}} \hfill
+\end{mathpar}
+}
+\vspace{-1em}
+\caption{ Remaining cases for propagation of $\fail{}$ terms. }
+\label{fig:Fullfailprop}
+\end{figure}
+\vspace{-1em}
+\begin{figure}[h]
+{\small
+\begin{align*}
+\mathscr{C}(\voidtype)                                       &=  \voidtype \\
+\mathscr{C}(\sumtype{\tau_1}{\tau_2})                        &=  \sumtype{\mathscr{C}(\tau_1)}{\mathscr{C}(\tau_2)}\\
+\mathscr{C}(\prodtype{\tau_1}{\tau_2})                       &=  \prodtype{\mathscr{C}(\tau_1)}{\mathscr{C}(\tau_2)}\\
+\mathscr{C}(\func{\tau_1}{pc}{\tau_2})                       &=  \func{\mathscr{C}({\tau_1})}{pc}{\mathscr{C}({\tau_2})}\\
+\mathscr{C}(\tlam{X}{pc}{\tau})                              &= \tlam{X}{pc}{\mathscr{C}(\tau)}\\
+\mathscr{C}(\says{(\selor{\ell_1}{\ell_2})}{\tau})           &=  \says{(\ell_1 \vee \ell_2)}{\mathscr{C}{(\tau)}}\\
+\mathscr{C}(\says{(\comor{\ell_1}{\ell_2})}{\mathscr{\tau}}) &=  \says{(\ell_1 \wedge \ell_2)}{\mathscr{C}{(\tau)}}\\
+ \textsf{(otherwise)~} \mathscr{C}(\says{\ell}{\tau})                               &=  \says{\ell}{\mathscr{C}(\tau)} 
+\end{align*}
+}
+\label{fig:Cfunction}
+\vspace{-1em}
+\caption{$\mathscr{C}$ function on types.}
+\end{figure}
+
+\begin{figure}
+{\small
+%\begin{flalign*}
+%& \boxed{\readjudge{\Pi}{p}{\tau}} &
+%\end{flalign*}
+\begin{mathpar}
+\Rule{R-Unit}
+     {}
+     {\readjudge{\Pi}{p}{\void}}
+\Rule{R-TFun}
+           {
+            \readjudge{\Pi}{p}{\tau}
+           }
+           {\readjudge{\Pi}{p}{\tfunc{X}{pc}{\tau}}}
+
+\Rule{R-Sum}
+     {\readjudge{\Pi}{p}{\tau_1} \\\\
+      \readjudge{\Pi}{p}{\tau_2}
+     }
+     {\readjudge{\Pi}{p}{\sumtype{\tau_1}{\tau_2}}}
+
+\Rule{R-Prod}
+     {\readjudge{\Pi}{p}{\tau_1} \\\\
+      \readjudge{\Pi}{p}{\tau_2}
+     }
+     {\readjudge{\Pi}{p}{\prodtype{\tau_1}{\tau_2}}}
+
+\Rule{R-Lbl}
+        {\rafjudge{\delegcontext}{p^{\confid}}{\ell^{\confid}} \\\\
+         \readjudge{\Pi}{p}{\tau} 
+        }
+        {\readjudge{\delegcontext}{p}{\says{\ell}{\tau}}}
+
+\Rule{R-Fun}
+           {
+            \readjudge{\delegcontext}{p}{\tau_1} \\\\
+            \readjudge{\delegcontext}{p}{\tau_2}
+           }
+          {\readjudge{\Pi}{p}{\func{\tau_1}{\pc}{\tau_2}}}
+\end{mathpar}
+}
+\caption{Reads judgments.}
+\label{fig:readjudgment}
+\end{figure}
+\begin{figure}
+  {\small
+\begin{flalign*}
+\last(x,y,&\blame,\ell_1,\ell_2) =~ \MATCH~ (x,y)~ \WITH \\
+|~& (\returnv{\ell}{v_1},\returnv{\ell}{v_2}) =  \\
+&~ \IF~ \entails{\blame}{\inF{\ell_1}{\FN}}~ \THEN~ \blame \\
+&~\ELSE~\IF~ \entails{\blame}{\inF{\ell_2}{\FN}}~\THEN~ \blame\\
+&~\ELSE~\IF~ \entails{\blame}{\inF{\ell}{\FN}}~\THEN~ \blame\\
+&~\ELSE ~\last(v_1,v_2,\blame,\ell,\ell) \\
+|~& (\return{\ell}{e_1},\return{\ell}{e_2}) = \last(e_1,e_2,\blame,\ell_1,\ell_2) \\ 
+|~& (\injia{\tau}{e_1},\injia{\tau}{e_2}) = \last(e_1,e_2,\blame,\ell_1,\ell_2) \\
+|~& (\paira{e_{11}}{e_{12}}{\tau},\paira{e_{21}}{e_{22}}{\tau}) =  \\
+  &~ \last(e_{11},e_{21},(\last(e_{12},e_{22},\blame,\ell_1,\ell_2)),\ell_1,\ell_2) ~ \\
+|~& (\runa{\tau}{e_1}{p},\runa{\tau}{e_2}{p}) = \last(e_1,e_2,\blame,\ell_1,\ell_2) \\
+|~& (\selecta{e_1}{e_2}{\tau},\selecta{e_1'}{e_2'}{\tau}) = \\
+  &~\last(e_1,e_1', (\last(e_2,e_2',\blame,\ell_1,\ell_2)),\ell_1,\ell_2) \\ 
+|~& (\comparea{\tau}{e_1}{e_2},\comparea{\tau}{e_1'}{e_2'}) = \\
+  &~ \last(e_1,e_1', (\last(e_2,e_2',\blame,\ell_1,\ell_2)),\ell_1,\ell_2) \\
+|~& (\lamc{x}{\tau}{pc}{e_1},\lamc{x}{\tau}{pc}{e_2}) = \last(e_1,e_2,\blame,\ell_1,\ell_2) \\
+|~& (\tlam{X}{pc}{e_1},\tlam{X}{pc}{e_2}) = \last(e_1,e_2,\blame,\ell_1,\ell_2) \\
+|~& (\proji{e_1},\proji{e_2}) = \last(e_1,e_2,\blame,\ell_1,\ell_2) \\ 
+|~& (\bind{x_1}{e_1}{e_1'},\bind{x_2}{e_2}{e_2'}) = \\
+  &~ \last(e_1,e_2,\last(e_1',e_2',\blame,\ell_1,\ell_2) ,\blame,\ell_1,\ell_2) \\
+|~& (\casexpan{e_1}{z}{e_2}{e_3}{\tau}, \\
+  &~~~ \casexpan{e_1'}{z}{e_2'}{e_3'}{\tau}) = \\
+  &~~~~~last(e_1,e_1',\last(e_2,e_2',\last(e_3,e_3',\blame,\ell_1,\ell_2),\ell_1,\ell_2),\ell_1,\ell_2)\\
+|~& (f_1,f_2) = \\
+  &~ \IF~ f_1 = f_2 \THEN ~ \blame \\
+  &~ \ELSE ~\IF~ \entails{\blame}{\inF{\ell_1}{\FN}}~ \THEN~ \blame \\
+  &~ \ELSE ~\IF~ \entails{\blame}{\inF{\ell_2}{\FN}} ~\THEN~ \blame~ \\
+  &~ \ELSE ~ "DNF"(\inF{\ell_1}{\FN} \AND \blame) \OR "DNF"(\inF{\ell_2}{\FN} \AND \blame)
+\end{flalign*}
+\begin{flalign*}
+&"DNF"(\inF{\ell}{\FN} \AND \blame)~ =>~ \MATCH~ \blame~ \WITH &\\
+&~~~~~~~~~  |~ \FN=\emptyset => \inF{\ell}{\FN} &\\
+&~~~~~~~~~  |~ \inF{\ell'}{\FN} => \inF{\ell}{\FN} \AND \inF{\ell'}{\FN} &\\
+&~~~~~~~~~  |~ \blame_1 \OR \blame_2 => "DNF"(\inF{\ell}{\FN} \AND \blame_1) \OR "DNF"(\inF{\ell}{\FN} \AND \blame_2) &\\
+&~~~~~~~~~   |~ \blame_1 \AND \blame_2 => \blame_1 \AND \blame_2  \AND \inF{\ell}{\FN} &\\
+\end{flalign*}
+}
+\caption{Function to construct blame constraint $\blame$.}
+\label{fig:Blameconst}
+\end{figure}
+
+\begin{figure}
+%\Rule{PartandL}
+%\begin{figure*}
+{\small
+\hfill
+  \begin{mathpar}
+\Rule{PAndL}
+{\rafjudge{\Pi}{p_i}{p} \\\\
+  k \in \{1,2\}
+ %\rafjudge{\Pi}{p_2}{p}
+}
+{\rafjudge{\Pi}{\comor{p_1}{p_2}}{p}}
+
+\Rule{PAndR}
+{\rafjudge{\Pi}{p}{p_1}\\\\
+ \rafjudge{\Pi}{p}{p_2}}
+{\rafjudge{\Pi}{p}{\comor{p_1}{p_2}}}
+
+\Rule{AndPAnd}
+{}
+{\rafjudge{\Pi}{p \wedge q}{\comor{p}{q}}}
+
+\Rule{PAndPOr}
+{}
+{\rafjudge{\Pi}{\comor{p}{q}}{\selor{p}{q}}}
+
+\Rule{ProjPAndL}
+{}
+{\rafjudge{\Pi}{\comor{p^{\pi}}{q^{\pi}}}{(\comor{p}{q})^{\pi}}}
+
+\Rule{ProjPAndR}
+{}
+{\rafjudge{\Pi}{(\comor{p}{q})^{\pi}}{\comor{p^{\pi}}{q^{\pi}}}}
+
+\Rule{ProjPOrL}
+{}
+{\rafjudge{\Pi}{\selor{p^{\pi}}{q^{\pi}}}{(\selor{p}{q})^{\pi}}}
+
+\Rule{ProjPOrR}
+{}
+{\rafjudge{\Pi}{(\selor{p}{q})^{\pi}}{\selor{p^{\pi}}{q^{\pi}}}}
+
+\Rule{POrOr}
+{}
+{\rafjudge{\Pi}{\selor{p}{q}}{p \vee q}}
+
+\\\\
+
+\Rule{AndDistPOrR}{}
+{\rafjudge{\Pi}{p \wedge (\selor{q}{r})}
+{\selor{(p \wedge q)}{(p \wedge r)}}}
+
+\Rule{POrDistAndR}{}
+{\rafjudge{\Pi}{\selor{p}{(q \wedge r)}}
+{(\selor{p}{q}) \wedge (\selor{p}{r})}}
+
+\Rule{AndDistPOrL}{}
+{\rafjudge{\Pi}
+{\selor{(p \wedge q)}{(p \wedge r)}}
+{p \wedge (\selor{q}{r})}}
+
+\Rule{{POrDistAndL}}{}
+{\rafjudge{\Pi}
+{(\selor{p}{q}) \wedge (\selor{p}{r})}
+{\selor{p}{(q \wedge r)}}}
+
+\Rule{{OrDistPOrR}}{}
+{\rafjudge{\Pi}{p \vee (\selor{q}{r})}
+{\selor{(p \vee q)}{(p \vee r)}}}
+
+\Rule{{OrDistPOrL}}{}
+{\rafjudge{\Pi}
+{\selor{(p \vee q)}{(p \vee r)}}{p \vee (\selor{q}{r})}}
+
+\Rule{{POrDistOrR}}{}
+{\rafjudge{\Pi}{\selor{p}{(q \vee r)}}
+{(\selor{p}{q}) \vee (\selor{p}{r})}}
+
+\Rule{{POrDistOrL}}{}
+{\rafjudge{\Pi}
+{(\selor{p}{q}) \vee (\selor{p}{r})}{\selor{p}{(q \vee r)}}}
+
+\\\\
+
+\Rule{AndDistPAndR}{}
+{\rafjudge{\Pi}{p \wedge (\comand{q}{r})}
+{\comand{(p \wedge q)}{(p \wedge r)}}}
+
+\Rule{PAndDistAndR}{}
+{\rafjudge{\Pi}{\comand{p}{(q \wedge r)}}
+{(\comand{p}{q}) \wedge (\comand{p}{r})}}
+
+\Rule{AndDistPAndL}{}
+{\rafjudge{\Pi}
+{\comand{(p \wedge q)}{(p \wedge r)}}
+{p \wedge (\comand{q}{r})}}
+
+\Rule{{PAndDistAndL}}{}
+{\rafjudge{\Pi}
+{(\comand{p}{q}) \wedge (\comand{p}{r})}
+{\comand{p}{(q \wedge r)}}}
+
+\Rule{{OrDistPAndR}}{}
+{\rafjudge{\Pi}{p \vee (\comand{q}{r})}
+{\comand{(p \vee q)}{(p \vee r)}}}
+
+\Rule{{OrDistPAndL}}{}
+{\rafjudge{\Pi}
+{\comand{(p \vee q)}{(p \vee r)}}{p \vee (\comand{q}{r})}}
+
+\Rule{{PAndDistOrR}}{}
+{\rafjudge{\Pi}{\comand{p}{(q \vee r)}}
+{(\comand{p}{q}) \vee (\comand{p}{r})}}
+
+\Rule{{PAndDistOrL}}{}
+{\rafjudge{\Pi}
+{(\comand{p}{q}) \vee (\comand{p}{r})}{\comand{p}{(q \vee r)}}}
+\hfill
+\end{mathpar}
+\label{fig:disjorandactsfor}
+}
+\caption{FLAQR Partial conjunction and disjunction acts-for rules.}
+\label{fig:partialactsforfull}
+\end{figure}
+
+\begin{figure}
+\begin{subfigure}{0.5\textwidth}
+{\small
+\begin{mathpar}
+    \Rule{Bracket}                                                                                 {
+           \rflowjudge{\delegcontext}{(H^\pi \sqcup \pc)}{{\pc'}} \\
+           e_1 = v_1  \iff e_2 \ne v_2 \\\\                        
+           \TValP{\Gamma;\pc';c}{e_1}{\tau} \\
+           \TValP{\Gamma;\pc';c}{e_2}{\tau} \\\\
+           \protjudge{\delegcontext}{H^{\pi}}{\cfun{\tau}}\\
+           \rafjudge{\Pi}{c}{pc} %\\ \pi \in \{"i","c"\}
+           }
+         {\TValGpcw{\bracket{e_1}{e_2}}{\tau}}
+
+  \Rule{Bracket-Values}                                                                            {
+           \TValGpcw{v_1}{\tau} \\                               
+           \TValGpcw{v_2}{\tau} \\\\  
+           \protjudge{\delegcontext}{H^\pi}{\cfun{\tau}} \\
+          \rafjudge{\Pi}{c}{pc}
+          }
+         {\TValGpcw{\bracket{v_1}{v_2}}{\tau}}
+
+
+  \Rule{BullR}
+  {\TValP{\Gamma;\pc;c}{e}{\tau} \\
+   %\pi \in \{"i","c"\}
+  }
+  {\TValP{\Gamma;\pc;c}{\bracket{e}{\bullet}}{\tau}}
+  \Rule{BullL}
+  {\TValP{\Gamma;\pc;c}{e}{\tau} \\
+   %\pi \in \{"i","c"\}
+  }
+  {\TValP{\Gamma;\pc;c}{\bracket{\bullet}{e}}{\tau}}
+
+  \Rule{Bracket-Fail-L}
+  {\TValP{\Gamma;\pc;c}{e}{\tau} \\
+   %\pi \in \{"i","c"\}
+  }
+  {\TValP{\Gamma;\pc;c}{\bracket{e}{\faila{\tau}}}{\tau}}
+
+  \Rule{Bracket-Fail-R}
+  {\TValP{\Gamma;\pc;c}{e}{\tau} \\
+  % \pi \in \{"i","c"\}
+  }
+  {\TValP{\Gamma;\pc;c}{\bracket{\faila{\tau}}{e}}{\tau}}
+  
+  \Rule{Bracket-Fail-A}
+  {\TValP{\Gamma;\pc;c}{e_i}{\tau} \\
+   e_i \not= \faila{\tau} \\
+   \pi = "a"
+  }
+  {\TValP{\Gamma;\pc;c}{\bracket{e_1}{e_2}}{\tau}}
+  
+   
+  \Rule{Bracket-Same}
+  {\TValP{\Gamma;\pc;c}{v}{\tau} \\
+  }
+  {\TValP{\Gamma;\pc;c}{\bracket{v}{v}}{\tau}}
+
+ \end{mathpar}
+}
+\caption{Typing rules for bracketed expressions.}
+\label{fig:bracketTypes}
+
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+{\small
+\begin{mathpar}
+\Rule{Bracket-Stack}
+        {
+          \TValGpcc{e}{\tau'}\\
+          \drflowjudge{\Pi}{pc}{pc'} \\\\
+          \forall i \in \{1,2\}.\TValGpcS{{s_i}}{[\tau']\tau}
+        }
+        {\TValGpcS{\distcon{e}{c}{\bracket{s_1}{s_2}}}{\tau}}
+
+\Rule{Bracket-Head}
+        {
+          \TValGpcc{\bracket{e_1}{e_2}}{\tau'}\\
+          \drflowjudge{\Pi}{pc}{pc'} \\\\
+          \TValGpcS{s}{[\tau']\tau}
+        }
+        {\TValGpcS{\distcon{\bracket{e_1}{e_2}}{c}{s}}{\tau}}
+%   \Rule{Bracket-Empty}
+%        {}
+%        {\TValGpcS{\bracket{empty}{empty}[\tau]}{\tau}}
+\end{mathpar}
+}
+\caption{Typing rules for bracketed configuration stack.}
+\label{fig:distbracketTypes}
+\end{subfigure}
+\caption{Bracketed typing rules.}
+\end{figure}
+
+\begin{figure*}
+\small
+\begin{mathpar}
+\berule*{B-CompareCommon}
+{\outproj{\comparea{\says{\txcmp{\ell_1}{\ell_2}}{\tau}}
+{\bracket{f_{11}}{f_{12}}}
+{\bracket{f_{21}}{f_{22}}}}{i}
+\stepsone f_i \quad \quad \forall i \in \{1,2\}}
+{\comparea{\says{\txcmp{\ell_1}{\ell_2}}{\tau}}{\bracket{f_{11}}{f_{12}}}{\bracket{f_{21}}{f_{22}}}}
+{\bracket{f_1}{f_2}}
+{}
+
+\berule*{B-CompareCommonRight}
+{\outproj{\comparea{\says{\txcmp{\ell_1}{\ell_2}}{\tau}}
+{\bracket{f_{11}}{f_{12}}}
+{f}}{i}
+\stepsone f_i \quad \quad \forall i \in \{1,2\}}
+{\comparea{\says{\txcmp{\ell_1}{\ell_2}}{\tau}}{\bracket{f_{11}}{f_{12}}}{f}}
+{\bracket{f_1}{f_2}}
+{}
+
+
+\berule*{B-SelectCommon}
+{\outproj{\selecta{\bracket{f_{11}}{f_{12}}}{\bracket{f_{21}}{f_{22}}}{\says{\txsel{\ell_1}{\ell_2}}{\tau}}}{i} \stepsone f_i
+\quad \quad \forall i \in \{1,2\}}
+{\selecta{\bracket{f_{11}}{f_{12}}}{\bracket{f_{21}}{f_{22}}}{\says{\txsel{\ell_1}{\ell_2}}{\tau}}}{\bracket{f_1}{f_2}}
+{}
+
+\berule*{B-SelectCommonLeft}
+{\outproj{\selecta
+{\bracket{f_{11}}{f_{12}}}
+{f}{\says{\txsel{\ell_1}{\ell_2}}{\tau}}}{i}
+\stepsone f_i \quad \quad \forall i \in \{1,2\}}
+{\selecta{\bracket{f_{11}}{f_{12}}}{f}{\says{\txsel{\ell_1}{\ell_2}}{\tau}}}
+{\bracket{f_1}{f_2}}
+{}
+
+
+\berule*{B-Fail1}{}
+{\return{\ell}{\bracket{v}{\faila{\tau}}}}
+{\bracket{\returnv{\ell}{v}}{\faila{\says{\ell}{\tau}}}}
+{}
+
+\berule*{B-Fail2}{}
+{\return{\ell}{\bracket{\faila{\tau}}{v}}}
+{\bracket{\faila{\says{\ell}{\tau}}}{\returnv{\ell}{v}}}
+{}
+
+\berule*{B-Fail}{}
+{\return{\ell}{\bracket{\faila{\tau}}{\faila{\tau}}}}
+{\faila{\tau}}
+{}
+
+\derule{B-RunLeft}{}{\distcon{\bracket{E[\runa{\tau}{e_1}{c'}]}{e_2}}
+{c}{s}}{\distcon{\bracket{\ret{e_1}{c}}{\bullet}}{c'}
+{\stackapp{\bracket{E[\expecta{\tau}]}
+{e_2}}{c}{s}}}
+
+\derule{B-RetRight}{
+ f' = {\begin{cases}
+     \returnv{\ell}{v} &\mbox{ if } f = v \\
+     \faila{\says{\ell}{\tau}} &\mbox{ if } f = \faila{\tau}
+      \end{cases}
+     }}
+ {\distcon{\bracket{\bullet}{\ret{f}{c}}}{c'}
+{\stackapp{\bracket{e_2}{E[\expecta{\says{\ell}{\tau}}]}}
+{c}{s}}}{\distcon{\bracket{e_2}{E[f']}}{c}{s}}
+
+\derule{B-RetV}
+{f_i' = {\begin{cases}
+          \returnv{\ell}{v} &\mbox{ if } f_i = v \\
+          \faila{\says{\ell}{\tau}} &\mbox{ if } f_i = \faila{\tau}
+         \end{cases}
+}}
+{\distcon{\ret{\bracket{f_1}{f_2}}{c}}{c'}
+{\stackapp{E[\expecta{\says{\ell}{\tau}}]}{c}{s}}}
+{\distcon{E[\bracket{f_1'}{f_2'}]}{c}{s}}
+{}
+ \end{mathpar}
+%\end{subfigure}
+\caption{Selected bracketed Evaluation Rules.}
+\label{fig:brackets}
+\end{figure*}
+
+\begin{figure*}
+  {\small
+\[
+\begin{array}{l l  l}
+\observefc{\faila{\tau}}{\Pi}{p} & = &  \circ \\
+\observefc{\select{e_1}{e_2}}{\delegcontext}{p} & = &
+      \select{\observefc{e_1}{\Pi}{p}}{\observefc{e_2}{\Pi}{p}} \\
+\observefc{\compare{e_1}{e_2}}{\delegcontext}{p} & = &
+\compare{\observefc{e_1}{\Pi}{p}}{\observefc{e_2}{\Pi}{p}} \\ 
+\observefc{\distcon{e}{c}{s}}{\Pi}{\ell} & = &
+      \begin{cases}
+        \observefc{e}{\Pi}{\ell} & s=\emptystack \\
+        \observefc{e}{\Pi}{\ell}\& \observefc{s}{\Pi}{\ell} \\
+      \end{cases} \\[1.25em] 
+\observefc{\stackapp{e}{c}{s}}{\Pi}{\ell} & = &
+     \begin{cases}
+       \observefc{e}{\Pi}{\ell}  & s=\emptystack \\
+       \observefc{e}{\Pi}{\ell} :: \observefc{s}{\Pi}{\ell} \\
+     \end{cases}\\ [1.25em]
+\observefc{E[\runa{\tau}{e}{c}]}{\Pi}{\ell} & = & \observefc{E[e]}{\Pi}{\ell}\\
+\observefc{\ret{e}{c}}{\Pi}{\ell} & = & \observefc{e}{\Pi}{\ell} \\ 
+\end{array}
+\]
+}
+\caption[Observation function for intermediate FLAQR terms]{Observation function for intermediate FLAQR terms (extended from FLAC \cite{jflac}).}
+\label{fig:observe}
+\end{figure*}

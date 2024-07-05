@@ -1,4 +1,4 @@
-\chapter{FLAQR : A programming model to apply consensus and replication securely} \label{ch:flaqr}
+\chapter{Flow-Limited Authorization for Quorum Replication} \label{ch:flaqr}
 \section{Introduction} 
 
 \label{sec:Intro}
@@ -44,39 +44,65 @@ high-level abstractions for replication and consensus that help
 manage tradeoffs between the availability and integrity of
 computation and data.
 
+\if 0
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[b]{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{chapters/pictures/tradeoff1.pdf}
+        \caption{Caption for figure 1}
+    \end{minipage}
+    \begin{minipage}[b]{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{chapters/pictures/tradeoff1.pdf}
+        \caption{Caption for figure 2}
+    \end{minipage}
+    \begin{minipage}[b]{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{chapters/pictures/tradeoff1.pdf}
+        \caption{Caption for figure 3}
+    \end{minipage}
+    \begin{minipage}[b]{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{chapters/pictures/tradeoff1.pdf}
+        \caption{Caption for figure 4}
+    \end{minipage}
+\end{figure}
+\fi 
+
 \begin{figure*}
   \centering
-  \begin{subfigure}[b]{0.23\textwidth}
+ \begin{minipage}[b]{0.4\textwidth}
   \centering
-  \includegraphics[scale=0.28]{chapters/pictures/tradeoff1.pdf}
+  \includegraphics[scale=0.5]{chapters/pictures/tradeoff1.pdf}
   \caption{More Integrity}
   \label{fig:compare}
-  \end{subfigure}
-  \begin{subfigure}[b]{0.23\textwidth}
-  \hspace{-0.4cm}
-  \centering
-  \includegraphics[scale=0.28]{chapters/pictures/tradeoff1.pdf}
+  \end{minipage}
+  \begin{minipage}[b]{0.4\textwidth}
+      \label{fig:select}
+ % \hspace{-0.4cm}
+  %\centering
+  \includegraphics[scale=0.5]{tradeoff1.pdf}
   \caption{More Availability}
-  \label{fig:select}
-  \end{subfigure}
-  \begin{subfigure}[b]{0.23\textwidth}
-  \centering
+  \end{minipage}
+  \begin{minipage}[b]{0.4\textwidth}
+  %\centering
   \hspace{-0.4cm}
-  \includegraphics[scale=0.28]{chapters/pictures/tradeoff1.pdf}
+  \includegraphics[scale=0.5]{chapters/pictures/tradeoff1.pdf}
   \caption{More Integrity and Availability}
   \label{fig:majority}
-  \end{subfigure}
-  \begin{subfigure}[b]{0.23\textwidth}
-  \centering
-  \includegraphics[scale=0.28]{chapters/pictures/tradeoff1.pdf}
+  \end{minipage}
+  \begin{minipage}[b]{0.4\textwidth}
+  %\centering
+  \includegraphics[scale=0.5]{chapters/pictures/tradeoff1.pdf}
    \caption{Heterogeneous trust}
   \label{fig:hetero}
-  \end{subfigure}
+  \end{minipage}
   %
+  \vspace{0.5cm}
   \caption{Integrity-Availability Trade-off}
   \label{fig:tradeoff}
 \end{figure*}
-
 Consider the scenarios in
 Figure~\ref{fig:tradeoff}.  Shaded boxes represent hosts in a distributed
 system.  Dashed lines denote outputs that contribute to the final
@@ -575,7 +601,7 @@ cannot cause failures that $p^{\avail}$ cannot.
 \end{figure}
 \fi
 \begin{figure}
-  \begin{subfigure}{0.5\textwidth}
+  \begin{minipage}{0.5\textwidth}
   {\small
   \begin{flushleft}
   %  \boxed{{e} \stepsone {e'}} \\
@@ -635,9 +661,9 @@ cannot cause failures that $p^{\avail}$ cannot.
 \end{mathpar}
 \end{flushleft}
 }
-\end{subfigure} 
+\end{minipage} 
 
-\begin{subfigure}{0.5\textwidth}
+\begin{minipage}{0.5\textwidth}
   \[
     \begin{array}{rcl}
       E & ::= & [\cdot] \sep E~e \sep v~E  \sep \return{\ell}{E}  \sep \bind{x}{E}{e} \\[0.4em]
@@ -646,7 +672,7 @@ cannot cause failures that $p^{\avail}$ cannot.
     \end{array}
   \]
 %\caption{operational semantics.}
-\end{subfigure} 
+\end{minipage} 
 \caption{FLAQR local semantics and evaluation context}
 \label{fig:semantics}
 \end{figure}
@@ -882,7 +908,7 @@ We discuss this aspect of remote execution in more detail in Section~\ref{sec:ty
 
 \section{FLAQR typing rules}\label{sec:types}
 \begin{figure*}
-%\begin{subfigure}
+%\begin{minipage}
 {\small
 \begin{flushleft}
   %\rulefiguresize
@@ -1091,7 +1117,7 @@ configuration is $\tau$,
 in which case the type of the whole stack is $[\tau]\tau$.
 
 \begin{figure}
-%\begin{subfigure}
+%\begin{minipage}
   {\small
 \begin{flushleft}
   %\rulefiguresize
@@ -1430,9 +1456,9 @@ the implied quorum system.
 
 \begin{definition}[Initial blame constraint]
   \label{bist}
-  For toleration set $\trans{\quo}$ of the form
-  $\{\reachn{(p^1_1 \wedge ... \wedge p^1_{m_1})}, ..., \reachn{(p^{k}_1 \wedge ... \wedge p^{k}_{m_{k}})} \}$ 
-  the initial blame constraint $\blame_{init}$ is defined as a (logical) disjunction
+  For toleration set $\trans{\quo}$ of the form as follows:
+  $$\{\reachn{(p^1_1 \wedge ... \wedge p^1_{m_1})}, ..., \reachn{(p^{k}_1 \wedge ... \wedge p^{k}_{m_{k}})} \}$$
+  then the initial blame constraint $\blame_{init}$ is defined as a (logical) disjunction
   of conjunctions:
   {\small
   \begin{align*}
@@ -1739,6 +1765,7 @@ but the additional proof obligations are relatively easy to discharge.
 
 \begin{table}
 {\small
+\centering
 \begin{tabular}{ |c|c|c| } 
  \hline
   & \multicolumn{2}{l|}{Can have less restrictive type} \\
@@ -1920,7 +1947,7 @@ condition $\rafjudge{\Pi}{c'}{pc}$ is true.% already.
 
 \begin{figure*}
 \begin{mdframed}
-\begin{subfigure}{1\textwidth}
+\begin{minipage}{1\textwidth}
 \begin{lstlisting}
 $(\lamc{x}{\tau_a}{pc}{}\lamc{y}{\tau_b}{pc}{}\lamc{z}{\tau_c}{pc}{}$
 $\quad(\selex{}$
@@ -1934,8 +1961,8 @@ $~(\runa{\tau_a}{e_a}{a})~(\runa{\tau_b}{e_b}{b})~(\runa{\tau_c}{e_c}{c})$
 \end{lstlisting}
 \caption[size=2pt]{FLAQR implementation of majority quorum example}
 \label{flaqrimpl2.1}
-\end{subfigure}
-\begin{subfigure}{1\textwidth}
+\end{minipage}
+\begin{minipage}{1\textwidth}
 \begin{lstlisting}
 $(\lamc{arg_1}{\tau_b}{pc}{(\lamc{arg_2}{\tau_{b'}}{pc}{}}$
 $\quad(\selonly$
@@ -1947,7 +1974,7 @@ $\quad(\select{(arg_1)}{(arg_2))})))(\runa{\tau_{b'}}{e'}{b'}))(\runa{\tau_b}{e}
 \end{lstlisting}
 \caption{FLAQR implementation of available largest balance example}
 \label{flaqrimpl2.2}
-\end{subfigure}
+\end{minipage}
 \end{mdframed}
 \end{figure*}
 
