@@ -55,3 +55,10 @@ availLarBal = do
 \end{minted}
 \caption{\HasChor\ (fault-tolerant features added) implementation of largest available balance}
 \end{figure}
+
+% For hiding the leakages associated with SSE, different techniques have been
+% used. ORAM based approaches are known to be most popular for hiding access pattern leakages. 
+% %This is because, the server can correlate two ORAM access of the same data with negligible probability. 
+% But ORAM based solutions are also very inefficient. 
+% %because of the extra memory accesses. 
+% Padding techniques are used to hide volumetric leakages. Again,it will only cause the client to read extra data on the server. Fully homomorphic encryption also incurs huge computational overhead. In a nutshell, all the mentioned %techniques offer security but at the same time make SSE operations time consuming. 

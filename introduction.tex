@@ -1,160 +1,314 @@
 \chapter{Introduction}
 %\subsection{Distributed Systems and Decentralized Trust.}
-In modern day computing distributed systems are ubiquitous. Distributed systems support all kinds of online services by integrating hosts across independent domains. But building secure distributed systems is a complex problem. Mainly due to the fact that the trust is decentralized; participating hosts do not trust each other or any central entity. Although the hosts within a domain may have mutual trust, to perform any meaningful computation, data needs to flow securely from one domain to another. Moreover, in this age of cloud computing and cloud storage, data also needs to be stored securely in remote databases, outside the trusted domain. There are different aspects that need to be taken care of to maintain inter-domain security and privacy. Problems like crash faults, byzantine faults, network partitioning, malicious servers, etc. make this problem even more complicated. Different mechanisms are used to keep data and computation secure in distributed systems. We will discuss two kinds of mechanisms in detail in this thesis. 
+In modern computing, distributed systems are ubiquitous, supporting various online services by integrating hosts across independent domains. 
 %
-First, we will discuss about a security model called Information Flow Control (IFC), which enables one to design security policies to describe the end-to-end behavior of the distributed systems. Specifically, we will be using the Flow-Limited Authorization model (FLAM) \cite{flam} to design the security policies. FLAM offers a unified model for reasoning about both information flow control and authorization. 
+However, building secure distributed systems is complex due to decentralized trust; i.e. participating hosts do not trust each other or any central entity. 
 %
-Second, we will discuss about a Haskell library called \FlameChor, that incorporates availability policies into \FLAM, and integrates fault-tolerance features and IFC into choreographic programming. 
+While hosts within a domain may have mutual trust, secure data flow between domains is necessary for meaningful computation and transactions (e.g. using one's credit card details on an e-commerce website for online shopping). 
 %
-Third, we will discuss about Searchable Encryption (also referred as Structured Encryption and Encrypted Search), a technique that enables users to perform operations on encrypted data that is stored on untrusted remote databases securely. 
-Particularly, we will present a novel technique that integrates forward and backward privacy with I/O efficiency for dynamic searchable encryption.
+Additionally, in this era of cloud computing and cloud storage, data must be securely stored to and accessed from remote databases outside the trusted domain. 
+%
+Maintaining inter-domain security and privacy involves addressing various issues, such as crash faults, Byzantine faults, network partitioning, and malicious servers. 
+%
+This complexity necessitates different mechanisms to ensure data and computation security in distributed systems. 
+%
+Quorum replication, information-flow control, and encryption are three widely used techniques in this regard. 
+%
+Throughout the chapters of this thesis, we will explore the design and implementation details of innovative methodologies based on these three techniques, aiming to make distributed systems trustless.
+%
+%
+% First, this thesis presents a general purpose programming model called Flow Limited Authorization for Quorum Replication (FLAQR), that enables programmers to write secure decentralized applications, using quorum replication and information-flow-control. 
+% %
+% FLAQR uses the Flow-Limited Authorization model (FLAM) \cite{flam} to implement information flow control. 
+% %
+% FLAM algebra offers a unified model for reasoning about both information flow control and authorization. 
+% %
+% FLAQR incorporates availability policies into the FLAM algebra which only 
+% reasoned about confidentiality and integrity policies. 
+% %
+% Another significant contribution of FLAQR is the introduction of secure \emph{fault-tolerant} language constructs to build quorum protocols.
+% %
+% FLAQR is the first language that addresses systems that compose multiple quorums or consider
+% quorum participants with heterogeneous trust relationships.
+% %
+% Next, the thesis presents an extension of FLAQR, which has language constructs to support secret sharing as a form of declassification. 
+% %
+% The resulting language is called FLAQR$^+$. 
+% %
+% Next, the thesis presents FlameChor, a Haskell library called \FlameChor, that incorporates availability policies into \FLAM, and integrates fault-tolerance features and information-flow-control into choreographic programming.
+% %
+% Finally, we will discuss about Searchable Encryption (also referred as Structured Encryption and Encrypted Search), a technique that enables users to perform operations on encrypted data that is stored on untrusted remote databases securely. Particularly, we will present a novel technique that integrates forward and backward privacy with I/O efficiency for dynamic searchable encryption.
 
-%that will be discussed in detail in this thesis are Information Flow Control (IFC) and Structured Data Encryption, specifically Symmetric Searchable Encryption (SSE). 
 
 
-\subsection{Flow-Limited Authorization for quorum replication.}
-Information flow control (IFC) provides a framework for specifying policies on the data that flows around in the distributed systems. The data is annotated with security labels. The data may flow from one host to another only if the security policy associated with the labels and the interacting hosts satisfy. IFC policies are of three kinds: confidentiality, integrity and availability policies. 
+\section{Flow-Limited Authorization for quorum replication.}
+\noindent This thesis presents a general purpose programming model called Flow Limited Authorization for Quorum Replication (FLAQR), that enables programmers to write secure decentralized applications, using quorum replication and information-flow-control. 
+%
+\paragraph{Information-flow-control.} Information-flow-control (or \textbf{IFC} in short) is a security model, which enables one to design security policies 
+to describe the end-to-end behavior of the distributed system. 
+%
+Specifically, IFC provides a framework for specifying policies on the data that flows around in the distributed systems. 
+%
+The data is annotated with security labels. 
+%
+The data may flow from one host to another only if the security policy associated with the labels and the interacting hosts satisfy. 
+%
+IFC policies are of three kinds: confidentiality, integrity and availability policies. 
 \begin{itemize}
-\item Confidentiality policy ensures that secret data does not flow to public domain. 
-\item Integrity policy ensures that a host does not accept data that is coming from an untrusted domain. 
-\item Availability policy ensures that highly available data does not depend on data that is coming from low available domain. 
+\item A confidentiality policy ensures that secret data does not flow to public domain. 
+\item An integrity policy ensures that a host does not accept data that is coming from an untrusted domain (i.e. domain that the host does not trust). 
+\item An availability policy ensures that highly available data does not depend on data that is coming from low available domain. 
 \end{itemize}
 
-There have been a lot of work for ensuring confidentiality and integrity policies in ditributed systems \cite{jfabric,flac,jflac,deflate,steve06,myerspopl99,zznm01-award}. But, very less attention has been paid to availability policies. The only two works we are aware of that combined availability with IFC in the past are by Zheng and Myres \cite{qimp, avail}. Although \cite{qimp, avail} enforces availability with IFC, their notion of information flow labels are based on decentralized label model (DLM) \cite{myers-phdthesis,myers-phd-tr}. In that model, security labels and host principals are considered to be from two separate set of entities. Arden et. al. introduced Flow Limited Authorization Model(FLAM)\cite{flam,flamtr} 
-in their CSF'15 paper. In this model security labels and host principals are considered to be elements of the same security lattice. The security policies in FLAM are represented as boolean expressions. FLAM talks about only confidentiality and integrity policies. One of the major contributions of this thesis is incorporating availability policies into FLAM algebra. %We will discuss this in depth in Chapter \ref{ch:flaqr}.
+There have been a lot of work for ensuring confidentiality and integrity policies in ditributed systems \cite{jfabric,flac,jflac,deflate,steve06,myerspopl99,zznm01-award}. 
+%
+But, very less attention has been paid to availability policies. 
+%
+The only two works we are aware of that combined availability with IFC in the past are by Zheng and Myres \cite{qimp, avail}. 
+%
+Although \cite{qimp, avail} enforces availability with IFC, their notion of information flow labels are based on decentralized label model (DLM) \cite{myers-phdthesis,myers-phd-tr}. 
+%
+In that model, security labels and host principals are considered to be from two separate set of entities. 
+%
+Arden et. al. introduced Flow Limited Authorization Model(FLAM)\cite{flam,flamtr} 
+in their CSF'15 paper. 
+%
+In this model security labels and host principals are considered to be elements of the same security lattice. 
+%
+The security policies in FLAM are represented as boolean expressions. 
+%
+FLAM talks about only confidentiality and integrity policies. 
+%
+One of the major contributions of FLAQR is incorporating availability policies into FLAM algebra. 
+%We will discuss this in depth in Chapter \ref{ch:flaqr}.
+%
 
-Reasoning about availability is crucial for fault-tolerant systems. In fact, fault-tolerance is one of the main design goals of distributed systems. To realize availability with IFC policies, we take the help of quorum based systems. Replicating data and 
-computation in quorum systems is a well-known technique for making distributed applications fault-tolerant. A quorum system is a collection of subsets of a set of hosts; each subset is called a quorum. The quorums
-in the quorum system need to overlap enough to ensure consistency.
-Quorum replication has a failure model which specifies 
-which hosts can fail. Specifically it is expressed in
-terms of the maximum number of tolerated faulty hosts. 
-Quorum replication can either be homogeneous or heterogeneous.
-In homogeneous quorum replication systems, 
-all the participating hosts are equally trusted. 
-Where as, in heterogeneous quorum replication systems, some of the hosts
-may be trusted more than the others. The quorum system makes progress 
+\paragraph{Quorum replication.} Reasoning about availability is crucial for fault-tolerance. And, 
+fault-tolerance is one of the main design goals of distributed systems. 
+%
+Quorum systems are a popular method for achieving fault tolerance in distributed applications by replicating data and computation across multiple hosts.
+%
+A quorum system is a collection of subsets of a set of hosts, with each subset referred to as a quorum. 
+%
+The quorums in the system must overlap sufficiently to ensure consistency.
+%
+Quorum replication operates under a failure model that specifies which hosts can fail. 
+%
+Specifically, it is defined by the maximum number of faulty hosts that can be tolerated in the system.
+%
+Quorum replication can be either homogeneous or heterogeneous. 
+In homogeneous quorum replication systems, all participating hosts are equally trusted. 
+%
+In contrast, heterogeneous quorum replication systems may have some hosts that are trusted more than others.
+%
+The quorum system makes progress 
 if a subset of hosts (i.e. one of the quorums) reach consensus 
-i.e. agree on their computed results. Thus, quorum systems can offer only availability and integrity guarantees of the result, but not confidentiality. While IFC and quorum systems together can enforce all three (i.e. confidentiality, integrity and availability) security properties.
+by agreeing on their computed results. 
+%
+Thus, quorum systems can not only provide increased availability through replication, but also offer increased integrity through consensus. 
+%
+Although, quorum systems do not provide any confidentiality guarantees. 
+%While IFC and quorum systems together can enforce all three (i.e. confidentiality, integrity and availability) security properties.
 
-
-Writing quorum based programs can be a painstaking task. There can be many 
- repetitive checks for the parts of the code running on each individual quorum, 
- making it verbose and hard to debug. 
- On top of that the programmers can make logical mistakes. 
- Not to mention, the unsafe data flows may take place as well, 
- while running the code. It would be nice to have a programming
- language specifically designed to build fault-tolerant applications,
- so that the developers can write programs that are secure by construction.
- It is not as straight-forward as it sounds, mainly because 
- of the different inter and intra domain trust relationships among the 
- hosts in a federated system. In Chapter \ref{ch:flaqr} we will discuss 
- about Flow Limited Authorization for Quorum Replication (FLAQR), 
- a general purpose programming framework for building distributed
-applications with heterogeneous quorum replication protocols.
-FLAQR enforces end-to-end information using the modified version of Flow-limited Authorization model, that enforces all three kinds of security policies. Later, in chapter \ref{ch:flaqrplus}, we will also see how we can extend FLAQR to also support secret sharing.
+%-------------------
+Writing quorum-based programs can be a painstaking task. 
+%
+There can be many repetitive checks for the parts of the code running on each individual quorum, making it verbose and hard to debug. 
+%
+Additionally, programmers can make logical mistakes, and unsafe data flows may occur while running the code. 
+%
+A programming language specifically designed to build fault-tolerant applications would be beneficial, 
+allowing developers to write programs that are secure by construction.
+%
+ It is not as straightforward as it sounds, mainly due to the different inter and intra-domain 
+ trust relationships among the hosts in a federated system.
+ %
+ FLAQR is the first language that lets you write programs for heterogeneous quorum systems.
+%  %In Chapter \ref{ch:flaqr} we will discuss 
+%  about Flow Limited Authorization for Quorum Replication (FLAQR), 
+%  a general purpose programming framework for building distributed
+% applications with heterogeneous quorum replication protocols.
+FLAQR enforces end-to-end information security using FLAM algebra that is extended with availability policies.
+FLAQR comes with a type-sytem that ensures any FLAQR program doea not violate their type-level specifications.
+%
+FLAQR is presented in detail in chapter \ref{ch:flaqr}. In chapter \ref{ch:flaqrplus}, an extended version of FLAQR is presented 
+that supports supports secret sharing as a form of declassification.
 
 \paragraph{Threat model of IFC based systems vs Distributed systems.}
- Different systems are built keeping different threat models in mind. We need to prove security guarantees of a system with respect to its threat model. In an IFC based system the information flow labels are represented as points in a security lattice, and the underlying type system statically enforces IFC policies on data processed by the programs. The hosts in IFC based systems is represented as principals. In Flow Limited Authorization Model principals and security labels are treated equivalently, i.e. they are part of the same security lattice. The most powerful attacker in this system is represented as a conjunction of atomic labels and is a single point in the security lattice. 
- 
- In distributed systems, we need to deal with malicious hosts. The security
- assumption that most fault-tolerant distributed protocols like Paxos\cite{paxos-techreport,paxos}, pBFT\cite{pbft} etc. have is that  
-there can only be a bounded number of (say $f$) faulty hosts. In order 
-to prove security of distributed fault-tolerant programs that are
-annotated with IFC labels, we need to combine the threat model that traditional IFC based systems have with the bounded fault assumptions of distributed systems.
-In order to achieve this goal, we deviate from the \emph{single most powerful} attacker model of IFC based systems and represent the most powerful attackers as a set. We pay special attention to availability attackers, as that is something missing in the literature so far, from the point of view of Flow Limited Authorization Model. We will discuss this attacker model in detail in \ref{sec:availAttacks}
+ Different systems are built keeping different threat models in mind. 
+ %
+ Security guarantees of a system is proven with respect to its threat model. 
+ %
+ In an IFC based system the information flow labels are represented as points in a security lattice, and the underlying type system statically enforces IFC policies on data processed by the programs.
+ %
+ The hosts in IFC based systems is represented as principals. 
+ %
+ In Flow Limited Authorization Model\cite{flam} principals and security labels are treated equivalently, i.e. they are part of the same security lattice. 
+ %
+ The most powerful attacker in this system is represented as a conjunction of the atomic labels 
+ and is a single point in the security lattice. 
+ %
+Distributed systems deal with malicious hosts. 
+%
+The security assumption underlying most fault-tolerant distributed protocols 
+(such as Paxos\cite{paxos-techreport,paxos} and pBFT\cite{pbft}) is that there can only be a 
+bounded number (say $f$) of faulty hosts.
+%
+To prove the security of distributed fault-tolerant programs annotated with IFC labels, the threat model of traditional IFC-based systems must be combined with the bounded fault assumptions of distributed systems.
+%
+To achieve this goal, the \emph{single most powerful} attacker model of IFC-based systems needs to be revised, and the most powerful attackers need to be represented as a set.
+%
+This new attacker model is discussed in detail in section \ref{sec:availAttacks} of chapter \ref{ch:flaqr}.
+%
+Special attention is paid to availability attackers, as this aspect has been missing in the literature from the perspective of the Flow Limited Authorization Model.
+%We will discuss this attacker model in detail in \ref{sec:availAttacks}
 
 %\paragraph{Security guarantees in terms of Noninterference.}
 %\subsection{Flow-Limited Authorization for Secret-sharing}Chapter \ref{ch:flaqrplus}
-\subsection{Integrating fault-tolerant features into \Flame\ Haskell library}
-In the pursuit of implementing the fault-tolerant features of FLAQR programming model, we developed a Haskell library called FlameChor. FlameChor is not a direct implementation of FLAQR, in fact it is a combination of few distinct features. Our journey began by enhancing Flame—a Haskell implementation of FLAM—with availability policies, as Flame originally supported only confidentiality and integrity policies. The next step involved incorporating the IFC policies from Flame into HasChor, a functional choreographic programming framework. Building on this, we then added FLAQR-inspired fault-tolerant language constructs to HasChor. The result of these efforts is FlameChor, a Haskell library that merges the capabilities of FLAME with the choreographic programming framework offered by HasChor and FLAQR based fault-tolerant language features. Finally, to validate the development, we implemented examples such as a 2/3 majority quorum and leader-based consensus in FlameChor. In chapter \ref{ch:flamechor}, we will talk about \FlameChor\ implementation in detail.
+\section{FlameChor: a Haskell library}
+\noindent In the pursuit of implementing the fault-tolerant features of the FLAQR programming model, a Haskell library called FlameChor is developed. 
+%
+FlameChor is not a direct implementation of FLAQR; rather, it is a combination of several distinct features. 
+%
+FlameChor is implemented in few stages. 
+%
+The journey began with the enhancement of FLAME\cite{nmifc}—a Haskell implementation of FLAM, with availability policies, 
+as Flame originally supported only confidentiality and integrity policies. 
+%
+The next step involved incorporating the IFC policies from the extended version of FLAME into HasChor\cite{haschor}, which is a functional choreographic programming framework. 
+% 
+Building on this, FLAQR-inspired fault-tolerant language constructs were added to HasChor. 
+%
+The result of these efforts is FlameChor, a Haskell library that merges the information-flow-control of FLAME with the choreographic programming framework offered by HasChor and FLAQR-based fault-tolerant language features.
+%
+Finally, to validate the development, examples such as a 2/3 majority quorum and leader-based consensus were implemented in FlameChor. 
+%
+In Chapter \ref{ch:flamechor}, the implementation of \FlameChor\ is discussed in detail.
 
 
-\subsection{Dynamic Searchable Encryption.}
-Vast majority of online applications deal with huge amount of data. In almost every distributed application, clients store their data on a remote server. Mainly because client has limited memory (cell phones for instance). Obviously, this data cannot be stored in clear, because most of the times these data has sensitive information (e.g. SSN information, medical information, bank details, personal emails etc). This is why the client first encrypts its data and then stores it in the remote server. But there is a problem with naively encrypting this data. If the client needs to access or update the data, it will have to download all of it locally. This is not a practical approach. As a solution Song et. al.\cite{song2000practical} introduced symmetric searchable encryption that provides a way for accessing this encrypted data without downloading it all. Since then a series of work has been done on searchable encryption \cite{cash2013highly,kamara2017boolean,faber2015rich,Demertzis17,compress, demertzis2018practical,Demertzis16,faber2015rich,Kamara16}.
+\section{Privacy and Efficiency of Dynamic Searchable Encryption schemes.}
+\noindent This thesis presents the first set of Dynamic Searchable Encryption(DSE) schemes that are Forward and Backward private and also achieves I/O-efficiency. 
+\paragraph{Dynamic Searchable Encryption.}
+The vast majority of distributed applications handle enormous amounts of data. 
+%
+In almost every application, clients store their data on remote servers, primarily because clients have limited memory (such as cell phones). 
+%
+Obviously, this data cannot be stored in plaintext because it often contains sensitive information (e.g., SSNs, medical records, bank details, personal emails, etc.). 
+%
+Therefore, clients first encrypt their data before storing it on the remote server. 
+%
+However, there is a problem with naively encrypting this data: the client cannot perform any computations on the encrypted data. %
+If the client needs to access or update the data, it must download all of it locally, which is impractical. 
+%
+As a solution, Song et al.\cite{song2000practical} introduced symmetric searchable encryption, which provides a way to perform queries on encrypted data. 
+%
+Since then, a series of works have been done on searchable encryption \cite{kamara2017boolean,faber2015rich,Demertzis17,compress,demertzis2018practical,Demertzis16,faber2015rich,Kamara16}.
 
 
-%\subsection{Searchable Encryption.}
-Searchable encryption is a special form of structured encryption. In this thesis we will only consider symmetric key searchable encryption schemes (SSE). Searchable encryption enables the client to outsource its data to the remote server, while retaining client's ability to access it. 
-The main idea is that given a set of encrypted documents the client needs to be able to perform keyword searches in those documents. 
+Searchable encryption is a special form of structured encryption, and also popularly known as encrypted search. 
 %
-In order to achieve this goal, the client first creates an inverted index from the documents. Then it encrypts the index and the documents separately and then uploads both of those to the server. The inverted index maps a keyword to all the document addresses (or identifiers) that contain it. 
+In this thesis we will only consider symmetric key searchable encryption schemes (SSE). 
 %
-During a search query the client queries the index first, retrieves the document identifiers and then retrieves the actual documents with the help of the identifiers. 
+Searchable encryption enables clients to outsource their data to a remote server in ecrypted form while retaining the ability to access it without downloading it all. 
 %
-Searchable encryption can be of two kinds: static and dynamic. For static schemes, the set of searchable documents are fixed from the beginning. 
+The main idea is that, given a set of encrypted documents, the client needs to be able to perform keyword searches on those documents.
 %
-Once they are uploaded at the server, only search queries can be performed on them. 
+To achieve this, the client first creates an inverted index from the documents. The index and the documents are then encrypted separately and uploaded to the server. 
 %
-Where as a dynamic searchable encryption (DSE) scheme, along with searches, allows adding new and deleting (and also updating) old documents. 
+The inverted index maps keywords to the document addresses (or identifiers) that contain them. 
+%
+During a search query, the client queries the index first, retrieves the document identifiers, and then retrieves the actual documents using these identifiers.
+%
+Searchable encryption can be of two kinds: static and dynamic. In static schemes, the set of searchable documents is fixed from the beginning. Once uploaded to the server, only search queries can be performed on them. %
+In contrast, a dynamic searchable encryption (DSE) scheme allows for adding new documents, deleting old ones, and updating existing ones, in addition to performing searches.
 
-\paragraph{Leakages in Searchable Encryption.} 
-Ideally there should not be any leakage in a searchable encryption scheme. But, to make a searchable encryption scheme practical some leakages are tolerated. 
-%
-These leakages can be of different kinds. The information leakage that takes place during the initialization of the SSE scheme is called the $total~leakage$, which includes number of entries and size of the search index and size of the documents. This leakage is unavoidable. 
-%
-The leakage that happens during performing client queries are of two kinds: $search$ and $access$ $pattern$ leakages. Access pattern leakages, again, is of two kinds: $volume$ and $overlapping$ pattern leakages. Search pattern reveals if two queries are for the same keyword. 
-%
-Volume pattern reveals the size of the query result. Overlapping pattern reveals if there are common documents in the result of any two queries. Prior works have shown that the above mentioned leakages can be exploited to perform query and database recovery attacks. The most secure approach to defend against $search$ and $overlapping$ pattern leakages is to use Oblivious RAM (ORAM). ORAM hides memory access patterns, so that the server can not correlate between accesses to the same memory location. But ORAM is an expensive tool, which comes with a significant computational overhead. Recursive ORAMs also incur logarithmic number of rounds of communication with the server. On the other hand, the simplistic approach for mitigating $volume$ $pattern$ leakages is to pad every result size to the worst case result size. This approach is also very impractical for real world applications. Not only this approach blows up the index to be quadratic in size, it also increases the search time. Dynamic symmetric searchable encryption (DSE) leaks additional information due to the insertions and deletions. There are two security notions for dynamic SSE schemes: $forward$ and $backward$ privacy. Forward privacy ensures that a new document insertion does not reveal the keywords this document contains that have been queried before. Backward privacy ensures that if a document $d$ containing keyword $w$ is deleted before a search for $w$, then the result of this search does not reveal anything about $d$. 
- Backward privacy is again catagorized into three types. (a) Type-I reveals only the identifiers of documents currently containing the searched keyword and timestamp of when the documents were inserted, (b) Type-II additionally reveals the timestamps and type of  (i.e. insertion and deletions) of all prior updates for the searched keywords, (c) Type-III also reveals for each deletion which insertion it canceled. Achieving forward privacy for dynamic SSE schemes is important as otherwise it suffers from adversarial document-injection attacks.              
 
-\paragraph{Client Storage}
-Minimizing the client storage is another important aspect of designing practical SSE schemes. This is because in real world applications the client storage is very limited (e.g. in cell phones). Also, sending the data to the server as much as possible, makes it flexible for the user to switch between devices and use the same data over the cloud. Vast majority of the efficient DSE schemes maintain one 
-counter for each unique keyword. This counter is either stored locally at the
-client or stored in encrypted form at the server and accessed obliviously. 
-ORAM based solutions need to maintain a position map 
-in the server, although we can get rid of the position map with recursive ORAMs.
-Demertzis et. al. proposed three DSE schemes in their NDSS'20 \cite{SDa} paper 
-with constant client storage. In \cite{mishraoblix} they use SGX to store the client's internal state at the server.
+\paragraph{Leakages and Forward \& Backward Privacy.} 
+Ideally, there should not be any leakage in a searchable encryption scheme. However, to make a searchable encryption scheme practical, some leakages are tolerated. These leakages can be of different kinds.
+%
+The leakage that occurs during the initialization of the SE scheme is called the \emph{setup leakage}, or \emph{total leakage}, which includes the number of entries, the size of the search index, and the size of the documents. This leakage is unavoidable.
 
-\paragraph{Threat model in searchable encryption.}
-Attacks in distributed systems can be of different types. 
-The type of the attack depends on multiple factors. 
-It depends on the adversarial model in which they work, 
-the information the adversary have, 
-or the inputs the adversary can produce.  
-Query-recovery attacks recover the queries made by the client, 
-whereas data-recovery attacks recover client's data.  
-For snapshot attacks, the adversary needs a hold over the document
-collection, whereas for persistent attacks it needs to know the query
-tokens as well. Sampled-data attacks need a sample from 
-the distribution that is very close to the distribution 
-of the original client data; known-data attacks require knowledge of a subset of the client's data collection, and known-query attacks require
-knowledge of a subset of the client queries. 
-Attackers can be of two types: passive and active.
-Passive attackers only observe the queries and memory 
-access patterns at the server and based on the 
-observations they try to infer the queries and client's data
-accessed by the queries.
-Active attackers can also inject data into the database.
+The leakage that occurs during client queries can be divided into two kinds: \emph{search-pattern} and \emph{access-pattern} leakages. Access pattern leakages are further divided into \emph{volume} and \emph{overlapping-pattern} leakages. Search pattern leakage reveals if two queries are for the same keyword. Volume pattern leakage reveals the size of the query result. Overlapping pattern leakage reveals if there are common documents in the results of any two queries. These leakages should be minimized as much as possible as prior works have shown that the aforementioned 
+leakages can be exploited to perform query and database recovery attacks.
+%
+The most secure approach to defend against \emph{search} and \emph{overlapping} pattern leakages is to use Oblivious RAM (ORAM). ORAM hides memory access patterns so that the server cannot correlate accesses to the same memory location. On the other hand, a simplistic approach for mitigating \emph{volume-pattern} leakages is to pad every result with extra (dummy) items.
+%
+
+Dynamic symmetric searchable encryption (DSE) leaks additional information due to insertions and deletions. There are two security notions for dynamic SSE schemes: \emph{forward} and \emph{backward} privacy. Forward privacy ensures that a new document insertion does not reveal the keywords this document contains that have been queried before. Lack of forward privacy makes the scheme susceptible to file-injection attacks\cite{yqbu}. Backward privacy ensures that a search query does not reveal anything about entries that have already been deleted. For example, if a document \(d\) containing keyword \(w\) is deleted before a search for \(w\), then the result of this search does not reveal anything about \(d\). To comply with privacy regulation laws like GDPR, CCPA, HIPAA etc. ensuring backward privacy is important.
+%
+Backward privacy is categorized into three types:
+(a) Type-I reveals only the identifiers of documents currently containing the searched keyword and the timestamp of when the documents were inserted,
+(b) Type-II additionally reveals the timestamps and types of all prior updates for the searched keywords (i.e., insertions and deletions),
+(c) Type-III also reveals which insertion each deletion canceled.
+
+% \paragraph{Client Storage}
+% Minimizing the client storage is another important aspect of designing practical SSE schemes. This is because in real world applications the client storage is very limited (e.g. in cell phones). Also, sending the data to the server as much as possible, makes it flexible for the user to switch between devices and use the same data over the cloud. Vast majority of the efficient DSE schemes maintain one 
+% counter for each unique keyword. This counter is either stored locally at the
+% client or stored in encrypted form at the server and accessed obliviously. 
+% ORAM based solutions need to maintain a position map 
+% in the server, although we can get rid of the position map with recursive ORAMs.
+% Demertzis et. al. proposed three DSE schemes in their NDSS'20 \cite{SDa} paper 
+% with constant client storage. In \cite{mishraoblix} they use SGX to store the client's internal state at the server.
+
+% \paragraph{Threat model in searchable encryption.}
+% Attacks in distributed systems can be of different types. 
+% The type of the attack depends on multiple factors. 
+% It depends on the adversarial model in which they work, 
+% the information the adversary have, 
+% or the inputs the adversary can produce.  
+% Query-recovery attacks recover the queries made by the client, 
+% whereas data-recovery attacks recover client's data.  
+% For snapshot attacks, the adversary needs a hold over the document
+% collection, whereas for persistent attacks it needs to know the query
+% tokens as well. Sampled-data attacks need a sample from 
+% the distribution that is very close to the distribution 
+% of the original client data; known-data attacks require knowledge of a subset of the client's data collection, and known-query attacks require
+% knowledge of a subset of the client queries. 
+% Attackers can be of two types: passive and active.
+% Passive attackers only observe the queries and memory 
+% access patterns at the server and based on the 
+% observations they try to infer the queries and client's data
+% accessed by the queries.
+% Active attackers can also inject data into the database.
 
 
  
-\paragraph{Security-Efficiency Tradeoff.}
-For hiding the leakages associated with SSE, different techniques have been
-used. ORAM based approaches are known to be most popular for hiding access pattern leakages. 
-%This is because, the server can correlate two ORAM access of the same data with negligible probability. 
-But ORAM based solutions are also very inefficient. 
-%because of the extra memory accesses. 
-Padding techniques are used to hide volumetric leakages. Again,it will only cause the client to read extra data on the server. Fully homomorphic encryption also incurs huge computational overhead. In a nutshell, all the mentioned
-techniques offer security but at the same time make SSE operations time consuming. 
-To make the SSE schemes useful for real-world applications we need to pay attention
-towards its efficiency as well. Because in modern cryptography we have really fast symmetric cryptographic primitives, the cost of memory accesses, specifically the number of random disk head movements, becomes the performance bottleneck. This is because in modern storage media (hard disk drives), accessing many random memory locations is much more expensive than accesssing one contiguous memory region. So the matter of the fact is, we can improve the performance of SSE operations if we can minimize the number of random disk head movements. 
+\paragraph{I/O Efficiency.}
+To make searchable encryption schemes useful for real-world applications, attention needs to be paid to their efficiency.
+%
+In modern cryptography, really fast symmetric cryptographic primitives are available, and because of this, the cost of memory accesses, specifically the number of I/O operations, becomes the performance bottleneck.
+%
+The fact of the matter is that the performance of SSE operations can be improved if the number of I/O operations is minimized.
+%
+There are some I/O metrics to measure I/O efficiency. The metrics relevant when the data is stored on HDDs are \emph{locality} and \emph{read efficiency}.
+%
+\emph{Locality} refers to the number of contiguous memory locations the server accesses to perform a client query. 
+%
+To minimize the number of random disk seeks, careful consideration is needed for how entries pertaining to same result are stored on the server. 
+%
+Storing the related entries in contiguous memory locations is insecure, as it violates forward privacy.
+%
+Storing each entry at a random location is ensures forward privacy but suffers from poor locality. 
+%
+However, \emph{locality} alone is not a meaningful metric since the entire database can be read with optimal locality.
+ %
+ Therefore, \emph{read efficiency} must also be considered. 
+ %
+ Read efficiency is the ratio of the amount of data actually read by the server to the amount of data that corresponds to the query result.
+ %
+ Ideally, both locality and read efficiency should be minimized.
+%
+For SSDs, the I/O efficiency metric is called \emph{page efficiency}. 
+Page efficiency refers to the ratio of the number of pages read to fetch the encrypted data to the number of pages that would have been read if the data were stored in plaintext.
 
+There has been a line of work \cite{onechoice,LocalLayeredSSECrypto22,Demertzis17,locCrypto18} 
+focused on making searchable encryption schemes I/O-efficient. Another line of work 
+\cite{Mitra,ShiNDSS14, RBCC16} focuses on 
+making DSE schemes Forward and Backward private.
+Although some of the previous work \cite{LocalLayeredSSECrypto22,RBCC} claim that 
+forward privacy and I/O efficiency cannot be achieved simultaneously, chapter \ref{ch:iodse} of this thesis presents schemes that demonstrates these two can indeed be achieved together.
 
-\paragraph{Locality and Read-Efficiency.}
-The number of random disk seeks done to perform a client query is known 
-as the \emph{locality}. In other words, \emph{locality} is the number of contiguous memory 
-locations the server accesses to perform a client
-query. To minimize the number of random disk seeks, we need to take care of 
-how to store the keyword lists at the server. Storing the entries of a list in contiguous memory 
-locations is is not secure, as it violates forward privacy. 
-Storing each entry at a random location is a good option 
-but it suffers from worst-case locality. But \emph{locality} alone 
-is not a meaningful metric. Since, the whole database can be read with exactly 
-one disk seek, which results into optimal locality. Thus we need to consider another metric called \emph{read efficiency}, which is the ratio of the amount of data that is actually read by the server (in Bytes) to the amount of data that corresponds to the query result. There have been a line of work \cite{onechoice,LocalLayeredSSECrypto22,Demertzis17,locCrypto18} on \emph{locality aware} SSE schemes, 
-focused on minimizing the locality of searchable encryption schemes. In Chapter \ref{ch:iodse}
-we will discuss the first dynamic searchable encryption schemes that are locality-aware, and at the same time ensure forward and backward privacy. %
+%we will discuss the first dynamic searchable encryption schemes that are locality-aware, and at the same time ensure forward and backward privacy. %
 
 %Cash and Tessaro \cite{cash2014locality}~ proved that any secure searchable encryption scheme with both optimal locality $O(1)$ and optimal read eﬀiciency $O(1)$ requires $\omega(N)$ space.
 

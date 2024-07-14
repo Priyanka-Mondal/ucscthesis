@@ -6,8 +6,6 @@ This work presents an approach to enhancing choreographic programming with fault
 
 The outcome of our efforts is \FlameChor, a Haskell library that merges the  capabilities of \FLAME\ with the choreographic programming paradigm offered by \HasChor\ and \FLAQR\ based fault-tolerant language features. %FlameChor extends the repertoire of choreographic programming frameworks by incorporating fault-tolerant features and comprehensive data safety measures, encompassing both data integrity and availability concerns.
 %\end{abstract}
-
-%\section{Introduction}
 \section{Background}
 \subsection{Choreographic programming}
 Choreographic programming is a paradigm in distributed systems and concurrent programming where the focus is on specifying the interaction patterns (or Choreographies) between nodes. In this approach, the programmer defines a global view of how nodes interact, ensuring that the communication and coordination between them adhere to a well-defined protocol. The process of deriving local behaviors (or local programs) from the global protocol is called end-point projection. Each end point's behavior is specified based on its role in the global choreography, ensuring that when each component follows its local behavior, the overall system adheres to the global protocol. By designing the system from a global perspective, choreographic programming helps ensure that the system is free from certain classes of errors (e.g., deadlocks, race conditions) by construction. This is because the interactions are specified in a way that prevents these issues from arising. Choreographic programming is particularly useful in complex distributed systems where multiple components need to communicate and collaborate to achieve a common goal. It can simplify the development and maintenance of such systems by providing clear specifications of how components should interact. For example see Figure \ref{fig:majQChoreo}, that represents a global view (i.e. a Choreography) of a 2/3 majority quorum program between four end-points: the client, host A, host B and host C. Where as, Figures \ref{fig:majQA}, \ref{fig:majQB}, \ref{fig:majQC} and \ref{fig:majQClient} represents the actual end-point programs for the four hosts.
@@ -126,8 +124,6 @@ Recall the two motivating examples from the last chapter (Figures \ref{} and \re
 
 
 %(Explain the below programs, explain locally $~>$ , un,  choreo monad, )
-
-
 
 \subsection{Useful concepts from the HasChor API}
 \HasChor\ is a new model for functional choreographic programming where choreographies are expressed as computations in a monad. \HasChor\ is implemented as a Haskell library. With \HasChor, 
@@ -601,7 +597,6 @@ SInteg :: SPrin p -> SPrin (KInteg p)
 notational convenience  (the new additions are shown in \tblue{blue}).}
 \label{fig:sprin}
 \end{figure*}
-
 
 \subsubsection{Run-time and type-level principals of \Flame}
 %
@@ -1400,6 +1395,7 @@ prepareCommit (ppa, ppb, ppc, statel, statea, stateb, statec) =  do
 \end{figure}
 
 
+
 \begin{figure}
 \begin{minted}{haskell}
 ---------------------------------COMMIT------------------------------------
@@ -1536,7 +1532,7 @@ prepareCommit (ppa, ppb, ppc, statel, statea, stateb, statec) =  do
 \end{minted}
 \caption{Leader-based consensus: the prepare and commit phase(continued)}
 \end{figure}
-%%%%
+
 \begin{figure}
 \begin{minted}{haskell}
         rl <-  (sym leader, abc, fromLeader, repl') ~>: sym client
@@ -1573,3 +1569,5 @@ prepareCommit (ppa, ppb, ppc, statel, statea, stateb, statec) =  do
 \end{figure}
 
 %\section{Conclusion}
+
+

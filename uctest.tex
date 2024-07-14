@@ -106,55 +106,70 @@
 \end{enumerate}
 
 \begin{abstract}
-%One of the main design goals of distributed systems is to eliminate centralized trust in order to deal with malicious hosts. Different approaches can be taken to address these issues. We present two kinds of techniques that enable a client to do computations in a distributed system without trusting a centralized remote server. First, I will present a general purpose programming framework FLAQR(…) that can be used to build decentralized applications while enforcing end-to-end information security in the presence of replication, consensus and program failures. My second work focuses on structured encryption techniques that can be used by the client to out- source its data to an untrusted server while retaining the ability to access and update it securely as well as efficiently.
-%Hosts in a distributed system can behave maliciously based on their own interest. Hence, 
-One of the main design goals of distributed systems is to eliminate centralized trust. %There are different aspects that need to be taken into account to achieve this goal. 
-%For instance, while computing on a distributed system there should not be any “single point-of-failure”. 
-Quorum replication techniques are very popular in this regard.
-%eliminating such “single point-of-failures”. 
-%The way quorum replication works is that a computation is replicated into a bunch of hosts and if a predetermined set of hosts agree on their outcome then we say consensus has been reached and hence the system makes progress. 
-In my first work, I will present a general purpose programming framework, called Flow Limited Authorization for Quorum Replication (FLAQR), that can be used to build decentralized quorum-based protocols. FLAQR type-system ensures that a well-typed program can not fail in ways that violate its type-level specifications. FLAQR enforces end-to-end information-security by annotating programs with information flow control (IFC) policies. IFC has been used to enforce decentralized security in distributed systems for confidentiality and integrity, while less attention has been paid to enforce decentralized availability policies with IFC. In this work, we extend the Flow Limited Authorization Model with availability policies. FLAQR security policies, language constructs, and the type-system together enable a programmer to write heterogeneous quorum based applications that are secure by construction. No programming language we are aware of addresses systems that compose multiple quorums or consider quorum participants with arbitrary trust relationships. 
-In this work we also 
-%identify the trade-offs between integrity and availability in distributed systems. Which led us to 
-introduce two novel binary-operators, called \emph{partial-or} and \emph{partial-and}, to realize integrity policies for programs that can be executed in the presence of replication, consensus and program failures. 
+One of the primary design objectives of distributed systems is to eliminate centralized trust.
+%
+Various approaches are used to achieve this goal. 
+%
+%Quorum replication techniques are widely popular in this regard.
+%
+Quorum replication techniques are popularly used for distributing trust among multiple parties, simultaneously eliminating the risk of a \emph{single point of failure}. 
+%
+This method not only boosts system availability but also improves overall integrity.
+%
+Information flow control is another tool for ensuring both data integrity and confidentiality in distributed computations.
+%
+Encryption is a widely popular technique used to maintain confidentiality of data on transit 
+and data at rest on the cloud.
+%
 
-%{\color{blue}{here goes FLAQR+ and flamechor}}
+This thesis presents a general purpose programming framework, called Flow Limited Authorization for Quorum Replication (FLAQR), that enables programmers to write secure decentralized applications, using quorum replication and information-flow-control. 
+%
+FLAQR utilizes the Flow-Limited Authorization model (FLAM) to implement information flow control. 
+%
+Two key contributions of FLAQR is the incorporation of availability policies into the FLAM algebra, and  introduction of secure \emph{fault-tolerant} language constructs. 
+%
 
+Later, FLAQR is extended with \emph{secret-sharing} language constructs, resulting in an enhanced version called  FLAQR$^+$.
+%
+Next, the fault-tolerant language constructs of FLAQR are implemented as a Haskell library called FlameChor. This library also incorporates availability polices to FLAME--a Haskell library that implements FLAM algebra.%, and information-flow-control into choreographic programming.
 
-Another important aspect of distributed systems is to store data in a trustless manner. My second work focuses on dynamic searchable encryption (DSE) techniques that can be used by the client to out-source its data to an untrusted server while retaining the ability to access it securely as well as efficiently. 
-%The way searchable encryption works is that 
-%The client creates an inverted index from its data, encrypts them both and uploads them both to the server. The client later makes search and update queries to the inverted index. 
-%Accessing data on the server can leak a lot of information about the client's query and the accessed data.
-A vast majority of works on DSE schemes focus on how to minimize the leakages that occur due to accessing the data on the server and make the schemes \emph{forward} and \emph{backward} private.
-%the two properties that a DSE scheme needs to satisfy in order to maintain a standard leakage profile. % are forward privacy and backward privacy. 
-Another line of work focuses on how to make the DSE scheme 
-\emph{locality aware} by minimizing the number of random disk seeks.
-%, or in other words make the DSE operation \emph{locality aware}. 
-This is because, when the server stores data on hard disk drives, the number of random disk movements becomes the performance bottleneck. I will present amortized and de-amortized DSE constructions that are \emph{locality aware} and at the same time forward and backward private. This is the first work we are aware of that combines forward and backward privacy with \emph{locality} for DSE constructions. 
-
+Finally, this thesis presents the first set of searchable encryption constructions that are both I/O-efficient, and ensure forward and backward privacy.
+%
+Searchable Encryption, also popularly known as \emph{encrypted search}, deals with design and
+implementation of practical cryptographic porotcols to perform queries on encrypted data. 
+%maintaining efficiency and (user's) privacy. 
+User privacy and efficiency are the two main areas of focus while designing a 
+searchable encryption scheme.
+%
+Forward and backward privacy are the two essential privacy guarantees for these schemes, which protect against attacks like file injection, and ensure compliance with privacy regulation laws.
+%
+On the other hand, the efficiency of a searchable encryption scheme can be enhanced by optimizing its
+I/O operations.
+%
+While some previous works claim that both forward privacy and I/O efficiency simultaneously can not be achieved, this thesis demonstrates otherwise.
 \end{abstract}
 
 \begin{dedication}
 \null\vfil
 {\large
 \begin{center}
-To my mother.
+%To my three pillars, maa, Tuni and Shiba.
 \end{center}}
 \vfil\null
 \end{dedication}
 
 
 \begin{acknowledgements}
-I want to thank my committee,blah
+%I want to thank my committee,blah blah
 \end{acknowledgements}
 
 \end{frontmatter}
 
-%\input{introduction}
-%\input{chapters/flaqr/FLAQR}
-%\input{chapters/flaqr/FLAQRplus}
-\input{chapters/flaqr/FlameChor}
-%\input{chapters/iodse/IODSE}
+\input{introduction}
+\input{chapters/flaqr/FLAQR}
+\input{chapters/flaqr/FLAQRplus}
+\input{chapters/flaqr/FlameChor2}
+\input{chapters/iodse/IODSE}
 %\chapter{Conclusion}
 
 \appendix
